@@ -17,6 +17,8 @@ AC_PATH_PROG([PERL],[perl])
 AC_PATH_PROG([OPENSSL],[openssl])
 AC_PATH_PROG([CP_BINARY],[cp],"/bin/cp")
 AC_PATH_PROG([MV_BINARY],[mv],"/bin/mv")
+SF_MONGOCLIENT
+AX_BOOST_BASE
 CHECK_XARGS_REPLACE
 CHECK_DATE_PARSE_ARGS
 CHECK_APACHE2
@@ -25,6 +27,9 @@ CHECK_XERCES
 CHECK_ODBC
 SFAC_LIB_STACK
 SFAC_FEATURE_SIP_TLS
+if test "${MONGO_CLIENT_CFLAGS}" == ""; then
+  AC_MSG_ERROR([Could not find required library: mongo])
+fi
 AC_ARG_ENABLE(odbc-tests,
   AC_HELP_STRING([--enable-odbc-tests], [Run unit tests that test ODBC connection to postgres]),
   enable_odbc_tests=yes)

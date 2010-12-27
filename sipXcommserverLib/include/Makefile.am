@@ -16,8 +16,6 @@ nobase_include_HEADERS =  \
     sipdb/CallerAliasRow.h \
     sipdb/CredentialDB.h \
     sipdb/CredentialRow.h \
-    sipdb/DialByNameDB.h \
-    sipdb/DialByNameRow.h \
     sipdb/ExtensionDB.h \
     sipdb/ExtensionRow.h \
     sipdb/LocationDB.h \
@@ -29,7 +27,6 @@ nobase_include_HEADERS =  \
     sipdb/RegistrationRow.h \
     sipdb/ResultSet.h \
     sipdb/SIPDBManager.h \
-    sipdb/SIPXAuthHelper.h \
     sipdb/SubscriptionDB.h \
     sipdb/SubscriptionRow.h \
     sipdb/UserLocationDB.h \
@@ -90,4 +87,5 @@ nobase_include_HEADERS =  \
     persist/SipPersistentSubscriptionMgr.h \
     testlib/RegistrationDbTestContext.h \
     testlib/SipDbTestContext.h \
-    testlib/FileTestContext.h
+    testlib/FileTestContext.h \
+    sipdb/IdentityDB.h

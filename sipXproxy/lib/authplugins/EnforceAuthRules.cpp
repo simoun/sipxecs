@@ -6,6 +6,8 @@
 //////////////////////////////////////////////////////////////////////////////
 
 // SYSTEM INCLUDES
+#include <string.h>
+#include "sipdb/IdentityDB.h"
 #include "os/OsReadLock.h"
 #include "os/OsWriteLock.h"
 #include "os/OsConfigDb.h"
@@ -17,7 +19,6 @@
 // APPLICATION INCLUDES
 #include "EnforceAuthRules.h"
 #include "sipdb/CredentialDB.h"
-#include "sipdb/PermissionDB.h"
 
 // DEFINES
 // CONSTANTS
@@ -205,7 +206,9 @@ EnforceAuthRules::authorizeAndModify(const UtlString& id,    /**< The authentica
             // some permission is required and caller is authenticated, so see if they have it
             ResultSet grantedPermissions;
             Url identity(id);
-            PermissionDB::getInstance()->getPermissions(identity, grantedPermissions);
+	    // FIXME : find a better way then to create a new DB instance each time.
+            IdentityDB db;
+	    db.getPermissions(identity, grantedPermissions);
 
             UtlString unmatchedPermissions;
             UtlString matchedPermission;
