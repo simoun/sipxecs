@@ -11,10 +11,26 @@ TARGET_PLATFORM = $(strip \
 	$(subst fedora,Fedora, \
 	$(subst centos,CentOS,$(DISTRO)))_$(DISTRO_VER))
 MOCK_RESULTS_DIR = @RPM_DIST_DIR@/$(TARGET_PLATFORM)/$(DISTRO_ARCH)
+MOCK_SRPM_DIR = @RPM_DIST_DIR@/$(TARGET_PLATFORM)/srpm
+RPMBUILD_TOPDIR = @RPMBUILD_TOPDIR@
 
 # strange: cannot use $(call lowercase,$(P)) inside an eval so copy in lowercase macro
 $(foreach P,$(sipx),$(eval $(P)_SRPM = $(shell echo $(P) | tr A-Z a-z)-$(PACKAGE_VERSION)-$(PACKAGE_REVISION).src.rpm))
 $(foreach P,$(sipx),$(eval $(P)_TAR = $(P)/$(shell echo $(P) | tr A-Z a-z)-$(PACKAGE_VERSION).tar.gz))
+
+# Copy or download a file. Downloads if not cached
+# - arg1 is source file to copy
+# - arg2 is the directory of the destination
+CopySourceFile = \
+	test -d $2 || mkdir -p $2; \
+	if [ -f $1 ]; then \
+	  cp -v $1 $2; \
+	else \
+	  if [ ! -f @DOWNLOAD_LIB_CACHE@/$(notdir $1) ]; then \
+	    curl -o @DOWNLOAD_LIB_CACHE@/$(notdir $1) @DOWNLOAD_LIB_URL@/$(notdir $1); \
+	  fi ;\
+	  cp -v @DOWNLOAD_LIB_CACHE@/$(notdir $1) $2; \
+	fi; \
 
 # pull in dependency make fragments
 include $(SRC)/*/.sipxecs.mk
@@ -32,17 +48,7 @@ help.*.srpm = Called automatically as part of rpm process after srpm target. Use
 	else \
 	  rpmbuild -ts $($(PROJ)_SRPM_DEFS) --nodeps $($(PROJ)_TAR); \
 	fi
-	cp @RPMBUILD_TOPDIR@/SRPMS/$($(PROJ)_SRPM) .
-
-CopySourceFile = \
-	if [ -f $1 ]; then \
-	  cp $1 $2; \
-	else \
-	  if [ ! -f @DOWNLOAD_LIB_CACHE@/$(notdir $1) ]; then \
-	    curl -o @DOWNLOAD_LIB_CACHE@/$(notdir $1) @DOWNLOAD_LIB_URL@/$(notdir $1); \
-	  fi ;\
-	  cp @DOWNLOAD_LIB_CACHE@/$(notdir $1) $2; \
-	fi; \
+	cp $(RPMBUILD_TOPDIR)/SRPMS/$($(PROJ)_SRPM) $(MOCK_SRPM_DIR)
 
 mock-init :
 	mock -r $(MOCK_TARGET_PLATFORM) --scrub=all

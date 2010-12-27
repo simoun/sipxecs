@@ -1,6 +1,8 @@
 ##
 ## AC macros for general packages like OpenSSL, Xerces, etc
 ##
+m4_include([config/mongo.m4])
+m4_include([config/ax_boost_base.m4])
 
 # ============ C L O V E R  =======================
 AC_DEFUN([CHECK_CLOVER],
