@@ -195,6 +195,9 @@
     class="org.sipfoundry.sipxconfig.admin.commserver.imdb.Mailstore">
     <property name="mailboxManager" ref="mailboxManager" />
   </bean>
+  <bean id="openacdDataSet" parent="dataSetGenerator"
+    class="org.sipfoundry.sipxconfig.admin.commserver.imdb.OpenAcd">
+  </bean>
 
   <bean id="replicationTrigger"
     class="org.sipfoundry.sipxconfig.admin.commserver.imdb.ReplicationTrigger">

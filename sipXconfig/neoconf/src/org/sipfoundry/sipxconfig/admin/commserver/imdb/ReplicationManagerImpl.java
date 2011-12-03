@@ -315,8 +315,12 @@ public class ReplicationManagerImpl extends HibernateDaoSupport implements Repli
             Long start = System.currentTimeMillis();
             DBObject top = m_dataSetGenerator.findOrCreate(entity);
             Set<DataSet> dataSets = entity.getDataSets();
-            for (DataSet dataSet : dataSets) {
-                replicateEntity(entity, dataSet, top);
+            if (dataSets != null && !dataSets.isEmpty()) {
+                for (DataSet dataSet : dataSets) {
+                    replicateEntity(entity, dataSet, top);
+                }
+            } else {
+                m_dataSetGenerator.getDbCollection().save(top);
             }
             Long end = System.currentTimeMillis();
             LOG.debug(REPLICATION_INS_UPD + name + IN + (end - start) + MS);

@@ -40,15 +40,17 @@ import org.sipfoundry.sipxconfig.common.SipxHibernateDaoSupport;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.common.event.DaoEventListener;
+import org.sipfoundry.sipxconfig.common.event.DaoEventPublisher;
 import org.sipfoundry.sipxconfig.freeswitch.FreeswitchAction;
 import org.sipfoundry.sipxconfig.freeswitch.FreeswitchCondition;
 import org.sipfoundry.sipxconfig.service.ServiceConfigurator;
 import org.sipfoundry.sipxconfig.service.SipxFreeswitchService;
+import org.sipfoundry.sipxconfig.service.SipxOpenAcdService;
 import org.sipfoundry.sipxconfig.service.SipxServiceManager;
 import org.springframework.dao.support.DataAccessUtils;
 
 public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport implements OpenAcdContext,
-    DaoEventListener, OpenAcdConfigObjectProvider {
+    DaoEventListener, DaoEventPublisher {
 
     private static final String VALUE = "value";
     private static final String OPEN_ACD_EXTENSION_WITH_NAME = "openAcdExtensionWithName";
@@ -60,8 +62,6 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
     private static final String OPEN_ACD_CLIENT_WITH_IDENTITY = "openAcdClientWithIdentity";
     private static final String DEFAULT_OPEN_ACD_SKILLS = "defaultOpenAcdSkills";
     private static final String OPEN_ACD_AGENT_BY_USERID = "openAcdAgentByUserId";
-    private static final String GROUP_NAME_DEFAULT = "Default";
-    private static final String MAGIC_SKILL_GROUP_NAME = "Magic";
     private static final String LINE_NAME = "line";
     private static final String OPEN_ACD_QUEUE_GROUP_WITH_NAME = "openAcdQueueGroupWithName";
     private static final String OPEN_ACD_QUEUE_WITH_NAME = "openAcdQueueWithName";
@@ -72,7 +72,7 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
     private SipxServiceManager m_serviceManager;
     private boolean m_enabled = true;
     private AliasManager m_aliasManager;
-    private OpenAcdProvisioningContext m_provisioningContext;
+    private DaoEventPublisher m_daoEventPublisher;
     private LocationsManager m_locationsManager;
     private ServiceConfigurator m_serviceConfigurator;
     private SipxProcessContext m_processContext;
@@ -279,10 +279,8 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
                 }
             }
             getHibernateTemplate().merge(agentGroup);
-            m_provisioningContext.updateObjects(Collections.singletonList(agentGroup));
         } else {
             getHibernateTemplate().save(agentGroup);
-            m_provisioningContext.addObjects(Collections.singletonList(agentGroup));
         }
     }
 
@@ -300,24 +298,14 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
         }
     }
 
-    public boolean removeAgentGroups(Collection<Integer> agentGroupIds) {
-        boolean affectDefaultAgentGroup = false;
-        List<OpenAcdAgentGroup> groups = new LinkedList<OpenAcdAgentGroup>();
-        List<OpenAcdAgent> agents = new LinkedList<OpenAcdAgent>();
-        for (Integer id : agentGroupIds) {
-            OpenAcdAgentGroup group = getAgentGroupById(id);
-            if (!group.getName().equals(GROUP_NAME_DEFAULT)) {
-                agents.addAll(group.getAgents());
-                groups.add(group);
-            } else {
-                affectDefaultAgentGroup = true;
-            }
+    public void deleteAgentGroup(OpenAcdAgentGroup group) {
+        if (group.getName().equals(GROUP_NAME_DEFAULT)) {
+            throw new DefaultAgentGroupDeleteException();
         }
-        getHibernateTemplate().deleteAll(groups);
-        m_provisioningContext.deleteObjects(agents);
-        m_provisioningContext.deleteObjects(groups);
+        getHibernateTemplate().delete(group);
+    }
 
-        return affectDefaultAgentGroup;
+    public class DefaultAgentGroupDeleteException extends UserException {
     }
 
     public void addAgentsToGroup(OpenAcdAgentGroup agentGroup, Collection<OpenAcdAgent> agents) {
@@ -326,7 +314,7 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
             agent.setGroup(agentGroup);
         }
         saveAgentGroup(agentGroup);
-        m_provisioningContext.addObjects(new LinkedList<OpenAcdConfigObject>(agents));
+        m_daoEventPublisher.publishSave(agentGroup);
     }
 
     public List<OpenAcdAgent> getAgents() {
@@ -347,17 +335,11 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
         return DaoUtils.requireOneOrZero(agents, OPEN_ACD_AGENT_BY_USERID);
     }
 
-    public void saveAgent(OpenAcdAgentGroup agentGroup, OpenAcdAgent agent) {
-        checkAgent(agent);
-        addAgentsToGroup(agentGroup, Collections.singletonList(agent));
-    }
-
     @Override
     public void saveAgent(OpenAcdAgent agent) {
         checkAgent(agent);
         getHibernateTemplate().saveOrUpdate(agent);
         agent.setOldName(agent.getName());
-        m_provisioningContext.updateObjects(Collections.singletonList(agent));
     }
 
     private void checkAgent(OpenAcdAgent agent) {
@@ -371,16 +353,11 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
     }
 
     @Override
-    public void deleteAgents(Collection<Integer> agentIds) {
-        List<OpenAcdAgent> agents = new LinkedList<OpenAcdAgent>();
-        for (Integer id : agentIds) {
-            OpenAcdAgent agent = getAgentById(id);
-            agents.add(agent);
-            OpenAcdAgentGroup group = agent.getGroup();
-            group.removeAgent(agent);
-            getHibernateTemplate().save(group);
-        }
-        m_provisioningContext.deleteObjects(agents);
+    public void deleteAgent(OpenAcdAgent agent) {
+        OpenAcdAgentGroup group = agent.getGroup();
+        group.removeAgent(agent);
+        getHibernateTemplate().save(group);
+        getHibernateTemplate().delete(agent);
     }
 
     @Override
@@ -434,7 +411,6 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
                 for (OpenAcdSkill skill : skillGroup.getSkills()) {
                     skills.add(skill);
                 }
-                m_provisioningContext.updateObjects(skills);
             }
             getHibernateTemplate().merge(skillGroup);
         } else {
@@ -459,26 +435,22 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
     @Override
     public List<String> removeSkillGroups(Collection<Integer> skillGroupIds) {
         List<OpenAcdSkillGroup> groups = new LinkedList<OpenAcdSkillGroup>();
-        List<OpenAcdSkill> skills = new LinkedList<OpenAcdSkill>();
         List<String> usedSkillGroups = new ArrayList<String>();
         for (Integer id : skillGroupIds) {
             OpenAcdSkillGroup group = getSkillGroupById(id);
             if (group.getName().equals(MAGIC_SKILL_GROUP_NAME) || containsUsedSkills(group)) {
                 usedSkillGroups.add(group.getName());
             } else {
-                skills.addAll(group.getSkills());
                 groups.add(group);
             }
         }
         getHibernateTemplate().deleteAll(groups);
-        if (!skills.isEmpty()) {
-            m_provisioningContext.deleteObjects(skills);
-        }
 
         return usedSkillGroups;
     }
 
-    private boolean containsUsedSkills(OpenAcdSkillGroup skillGroup) {
+    @Override
+    public boolean containsUsedSkills(OpenAcdSkillGroup skillGroup) {
         for (OpenAcdSkill skill : skillGroup.getSkills()) {
             if (skill.isDefaultSkill() || isSkillInUse(skill)) {
                 return true;
@@ -541,31 +513,25 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
 
         if (!skill.isNew()) {
             getHibernateTemplate().merge(skill);
-            m_provisioningContext.updateObjects(Collections.singletonList(skill));
         } else {
             getHibernateTemplate().save(skill);
-            m_provisioningContext.addObjects(Collections.singletonList(skill));
         }
     }
 
-    public List<String> removeSkills(Collection<Integer> skillIds) {
+    public void deleteSkill(OpenAcdSkill skill) {
         List<OpenAcdSkill> skills = new LinkedList<OpenAcdSkill>();
-        List<String> usedSkills = new ArrayList<String>();
-        for (Integer id : skillIds) {
-            OpenAcdSkill skill = getSkillById(id);
-            if (skill.isDefaultSkill() || isSkillInUse(skill)) {
-                usedSkills.add(skill.getName());
-            } else {
-                OpenAcdSkillGroup group = skill.getGroup();
-                group.removeSkill(skill);
-                getHibernateTemplate().saveOrUpdate(group);
-                skills.add(skill);
-            }
+        if (skill.isDefaultSkill() || isSkillInUse(skill)) {
+            throw new SkillInUseException();
+        } else {
+            OpenAcdSkillGroup group = skill.getGroup();
+            group.removeSkill(skill);
+            getHibernateTemplate().saveOrUpdate(group);
+            skills.add(skill);
         }
         getHibernateTemplate().deleteAll(skills);
-        m_provisioningContext.deleteObjects(skills);
+    }
 
-        return usedSkills;
+    public class SkillInUseException extends UserException {
     }
 
     private boolean isSkillInUse(OpenAcdSkill skill) {
@@ -640,7 +606,6 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
 
         if (client.isNew()) {
             getHibernateTemplate().save(client);
-            m_provisioningContext.addObjects(Collections.singletonList(client));
         } else {
             if (isNameChanged(client)) {
                 // don't rename the default client
@@ -651,7 +616,6 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
             }
 
             getHibernateTemplate().merge(client);
-            m_provisioningContext.updateObjects(Collections.singletonList(client));
         }
     }
 
@@ -693,21 +657,15 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
     }
 
     @Override
-    public List<String> removeClients(Collection<Integer> clientsId) {
-        List<OpenAcdClient> clients = new ArrayList<OpenAcdClient>();
-        List<String> usedClients = new ArrayList<String>();
-        for (Integer id : clientsId) {
-            OpenAcdClient client = getClientById(id);
-            if (client.getName().equals(DEFAULT_CLIENT) || isUsedByLine(OpenAcdLine.BRAND + client.getIdentity())) {
-                usedClients.add(client.getName());
-            } else {
-                clients.add(client);
-            }
+    public void deleteClient(OpenAcdClient client) {
+        if (client.getName().equals(DEFAULT_CLIENT) || isUsedByLine(OpenAcdLine.BRAND + client.getIdentity())) {
+            throw new ClientInUseException();
+        } else {
+            getHibernateTemplate().delete(client);
         }
-        getHibernateTemplate().deleteAll(clients);
-        m_provisioningContext.deleteObjects(clients);
+    }
 
-        return usedClients;
+    public final class ClientInUseException extends UserException {
     }
 
     @Override
@@ -781,32 +739,23 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
                 }
             }
             getHibernateTemplate().merge(queueGroup);
-            m_provisioningContext.updateObjects(Collections.singletonList(queueGroup));
         } else {
             getHibernateTemplate().save(queueGroup);
-            m_provisioningContext.addObjects(Collections.singletonList(queueGroup));
         }
     }
 
     @Override
-    public List<String> removeQueueGroups(Collection<Integer> queueGroupIds) {
+    public void deleteQueueGroup(OpenAcdQueueGroup group) {
         List<OpenAcdQueueGroup> groups = new LinkedList<OpenAcdQueueGroup>();
-        List<OpenAcdQueue> queues = new LinkedList<OpenAcdQueue>();
-        List<String> usedGroups = new ArrayList<String>();
-        for (Integer id : queueGroupIds) {
-            OpenAcdQueueGroup group = getQueueGroupById(id);
-            if (group.getName().equals(GROUP_NAME_DEFAULT) || containsUsedQueues(group)) {
-                usedGroups.add(group.getName());
-            } else {
-                queues.addAll(group.getQueues());
-                groups.add(group);
-            }
+        if (group.getName().equals(GROUP_NAME_DEFAULT) || containsUsedQueues(group)) {
+            throw new QueueGroupInUseException();
+        } else {
+            groups.add(group);
         }
         getHibernateTemplate().deleteAll(groups);
-        m_provisioningContext.deleteObjects(queues);
-        m_provisioningContext.deleteObjects(groups);
+    }
 
-        return usedGroups;
+    public final class QueueGroupInUseException extends UserException {
     }
 
     private boolean isNameChanged(OpenAcdQueueGroup queueGroup) {
@@ -872,10 +821,8 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
                 }
             }
             getHibernateTemplate().merge(queue);
-            m_provisioningContext.updateObjects(Collections.singletonList(queue));
         } else {
             getHibernateTemplate().save(queue);
-            m_provisioningContext.addObjects(Collections.singletonList(queue));
         }
     }
 
@@ -906,26 +853,18 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
     }
 
     @Override
-    public List<String> removeQueues(Collection<Integer> queueIds) {
-        List<OpenAcdQueue> queues = new LinkedList<OpenAcdQueue>();
-        List<OpenAcdQueueGroup> groups = new LinkedList<OpenAcdQueueGroup>();
-        List<String> usedQueues = new ArrayList<String>();
-        for (Integer id : queueIds) {
-            OpenAcdQueue queue = getQueueById(id);
-            if (queue.getName().equals(DEFAULT_QUEUE) || isUsedByLine(OpenAcdLine.Q + queue.getName())) {
-                usedQueues.add(queue.getName());
-            } else {
-                OpenAcdQueueGroup group = queue.getGroup();
-                group.removeQueue(queue);
-                getHibernateTemplate().saveOrUpdate(group);
-                queues.add(queue);
-                groups.add(group);
-            }
+    public void deleteQueue(OpenAcdQueue queue) {
+        if (queue.getName().equals(DEFAULT_QUEUE) || isUsedByLine(OpenAcdLine.Q + queue.getName())) {
+            throw new QueueInUseException();
+        } else {
+            OpenAcdQueueGroup group = queue.getGroup();
+            group.removeQueue(queue);
+            getHibernateTemplate().saveOrUpdate(group);
+            getHibernateTemplate().delete(queue);
         }
-        getHibernateTemplate().deleteAll(queues);
-        m_provisioningContext.deleteObjects(queues);
+    }
 
-        return usedQueues;
+    public final class QueueInUseException extends UserException {
     }
 
     private boolean isUsedByLine(String data) {
@@ -946,6 +885,34 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
         for (OpenAcdExtension ext : getHibernateTemplate().loadAll(OpenAcdExtension.class)) {
             replicables.add(ext);
         }
+        for (OpenAcdQueue q : getQueues()) {
+            replicables.add(q);
+        }
+        for (OpenAcdAgent agent : getAgents()) {
+            replicables.add(agent);
+        }
+        for (OpenAcdAgentGroup agentGroup : getAgentGroups()) {
+            replicables.add(agentGroup);
+        }
+        for (OpenAcdClient client : getClients()) {
+            replicables.add(client);
+        }
+        for (OpenAcdQueueGroup qgr : getQueueGroups()) {
+            replicables.add(qgr);
+        }
+        for (OpenAcdSkill skill : getSkills()) {
+            replicables.add(skill);
+        }
+        SipxOpenAcdService service = (SipxOpenAcdService) m_serviceManager.
+        getServiceByBeanId(SipxOpenAcdService.BEAN_ID);
+        replicables.add(new FreeswitchMediaCommand(
+                (Boolean) service.getSettingTypedValue(SipxOpenAcdService.FS_ENABLED),
+                service.getSettingValue(SipxOpenAcdService.C_NODE),
+                service.getSettingValue(SipxOpenAcdService.DIAL_STRING)));
+        replicables.add(new OpenAcdAgentConfigCommand(
+                (Boolean) service.getSettingTypedValue(SipxOpenAcdService.DIALPLAN_LISTENER)));
+        replicables.add(new OpenAcdLogConfigCommand(service.getOpenAcdLogLevel(),
+                service.getLogDir()));
         return replicables;
     }
 
@@ -958,21 +925,10 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
             User user = (User) entity;
             OpenAcdAgent agent = getAgentByUser(user);
             if (agent != null) {
-                deleteAgents(Collections.singletonList(agent.getId()));
+                deleteAgent(agent);
                 getHibernateTemplate().flush();
             }
         }
-    }
-
-    public List<OpenAcdConfigObject> getConfigObjects() {
-        List<OpenAcdConfigObject> objects = new ArrayList<OpenAcdConfigObject>();
-        objects.addAll(getSkills());
-        objects.addAll(getClients());
-        objects.addAll(getAgentGroups());
-        objects.addAll(getAgents());
-        objects.addAll(getQueueGroups());
-        objects.addAll(getQueues());
-        return objects;
     }
 
     public void setSipxServiceManager(SipxServiceManager manager) {
@@ -981,10 +937,6 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
 
     public void setAliasManager(AliasManager aliasManager) {
         m_aliasManager = aliasManager;
-    }
-
-    public void setProvisioningContext(OpenAcdProvisioningContext context) {
-        m_provisioningContext = context;
     }
 
     public void setServiceConfigurator(ServiceConfigurator serviceConfigurator) {
@@ -997,6 +949,10 @@ public abstract class OpenAcdContextImpl extends SipxHibernateDaoSupport impleme
 
     public void setLocationsManager(LocationsManager locationsManager) {
         m_locationsManager = locationsManager;
+    }
+
+    public void setDaoEventPublisher(DaoEventPublisher daoEventPublisher) {
+        m_daoEventPublisher = daoEventPublisher;
     }
 
 }

@@ -16,10 +16,20 @@
  */
 package org.sipfoundry.sipxconfig.openacd;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
-public class OpenAcdLogConfigCommand extends OpenAcdConfigObject {
+import org.sipfoundry.commons.mongo.MongoConstants;
+import org.sipfoundry.sipxconfig.admin.commserver.imdb.AliasMapping;
+import org.sipfoundry.sipxconfig.admin.commserver.imdb.DataSet;
+import org.sipfoundry.sipxconfig.common.BeanWithId;
+import org.sipfoundry.sipxconfig.common.Replicable;
+import org.sipfoundry.sipxconfig.service.SipxFreeswitchService;
+
+public class OpenAcdLogConfigCommand extends BeanWithId implements Replicable {
 
     private final String m_logLevel;
     private final String m_logDir;
@@ -38,20 +48,45 @@ public class OpenAcdLogConfigCommand extends OpenAcdConfigObject {
     }
 
     @Override
-    public List<String> getProperties() {
-        List<String> props = new LinkedList<String>();
-        props.add("logLevel");
-        props.add("logDir");
+    public Map<String, Object> getMongoProperties(String domain) {
+        Map<String, Object> props = new HashMap<String, Object>();
+        props.put(MongoConstants.LOG_LEVEL, getLogLevel());
+        props.put(MongoConstants.LOG_DIR, getLogDir());
         return props;
     }
 
     @Override
-    public String getType() {
-        return "log_configuration";
+    public Set<DataSet> getDataSets() {
+        return Collections.singleton(DataSet.OPENACD);
     }
 
     @Override
-    public boolean isConfigCommand() {
-        return true;
+    public String getIdentity(String domainName) {
+        return null;
     }
+
+    @Override
+    public Collection<AliasMapping> getAliasMappings(String domainName) {
+        return null;
+    }
+
+    @Override
+    public Collection<AliasMapping> getAliasMappings(String domainName, SipxFreeswitchService fs) {
+        return null;
+    }
+
+    @Override
+    public boolean isValidUser() {
+        return false;
+    }
+
+    @Override
+    public String getName() {
+        return null;
+    }
+
+    @Override
+    public void setName(String name) {
+    }
+
 }

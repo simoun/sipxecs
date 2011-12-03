@@ -17,17 +17,25 @@
 package org.sipfoundry.sipxconfig.openacd;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
-import com.mongodb.BasicDBObject;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.sipfoundry.commons.mongo.MongoConstants;
+import org.sipfoundry.sipxconfig.admin.commserver.imdb.AliasMapping;
+import org.sipfoundry.sipxconfig.admin.commserver.imdb.DataSet;
+import org.sipfoundry.sipxconfig.common.Replicable;
+import org.sipfoundry.sipxconfig.service.SipxFreeswitchService;
 
-public class OpenAcdQueue extends OpenAcdQueueWithSkills {
+import com.mongodb.BasicDBObject;
+
+public class OpenAcdQueue extends OpenAcdQueueWithSkills implements Replicable {
     private String m_name;
     private String m_description;
     private OpenAcdQueueGroup m_group;
@@ -111,38 +119,60 @@ public class OpenAcdQueue extends OpenAcdQueueWithSkills {
     }
 
     @Override
-    public List<String> getProperties() {
-        List<String> props = new LinkedList<String>();
-        props.add("name");
-        props.add("queueGroup");
-        props.add("skillsAtoms");
-        props.add("profiles");
-        props.add("weight");
-        props.add("oldName");
-        props.add("additionalObjects");
-        return props;
+    public Set<DataSet> getDataSets() {
+        return Collections.singleton(DataSet.OPENACD);
     }
 
     @Override
-    public String getType() {
-        return "queue";
+    public String getIdentity(String domainName) {
+        return null;
     }
 
     @Override
-    public List<BasicDBObject> getAdditionalObjects() {
+    public Collection<AliasMapping> getAliasMappings(String domainName) {
+        return null;
+    }
+
+    @Override
+    public Collection<AliasMapping> getAliasMappings(String domainName, SipxFreeswitchService fs) {
+        return null;
+    }
+
+    @Override
+    public boolean isValidUser() {
+        return false;
+    }
+
+    @Override
+    public Map<String, Object> getMongoProperties(String domain) {
+        Map<String, Object> props = new HashMap<String, Object>();
+        props.put(MongoConstants.QUEUE_GROUP, getQueueGroup());
+        List<String> skills = new ArrayList<String>();
+        for (OpenAcdSkill skill : getSkills()) {
+            skills.add(skill.getAtom());
+        }
+        props.put(MongoConstants.SKILLS, skills);
+        List<String> profiles = new ArrayList<String>();
+        for (OpenAcdAgentGroup profile : getAgentGroups()) {
+            profiles.add(profile.getName());
+        }
+        props.put(MongoConstants.PROFILES, profiles);
+        props.put(MongoConstants.WEIGHT, getWeight());
+        props.put(MongoConstants.OLD_NAME, getOldName());
         List<BasicDBObject> objects = new ArrayList<BasicDBObject>();
         for (OpenAcdRecipeStep step : m_steps) {
             BasicDBObject recipeStep = new BasicDBObject();
-            recipeStep.put("action", step.getAction().getMongoObject());
+            recipeStep.put(MongoConstants.ACTION, step.getAction().getMongoObject());
             List<BasicDBObject> conditions = new ArrayList<BasicDBObject>();
             for (OpenAcdRecipeCondition condition : step.getConditions()) {
                 conditions.add(condition.getMongoObject());
             }
-            recipeStep.put("conditions", conditions);
-            recipeStep.put("frequency", step.getFrequency());
-            recipeStep.put("stepName", "New Step");
+            recipeStep.put(MongoConstants.CONDITION, conditions);
+            recipeStep.put(MongoConstants.FREQUENCY, step.getFrequency());
+            recipeStep.put(MongoConstants.STEP_NAME, "New Step");
             objects.add(recipeStep);
         }
-        return objects;
+        props.put(MongoConstants.RECIPES, objects);
+        return props;
     }
 }

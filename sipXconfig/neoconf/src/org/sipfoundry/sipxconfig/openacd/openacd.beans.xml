@@ -15,7 +15,7 @@
     <lookup-method name="newOpenAcdCommand" bean="openAcdCommand"/>
     <property name="sessionFactory" ref="sessionFactory" />
     <property name="aliasManager" ref="aliasManager" />
-    <property name="provisioningContext" ref="openAcdProvisioningContext" />
+    <property name="daoEventPublisher" ref="daoEventPublisher"/>
     <property name="locationsManager" ref="locationsManager" />
     <property name="serviceConfigurator" ref="serviceConfigurator" />
     <property name="processContext" ref="sipxProcessContext" />

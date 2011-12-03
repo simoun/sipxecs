@@ -16,20 +16,15 @@
  */
 package org.sipfoundry.sipxconfig.service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.sipfoundry.sipxconfig.admin.commserver.Location;
+import org.sipfoundry.sipxconfig.admin.commserver.imdb.ReplicationManager;
 import org.sipfoundry.sipxconfig.openacd.FreeswitchMediaCommand;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentConfigCommand;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdConfigObject;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdConfigObjectProvider;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdLogConfigCommand;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdProvisioningContext;
 import org.sipfoundry.sipxconfig.setting.SettingEntry;
 
-public class SipxOpenAcdService extends SipxService implements LoggingEntity, OpenAcdConfigObjectProvider {
+public class SipxOpenAcdService extends SipxService implements LoggingEntity {
     public static final String BEAN_ID = "sipxOpenAcdService";
     public static final String FS_ENABLED = "freeswitch_media_manager/FREESWITCH_ENABLED";
     public static final String C_NODE = "freeswitch_media_manager/C_NODE";
@@ -40,6 +35,7 @@ public class SipxOpenAcdService extends SipxService implements LoggingEntity, Op
     private String m_audioDirectory;
     private String m_logDirectory;
     private OpenAcdProvisioningContext m_provisioningContext;
+    private ReplicationManager m_replicationManager;
 
     @Override
     public String getLogSetting() {
@@ -111,18 +107,18 @@ public class SipxOpenAcdService extends SipxService implements LoggingEntity, Op
 
     @Override
     public void afterReplication(Location location) {
-        m_provisioningContext.configure(Collections.singletonList(new OpenAcdLogConfigCommand(getOpenAcdLogLevel(),
-                m_logDirectory)));
+        m_replicationManager.replicateEntity(new OpenAcdLogConfigCommand(getOpenAcdLogLevel(),
+                m_logDirectory));
     }
 
     private void saveOpenAcdSettings() {
         Boolean enabled = (Boolean) getSettingTypedValue(FS_ENABLED);
         String cNode = getSettingValue(C_NODE);
         String dialString = getSettingValue(DIAL_STRING);
-        m_provisioningContext.configure(Collections.singletonList(new FreeswitchMediaCommand(enabled, cNode,
-                dialString)));
+        m_replicationManager.replicateEntity(new FreeswitchMediaCommand(enabled, cNode,
+                dialString));
         Boolean dialPlanListener = (Boolean) getSettingTypedValue(DIALPLAN_LISTENER);
-        m_provisioningContext.configure(Collections.singletonList(new OpenAcdAgentConfigCommand(dialPlanListener)));
+        m_replicationManager.replicateEntity(new OpenAcdAgentConfigCommand(dialPlanListener));
     }
 
     public static class DefaultSettings {
@@ -148,20 +144,8 @@ public class SipxOpenAcdService extends SipxService implements LoggingEntity, Op
         }
     }
 
-    @Override
-    public List<OpenAcdConfigObject> getConfigObjects() {
-        Boolean enabled = (Boolean) getSettingTypedValue(FS_ENABLED);
-        String cNode = getSettingValue(C_NODE);
-        String dialString = getSettingValue(DIAL_STRING);
-        List<OpenAcdConfigObject> objects = new ArrayList<OpenAcdConfigObject>();
-        objects.add(new FreeswitchMediaCommand(enabled, cNode,
-                dialString));
-
-        Boolean dialPlanListener = (Boolean) getSettingTypedValue(DIALPLAN_LISTENER);
-        objects.add(new OpenAcdAgentConfigCommand(dialPlanListener));
-
-        objects.add(new OpenAcdLogConfigCommand(getOpenAcdLogLevel(),
-                m_logDirectory));
-        return objects;
+    public void setReplicationManager(ReplicationManager replicationManager) {
+        m_replicationManager = replicationManager;
     }
+
 }

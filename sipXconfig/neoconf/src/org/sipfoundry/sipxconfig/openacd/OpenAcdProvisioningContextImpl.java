@@ -16,15 +16,7 @@
  */
 package org.sipfoundry.sipxconfig.openacd;
 
-import static org.apache.commons.beanutils.BeanUtils.getSimpleProperty;
-import static org.apache.commons.lang.StringUtils.EMPTY;
-
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import org.sipfoundry.sipxconfig.common.UserChangeEvent;
 import org.sipfoundry.sipxconfig.common.UserException;
@@ -44,27 +36,9 @@ import com.mongodb.WriteResult;
 public class OpenAcdProvisioningContextImpl implements OpenAcdProvisioningContext, ApplicationListener,
         BeanFactoryAware {
     enum Command {
-        ADD {
+        RESYNC {
             public String toString() {
-                return "ADD";
-            }
-        },
-
-        DELETE {
-            public String toString() {
-                return "DELETE";
-            }
-        },
-
-        UPDATE {
-            public String toString() {
-                return "UPDATE";
-            }
-        },
-
-        CONFIGURE {
-            public String toString() {
-                return "CONFIGURE";
+                return "RESYNC";
             }
         }
     }
@@ -85,29 +59,9 @@ public class OpenAcdProvisioningContextImpl implements OpenAcdProvisioningContex
 
                 ArrayList<OpenAcdAgent> list = new ArrayList<OpenAcdAgent>();
                 list.add(agent);
-                updateObjects(list);
+                m_openAcdContext.saveAgent(agent);
             }
         }
-    }
-
-    @Override
-    public void deleteObjects(List< ? extends OpenAcdConfigObject> openAcdObjects) {
-        storeCommand(createCommand(Command.DELETE, openAcdObjects));
-    }
-
-    @Override
-    public void addObjects(List< ? extends OpenAcdConfigObject> openAcdObjects) {
-        storeCommand(createCommand(Command.ADD, openAcdObjects));
-    }
-
-    @Override
-    public void updateObjects(List< ? extends OpenAcdConfigObject> openAcdObjects) {
-        storeCommand(createCommand(Command.UPDATE, openAcdObjects));
-    }
-
-    @Override
-    public void configure(List< ? extends OpenAcdConfigObject> openAcdObjects) {
-        storeCommand(createCommand(Command.CONFIGURE, openAcdObjects));
     }
 
     protected void storeCommand(BasicDBObject command) {
@@ -126,55 +80,14 @@ public class OpenAcdProvisioningContextImpl implements OpenAcdProvisioningContex
         }
     }
 
-    private static BasicDBObject createCommand(Command openAcdCommand,
-            List< ? extends OpenAcdConfigObject> openAcdObjects) {
+    private static BasicDBObject createCommand(Command openAcdCommand) {
         BasicDBObject command = new BasicDBObject();
         command.put("command", openAcdCommand.toString());
-        command.put("count", openAcdObjects.size());
-        command.put("objects", getObjects(openAcdObjects));
         return command;
     }
 
-    private static List<BasicDBObject> getObjects(List< ? extends OpenAcdConfigObject> openAcdObjects) {
-        List<BasicDBObject> objects = new LinkedList<BasicDBObject>();
-        for (OpenAcdConfigObject openAcdObject : openAcdObjects) {
-            BasicDBObject object = new BasicDBObject();
-            object.put("type", openAcdObject.getType());
-            for (String property : openAcdObject.getProperties()) {
-                object.put(property, getDataValue(openAcdObject, property));
-            }
-            if (openAcdObject instanceof EnhancedOpenAcdConfigObject) {
-                object.put("additionalObjects", ((EnhancedOpenAcdConfigObject) openAcdObject).getAdditionalObjects());
-            }
-            objects.add(object);
-        }
-        return objects;
-    }
-
-    private static String getDataValue(Object bean, String name) {
-        try {
-            return getSimpleProperty(bean, name);
-        } catch (IllegalAccessException e) {
-            return EMPTY;
-        } catch (InvocationTargetException e) {
-            return EMPTY;
-        } catch (NoSuchMethodException e) {
-            return EMPTY;
-        }
-    }
-
     public void resync() {
-        Map<String, OpenAcdConfigObjectProvider> beanMap = m_beanFactory
-                .getBeansOfType(OpenAcdConfigObjectProvider.class);
-        for (OpenAcdConfigObjectProvider bean : beanMap.values()) {
-            for (OpenAcdConfigObject configObj : bean.getConfigObjects()) {
-                if (!configObj.isConfigCommand()) {
-                    addObjects(Collections.singletonList(configObj));
-                } else {
-                    configure(Collections.singletonList(configObj));
-                }
-            }
-        }
+        storeCommand(createCommand(Command.RESYNC));
     }
 
     @Override
