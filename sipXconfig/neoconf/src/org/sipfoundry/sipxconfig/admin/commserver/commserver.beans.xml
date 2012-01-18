@@ -190,7 +190,7 @@
     class="org.sipfoundry.sipxconfig.admin.commserver.imdb.Mailstore">
     <property name="mailboxManager" ref="mailboxManager" />
   </bean>
-  <bean id="openacdDataSet" parent="dataSetGenerator"
+  <bean id="openacdDataSet" parent="abstractDataSetGenerator"
     class="org.sipfoundry.sipxconfig.admin.commserver.imdb.OpenAcd">
   </bean>
 

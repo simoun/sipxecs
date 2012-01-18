@@ -23,16 +23,16 @@ import org.sipfoundry.sipxconfig.common.Replicable;
 
 import com.mongodb.DBObject;
 
-public class OpenAcd extends DataSetGenerator {
+public class OpenAcd extends AbstractDataSetGenerator {
     @Override
-    public void generate(Replicable entity, DBObject top) {
+    public boolean generate(Replicable entity, DBObject top) {
         if (entity.getName() != null) {
             top.put(MongoConstants.NAME, entity.getName());
         }
         top.put(MongoConstants.UUID,  UUID.randomUUID().toString());
         top.put(MongoConstants.TYPE, entity.getClass().getSimpleName().toString().toLowerCase());
-        getDbCollection().save(top);
-    }
+		return true;
+	}
 
     @Override
     protected DataSet getType() {
