@@ -224,4 +224,11 @@
   </bean>
   <alias name="conferenceDetailsResource" alias="/my/conferencedetails/{confName}" />     
 
+  <bean id="openAcdAgentGroupsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdAgentGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+  </bean>
+  <alias name="openAcdAgentGroupsResource" alias="/openacd-agent-group" />
+
 </beans>
