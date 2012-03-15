@@ -228,7 +228,16 @@
     <property name="coreContext" ref="coreContext" />
     <property name="openAcdContext" ref="openAcdContext" />
     <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
   </bean>
   <alias name="openAcdAgentGroupsResource" alias="/openacd-agent-group" />
+
+  <bean id="openAcdAgentGroupResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdAgentGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdAgentGroupResource" alias="/openacd-agent-group/{id}" />
 
 </beans>
