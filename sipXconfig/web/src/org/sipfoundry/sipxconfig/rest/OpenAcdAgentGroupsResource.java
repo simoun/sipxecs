@@ -55,21 +55,21 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     // use to define all possible sort fields
     enum SortField
     {
-	NAME, DESCRIPTION, NONE;
+        NAME, DESCRIPTION, NONE;
 
-	public static SortField toSortField(String fieldString)
-	{
-	    if (fieldString == null) {
-		return NONE;
-	    }
+        public static SortField toSortField(String fieldString)
+        {
+            if (fieldString == null) {
+                return NONE;
+            }
 
-	    try {
-		return valueOf(fieldString.toUpperCase());
-	    } 
-	    catch (Exception ex) {
-		return NONE;
-	    }
-	}   
+            try {
+                return valueOf(fieldString.toUpperCase());
+            } 
+            catch (Exception ex) {
+                return NONE;
+            }
+        }   
     }
 
 
@@ -79,8 +79,8 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         getVariants().add(new Variant(TEXT_XML));
         getVariants().add(new Variant(APPLICATION_JSON));
 
-	// pull parameters from url
-	m_form = getRequest().getResourceRef().getQueryAsForm();
+        // pull parameters from url
+        m_form = getRequest().getResourceRef().getQueryAsForm();
     }
 
 
@@ -107,33 +107,33 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
-	// process request for a single group
-	OpenAcdAgentGroupRestInfo agentGroupRestInfo;
-	String groupIdString = (String) getRequest().getAttributes().get("id");
+        // process request for a single group
+        OpenAcdAgentGroupRestInfo agentGroupRestInfo;
+        String idString = (String) getRequest().getAttributes().get("id");
 
-	if (groupIdString != null) {
-	    int groupId = OpenAcdUtilities.getIntFromAttribute(groupIdString);
-	    agentGroupRestInfo = getAgentGroupRestInfoById(groupId);
+        if (idString != null) {
+            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+            agentGroupRestInfo = getAgentGroupRestInfoById(idInt);
 
-	    // finally return group representation
-	    return new OpenAcdAgentGroupRepresentation(variant.getMediaType(), agentGroupRestInfo);
-	}
+            // finally return group representation
+            return new OpenAcdAgentGroupRepresentation(variant.getMediaType(), agentGroupRestInfo);
+        }
 
 
-	// if not single group, process request for all groups
-	List<OpenAcdAgentGroup> agentGroups = m_openAcdContext.getAgentGroups();
+        // if not single group, process request for all groups
+        List<OpenAcdAgentGroup> agentGroups = m_openAcdContext.getAgentGroups();
         List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo = new ArrayList<OpenAcdAgentGroupRestInfo>();
-	Form form = getRequest().getResourceRef().getQueryAsForm();
-	MetadataRestInfo metadataRestInfo;
+        Form form = getRequest().getResourceRef().getQueryAsForm();
+        MetadataRestInfo metadataRestInfo;
 
-	// sort groups if specified
-	sortGroups(agentGroups);
+        // sort groups if specified
+        sortGroups(agentGroups);
 
-	// set requested agents groups and get resulting metadata
-	metadataRestInfo = addAgentGroups(agentGroupsRestInfo, agentGroups);
+        // set requested agents groups and get resulting metadata
+        metadataRestInfo = addAgentGroups(agentGroupsRestInfo, agentGroups);
 
-	// create final restinfo
-	OpenAcdAgentGroupsBundleRestInfo agentGroupsBundleRestInfo = new OpenAcdAgentGroupsBundleRestInfo(agentGroupsRestInfo, metadataRestInfo);
+        // create final restinfo
+        OpenAcdAgentGroupsBundleRestInfo agentGroupsBundleRestInfo = new OpenAcdAgentGroupsBundleRestInfo(agentGroupsRestInfo, metadataRestInfo);
 
         return new OpenAcdAgentGroupsRepresentation(variant.getMediaType(), agentGroupsBundleRestInfo);
     }
@@ -144,29 +144,29 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
-	// get group from body
+        // get group from body
         OpenAcdAgentGroupRepresentation representation = new OpenAcdAgentGroupRepresentation(entity);
         OpenAcdAgentGroupRestInfo agentGroupRestInfo = representation.getObject();
-	OpenAcdAgentGroup agentGroup;
+        OpenAcdAgentGroup agentGroup;
 
-	// if have id then update a single group
-	String groupIdString = (String) getRequest().getAttributes().get("id");
+        // if have id then update a single group
+        String idString = (String) getRequest().getAttributes().get("id");
 
-	if (groupIdString != null) {
-	    int groupId = OpenAcdUtilities.getIntFromAttribute(groupIdString);
-	    agentGroup = m_openAcdContext.getAgentGroupById(groupId);
+        if (idString != null) {
+            int groupId = OpenAcdUtilities.getIntFromAttribute(idString);
+            agentGroup = m_openAcdContext.getAgentGroupById(id);
 
-	    // copy values over to existing group
-	    updateAgentGroup(agentGroup, agentGroupRestInfo);
-	    m_openAcdContext.saveAgentGroup(agentGroup);
+            // copy values over to existing group
+            updateAgentGroup(agentGroup, agentGroupRestInfo);
+            m_openAcdContext.saveAgentGroup(agentGroup);
 
-	    return;
-	}
+            return;
+        }
 
 
-	// otherwise add new agent group
-	agentGroup = createOpenAcdAgentGroup(agentGroupRestInfo);
-	m_openAcdContext.saveAgentGroup(agentGroup);
+        // otherwise add new agent group
+        agentGroup = createOpenAcdAgentGroup(agentGroupRestInfo);
+        m_openAcdContext.saveAgentGroup(agentGroup);
         getResponse().setStatus(Status.SUCCESS_CREATED);
     }
 
@@ -176,21 +176,21 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
     @Override
     public void removeRepresentations() throws ResourceException {
-	OpenAcdAgentGroup agentGroup;
+        OpenAcdAgentGroup agentGroup;
 
-	// get id then delete a single group
-	String groupIdString = (String) getRequest().getAttributes().get("id");
+        // get id then delete a single group
+        String idString = (String) getRequest().getAttributes().get("id");
 
-	if (groupIdString != null) {
-	    int groupId = OpenAcdUtilities.getIntFromAttribute(groupIdString);
-	    agentGroup = m_openAcdContext.getAgentGroupById(groupId);
+        if (idString != null) {
+            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+            agentGroup = m_openAcdContext.getAgentGroupById(idInt);
 
-	    m_openAcdContext.deleteAgentGroup(agentGroup);
+            m_openAcdContext.deleteAgentGroup(agentGroup);
 
-	    return;
-	}
-	
-	// no id string
+            return;
+        }
+
+        // no id string
         getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
     }
 
@@ -199,171 +199,171 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     // ----------------
 
     private OpenAcdAgentGroupRestInfo getAgentGroupRestInfoById(int groupId) throws ResourceException {
-	OpenAcdAgentGroupRestInfo agentGroupRestInfo;
-	
-	try {
-	    agentGroupRestInfo = createAgentGroupRestInfo(groupId);
-	}
-	catch (Exception exception) {
-	    throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "Group ID " + groupId + " not found.");
-	}
+        OpenAcdAgentGroupRestInfo agentGroupRestInfo;
 
-	return agentGroupRestInfo;
+        try {
+            agentGroupRestInfo = createAgentGroupRestInfo(groupId);
+        }
+        catch (Exception exception) {
+            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "Group ID " + groupId + " not found.");
+        }
+
+        return agentGroupRestInfo;
     }
 
     private OpenAcdAgentGroupRestInfo createAgentGroupRestInfo(int groupId) {
-	List<OpenAcdSkillRestInfo> skillsRestInfo;
-	OpenAcdAgentGroupRestInfo agentGroupRestInfo;
-	OpenAcdAgentGroup agentGroup = m_openAcdContext.getAgentGroupById(groupId);
-	
-	skillsRestInfo = createSkillsRestInfo(agentGroup);
-	agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo);
+        List<OpenAcdSkillRestInfo> skillsRestInfo;
+        OpenAcdAgentGroupRestInfo agentGroupRestInfo;
+        OpenAcdAgentGroup agentGroup = m_openAcdContext.getAgentGroupById(groupId);
 
-	return agentGroupRestInfo;
+        skillsRestInfo = createSkillsRestInfo(agentGroup);
+        agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo);
+
+        return agentGroupRestInfo;
     }
 
     private void updateAgentGroup(OpenAcdAgentGroup agentGroup, OpenAcdAgentGroupRestInfo agentGroupRestInfo) {
-	String tempString;
+        String tempString;
 
-	// do not allow empty name
-	tempString = agentGroupRestInfo.getName();
-	if (!tempString.isEmpty()) {
-	    agentGroup.setName(tempString);
-	}
+        // do not allow empty name
+        tempString = agentGroupRestInfo.getName();
+        if (!tempString.isEmpty()) {
+            agentGroup.setName(tempString);
+        }
 
-	agentGroup.setDescription(agentGroupRestInfo.getDescription());
-	
-	// set skills (should this be a separate "setskills" api call?)
-	OpenAcdSkill skill;
-	List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
-	for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
-	    skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
-	    agentGroup.addSkill(skill);
-	}
+        agentGroup.setDescription(agentGroupRestInfo.getDescription());
+
+        // set skills (should this be a separate "setskills" api call?)
+        OpenAcdSkill skill;
+        List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
+        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
+            skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
+            agentGroup.addSkill(skill);
+        }
     }
 
     private MetadataRestInfo addAgentGroups(List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo, List<OpenAcdAgentGroup> agentGroups) {
-	List<OpenAcdSkillRestInfo> skillsRestInfo;
+        List<OpenAcdSkillRestInfo> skillsRestInfo;
 
-	// determine pagination
-	PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, agentGroups.size());
+        // determine pagination
+        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, agentGroups.size());
 
-	// create list of group restinfos
+        // create list of group restinfos
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
-	    OpenAcdAgentGroup agentGroup = agentGroups.get(index);
-	    skillsRestInfo = createSkillsRestInfo(agentGroup);
+            OpenAcdAgentGroup agentGroup = agentGroups.get(index);
+            skillsRestInfo = createSkillsRestInfo(agentGroup);
 
             OpenAcdAgentGroupRestInfo agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo);
             agentGroupsRestInfo.add(agentGroupRestInfo);
         }
 
-	// create metadata about agent groups
-	MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
-	return metadata;
+        // create metadata about agent groups
+        MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
+        return metadata;
     }
 
     private List<OpenAcdSkillRestInfo> createSkillsRestInfo(OpenAcdAgentGroup agentGroup) {
-	List<OpenAcdSkillRestInfo> skillsRestInfo;
-	OpenAcdSkillRestInfo skillRestInfo;
+        List<OpenAcdSkillRestInfo> skillsRestInfo;
+        OpenAcdSkillRestInfo skillRestInfo;
 
-	// create list of skill restinfos for single group
-	Set<OpenAcdSkill> groupSkills = agentGroup.getSkills();
-	skillsRestInfo = new ArrayList<OpenAcdSkillRestInfo>(groupSkills.size());
+        // create list of skill restinfos for single group
+        Set<OpenAcdSkill> groupSkills = agentGroup.getSkills();
+        skillsRestInfo = new ArrayList<OpenAcdSkillRestInfo>(groupSkills.size());
 
-	for (OpenAcdSkill groupSkill : groupSkills) {
-	    skillRestInfo = new OpenAcdSkillRestInfo(groupSkill);
-	    skillsRestInfo.add(skillRestInfo);
-	}
+        for (OpenAcdSkill groupSkill : groupSkills) {
+            skillRestInfo = new OpenAcdSkillRestInfo(groupSkill);
+            skillsRestInfo.add(skillRestInfo);
+        }
 
-	return skillsRestInfo;
+        return skillsRestInfo;
     }
 
     private void sortGroups(List<OpenAcdAgentGroup> agentGroups) {
-	// sort groups if requested
-	SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
+        // sort groups if requested
+        SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
 
-	if (!sortInfo.sort) {
-	    return;
-	}
+        if (!sortInfo.sort) {
+            return;
+        }
 
-	SortField sortField = SortField.toSortField(sortInfo.sortField);
+        SortField sortField = SortField.toSortField(sortInfo.sortField);
 
-	if (sortInfo.directionForward) {
-	    
-	    switch (sortField) {
-	    case NAME:
-		Collections.sort(agentGroups, new Comparator(){
-			
-			public int compare(Object object1, Object object2) {
-			    OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
-			    OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-			    return agentGroup1.getName().compareToIgnoreCase(agentGroup2.getName());
-			}
-			
-		    });
-		break;
-		
-	    case DESCRIPTION:
-		Collections.sort(agentGroups, new Comparator(){
-			
-			public int compare(Object object1, Object object2) {
-			    OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
-			    OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-			    return agentGroup1.getDescription().compareToIgnoreCase(agentGroup2.getDescription());
-			}
-			
-		    });
-		break;
-	    }
-	}
-	else {
-	    // must be reverse
-	    switch (sortField) {
-	    case NAME:
-		Collections.sort(agentGroups, new Comparator(){
-			
-			public int compare(Object object1, Object object2) {
-			    OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
-			    OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-			    return agentGroup2.getName().compareToIgnoreCase(agentGroup1.getName());
-			}
-			
-		    });
-		break;
-		
-	    case DESCRIPTION:
-		Collections.sort(agentGroups, new Comparator(){
-			
-			public int compare(Object object1, Object object2) {
-			    OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
-			    OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-			    return agentGroup2.getDescription().compareToIgnoreCase(agentGroup1.getDescription());
-			}
-			
-		    });
-		break;
-	    }
-	}
+        if (sortInfo.directionForward) {
+
+            switch (sortField) {
+            case NAME:
+                Collections.sort(agentGroups, new Comparator(){
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
+                        OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
+                        return agentGroup1.getName().compareToIgnoreCase(agentGroup2.getName());
+                    }
+
+                });
+                break;
+
+            case DESCRIPTION:
+                Collections.sort(agentGroups, new Comparator(){
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
+                        OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
+                        return agentGroup1.getDescription().compareToIgnoreCase(agentGroup2.getDescription());
+                    }
+
+                });
+                break;
+            }
+        }
+        else {
+            // must be reverse
+            switch (sortField) {
+            case NAME:
+                Collections.sort(agentGroups, new Comparator(){
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
+                        OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
+                        return agentGroup2.getName().compareToIgnoreCase(agentGroup1.getName());
+                    }
+
+                });
+                break;
+
+            case DESCRIPTION:
+                Collections.sort(agentGroups, new Comparator(){
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
+                        OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
+                        return agentGroup2.getDescription().compareToIgnoreCase(agentGroup1.getDescription());
+                    }
+
+                });
+                break;
+            }
+        }
     }
 
     private OpenAcdAgentGroup createOpenAcdAgentGroup(OpenAcdAgentGroupRestInfo agentGroupRestInfo) {
-	OpenAcdAgentGroup agentGroup = new OpenAcdAgentGroup();
-	
-	// copy fields from rest info
-	agentGroup.setName(agentGroupRestInfo.getName());
-	agentGroup.setDescription(agentGroupRestInfo.getDescription());
+        OpenAcdAgentGroup agentGroup = new OpenAcdAgentGroup();
 
-	// add skills
-	Set<OpenAcdSkill> skills = new LinkedHashSet<OpenAcdSkill>();
-	List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
+        // copy fields from rest info
+        agentGroup.setName(agentGroupRestInfo.getName());
+        agentGroup.setDescription(agentGroupRestInfo.getDescription());
 
-	for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
-	    skills.add(m_openAcdContext.getSkillById(skillRestInfo.getId()));
-	}
+        // add skills
+        Set<OpenAcdSkill> skills = new LinkedHashSet<OpenAcdSkill>();
+        List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
 
-	agentGroup.setSkills(skills);
+        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
+            skills.add(m_openAcdContext.getSkillById(skillRestInfo.getId()));
+        }
 
-	return agentGroup;
+        agentGroup.setSkills(skills);
+
+        return agentGroup;
     }
 
 
@@ -413,13 +413,13 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         private final String m_name;
         private final int m_id;
         private final String m_description;
-	private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdSkillRestInfo> m_skills;
 
         public OpenAcdAgentGroupRestInfo(OpenAcdAgentGroup agentGroup, List<OpenAcdSkillRestInfo> skills) {
             m_name = agentGroup.getName();
             m_id = agentGroup.getId();
             m_description = agentGroup.getDescription();
-	    m_skills = skills;
+            m_skills = skills;
         }
 
         public String getName() {
@@ -440,81 +440,81 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     }
 
     static class MetadataRestInfo {
-	private final int m_totalResults;
-	private final int m_currentPage;
-	private final int m_totalPages;
-	private final int m_resultsPerPage;
+        private final int m_totalResults;
+        private final int m_currentPage;
+        private final int m_totalPages;
+        private final int m_resultsPerPage;
 
-	public MetadataRestInfo(PaginationInfo paginationInfo) {
-	    m_totalResults = paginationInfo.totalResults;
-	    m_currentPage = paginationInfo.pageNumber;
-	    m_totalPages = paginationInfo.totalPages;
-	    m_resultsPerPage = paginationInfo.resultsPerPage;
-	}
+        public MetadataRestInfo(PaginationInfo paginationInfo) {
+            m_totalResults = paginationInfo.totalResults;
+            m_currentPage = paginationInfo.pageNumber;
+            m_totalPages = paginationInfo.totalPages;
+            m_resultsPerPage = paginationInfo.resultsPerPage;
+        }
 
         public int getTotalResults() {
             return m_totalResults;
         }
 
-	public int getCurrentPage() {
-	    return m_currentPage;
-	}
+        public int getCurrentPage() {
+            return m_currentPage;
+        }
 
-	public int getTotalPages() {
-	    return m_totalPages;
-	}
+        public int getTotalPages() {
+            return m_totalPages;
+        }
 
-	public int getResultsPerPage() {
-	    return m_resultsPerPage;
-	}
+        public int getResultsPerPage() {
+            return m_resultsPerPage;
+        }
     }
 
     static class OpenAcdAgentGroupsBundleRestInfo {
-	private final MetadataRestInfo m_metadata;
-	private final List<OpenAcdAgentGroupRestInfo> m_groups;
+        private final MetadataRestInfo m_metadata;
+        private final List<OpenAcdAgentGroupRestInfo> m_groups;
 
-	public OpenAcdAgentGroupsBundleRestInfo(List<OpenAcdAgentGroupRestInfo> agentGroups, MetadataRestInfo metadata) {
-	    m_metadata = metadata;
-	    m_groups = agentGroups;
-	}
+        public OpenAcdAgentGroupsBundleRestInfo(List<OpenAcdAgentGroupRestInfo> agentGroups, MetadataRestInfo metadata) {
+            m_metadata = metadata;
+            m_groups = agentGroups;
+        }
 
         public MetadataRestInfo getMetadata() {
             return m_metadata;
         }
 
-	public List<OpenAcdAgentGroupRestInfo> getGroups() {
-	    return m_groups;
-	}
+        public List<OpenAcdAgentGroupRestInfo> getGroups() {
+            return m_groups;
+        }
     }
 
     static class OpenAcdSkillRestInfo {
-	private final int m_id;
-	private final String m_name;
-	private final String m_description;
-	private final String m_groupName;
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+        private final String m_groupName;
 
-	public OpenAcdSkillRestInfo(OpenAcdSkill skill) {
-	    m_id = skill.getId();
-	    m_name = skill.getName();
-	    m_description = skill.getDescription();
-	    m_groupName = skill.getGroupName();
-	}
+        public OpenAcdSkillRestInfo(OpenAcdSkill skill) {
+            m_id = skill.getId();
+            m_name = skill.getName();
+            m_description = skill.getDescription();
+            m_groupName = skill.getGroupName();
+        }
 
         public int getId() {
             return m_id;
         }
 
-	public String getName() {
-	    return m_name;
-	}
+        public String getName() {
+            return m_name;
+        }
 
-	public String getDescription() {
-	    return m_description;
-	}
+        public String getDescription() {
+            return m_description;
+        }
 
-	public String getGroupName() {
-	    return m_groupName;
-	}
+        public String getGroupName() {
+            return m_groupName;
+        }
     }
 
 

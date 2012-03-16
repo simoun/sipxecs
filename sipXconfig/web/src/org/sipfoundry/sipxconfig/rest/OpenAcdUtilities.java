@@ -20,13 +20,6 @@
 
 package org.sipfoundry.sipxconfig.rest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.LinkedHashSet;
-import java.util.Collections;
-import java.util.Comparator;
-
 import org.restlet.data.Status;
 import org.restlet.data.Form;
 import org.restlet.resource.ResourceException;
@@ -34,28 +27,28 @@ import org.restlet.resource.ResourceException;
 public class OpenAcdUtilities {
 
     public static int getIntFromAttribute(String attributeString) throws ResourceException {
-	int intFromAttribute;
+        int intFromAttribute;
 
-	// attempt to parse attribute provided as an id
-	try {
-	    intFromAttribute = Integer.parseInt(attributeString);
-	}
-	catch (Exception exception) {
-	    throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "Attribute " + attributeString + " invalid.");
-	}
+        // attempt to parse attribute provided as an id
+        try {
+            intFromAttribute = Integer.parseInt(attributeString);
+        }
+        catch (Exception exception) {
+            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "Attribute " + attributeString + " invalid.");
+        }
 
-	return intFromAttribute;
+        return intFromAttribute;
     }
 
     public static PaginationInfo calculatePagination(Form form, int totalResults) {
-	PaginationInfo paginationInfo = new PaginationInfo();
-	paginationInfo.totalResults = totalResults;
+        PaginationInfo paginationInfo = new PaginationInfo();
+        paginationInfo.totalResults = totalResults;
 
         // must specify both PageNumber and ResultsPerPage together
         String pageNumberString = form.getFirstValue("page");
         String resultsPerPageString = form.getFirstValue("pagesize");
 
-	// attempt to parse pagination values from request
+        // attempt to parse pagination values from request
         try {
             paginationInfo.pageNumber = Integer.parseInt(pageNumberString);
             paginationInfo.resultsPerPage = Integer.parseInt(resultsPerPageString);
@@ -77,75 +70,75 @@ public class OpenAcdUtilities {
         }
 
 
-	// do we have to paginate?
-	if (paginationInfo.paginate) {
-	    paginationInfo.totalPages = ((paginationInfo.totalResults - 1) / paginationInfo.resultsPerPage) + 1;
+        // do we have to paginate?
+        if (paginationInfo.paginate) {
+            paginationInfo.totalPages = ((paginationInfo.totalResults - 1) / paginationInfo.resultsPerPage) + 1;
 
-	    // check if only one page
-	    //if (resultsPerPage >= totalResults) {
-	    if (paginationInfo.totalPages == 1) {
-		paginationInfo.startIndex = 0;
-		paginationInfo.endIndex = paginationInfo.totalResults - 1;
-		paginationInfo.pageNumber = 1;
-		// design decision: should the resultsPerPage actually be set to totalResults?
-		// since totalResults are already available preserve call value
-	    }
-	    else {
-		// check if specified page number is on or beyoned last page (then use last page)
-		if (paginationInfo.pageNumber >= paginationInfo.totalPages) {
-		    paginationInfo.pageNumber = paginationInfo.totalPages;
-		    paginationInfo.startIndex = (paginationInfo.totalPages - 1) * paginationInfo.resultsPerPage;
-		    paginationInfo.endIndex = paginationInfo.totalResults - 1;
-		}
-		else {
-		    paginationInfo.startIndex = (paginationInfo.pageNumber - 1) * paginationInfo.resultsPerPage;
-		    paginationInfo.endIndex = paginationInfo.startIndex + paginationInfo.resultsPerPage - 1;
-		}
-	    }
-	}
-	else {
-	    // default values assuming no pagination
-	    paginationInfo.startIndex = 0;
-	    paginationInfo.endIndex = paginationInfo.totalResults - 1;
-	    paginationInfo.pageNumber = 1;
-	    paginationInfo.totalPages = 1;
-	    paginationInfo.resultsPerPage = paginationInfo.totalResults;
-	}
+            // check if only one page
+            //if (resultsPerPage >= totalResults) {
+            if (paginationInfo.totalPages == 1) {
+                paginationInfo.startIndex = 0;
+                paginationInfo.endIndex = paginationInfo.totalResults - 1;
+                paginationInfo.pageNumber = 1;
+                // design decision: should the resultsPerPage actually be set to totalResults?
+                // since totalResults are already available preserve call value
+            }
+            else {
+                // check if specified page number is on or beyoned last page (then use last page)
+                if (paginationInfo.pageNumber >= paginationInfo.totalPages) {
+                    paginationInfo.pageNumber = paginationInfo.totalPages;
+                    paginationInfo.startIndex = (paginationInfo.totalPages - 1) * paginationInfo.resultsPerPage;
+                    paginationInfo.endIndex = paginationInfo.totalResults - 1;
+                }
+                else {
+                    paginationInfo.startIndex = (paginationInfo.pageNumber - 1) * paginationInfo.resultsPerPage;
+                    paginationInfo.endIndex = paginationInfo.startIndex + paginationInfo.resultsPerPage - 1;
+                }
+            }
+        }
+        else {
+            // default values assuming no pagination
+            paginationInfo.startIndex = 0;
+            paginationInfo.endIndex = paginationInfo.totalResults - 1;
+            paginationInfo.pageNumber = 1;
+            paginationInfo.totalPages = 1;
+            paginationInfo.resultsPerPage = paginationInfo.totalResults;
+        }
 
-	return paginationInfo;
+        return paginationInfo;
     }
 
     public static SortInfo calculateSorting(Form form) {
-	SortInfo sortInfo = new SortInfo();
+        SortInfo sortInfo = new SortInfo();
 
         String sortDirectionString = form.getFirstValue("sortdir");
         String sortFieldString = form.getFirstValue("sortby");
 
-	// check for invalid input
-	if ((sortDirectionString == null) || (sortFieldString == null)) {
-	    sortInfo.sort = false;
-	    return sortInfo;
-	}
+        // check for invalid input
+        if ((sortDirectionString == null) || (sortFieldString == null)) {
+            sortInfo.sort = false;
+            return sortInfo;
+        }
 
-	if ((sortDirectionString.isEmpty()) || (sortFieldString.isEmpty())) {
-	    sortInfo.sort = false;
-	    return sortInfo;
-	}
+        if ((sortDirectionString.isEmpty()) || (sortFieldString.isEmpty())) {
+            sortInfo.sort = false;
+            return sortInfo;
+        }
 
-	sortInfo.sort = true;
+        sortInfo.sort = true;
 
-	// assume forward if get anything else but "reverse"
-	if (sortDirectionString.toLowerCase().equals("reverse")) {
-	    sortInfo.directionForward = false;
-	}
-	else {
-	    sortInfo.directionForward = true;
-	}
+        // assume forward if get anything else but "reverse"
+        if (sortDirectionString.toLowerCase().equals("reverse")) {
+            sortInfo.directionForward = false;
+        }
+        else {
+            sortInfo.directionForward = true;
+        }
 
-	// tough to type-check this one
-	sortInfo.sortField = sortFieldString;
+        // tough to type-check this one
+        sortInfo.sortField = sortFieldString;
 
-	return sortInfo;
+        return sortInfo;
     }
 
 
@@ -163,9 +156,9 @@ public class OpenAcdUtilities {
     }
 
     public static class SortInfo {
-	Boolean sort = false;
-	Boolean directionForward = true;
-	String sortField = "";
+        Boolean sort = false;
+        Boolean directionForward = true;
+        String sortField = "";
     }
 
 }

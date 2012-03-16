@@ -240,4 +240,20 @@
   </bean>
   <alias name="openAcdAgentGroupResource" alias="/openacd-agent-group/{id}" />
 
+  <bean id="openAcdSkillsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdSkillsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdSkillsResource" alias="/openacd-skill" />
+
+  <bean id="openAcdSkillResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdSkillsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdSkillResource" alias="/openacd-skill/{id}" />
+
 </beans>
