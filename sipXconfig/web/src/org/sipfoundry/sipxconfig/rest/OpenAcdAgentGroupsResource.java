@@ -107,7 +107,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
-        // process request for a single group
+        // process request for single
         OpenAcdAgentGroupRestInfo agentGroupRestInfo;
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -120,16 +120,16 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         }
 
 
-        // if not single group, process request for all groups
+        // if not single, process request for all
         List<OpenAcdAgentGroup> agentGroups = m_openAcdContext.getAgentGroups();
         List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo = new ArrayList<OpenAcdAgentGroupRestInfo>();
         Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
-        // sort groups if specified
+        // sort if specified
         sortGroups(agentGroups);
 
-        // set requested agents groups and get resulting metadata
+        // set requested based on pagination and get resulting metadata
         metadataRestInfo = addAgentGroups(agentGroupsRestInfo, agentGroups);
 
         // create final restinfo
@@ -153,8 +153,8 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int groupId = OpenAcdUtilities.getIntFromAttribute(idString);
-            agentGroup = m_openAcdContext.getAgentGroupById(id);
+            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+            agentGroup = m_openAcdContext.getAgentGroupById(idInt);
 
             // copy values over to existing group
             updateAgentGroup(agentGroup, agentGroupRestInfo);
@@ -198,14 +198,14 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    private OpenAcdAgentGroupRestInfo getAgentGroupRestInfoById(int groupId) throws ResourceException {
+    private OpenAcdAgentGroupRestInfo getAgentGroupRestInfoById(int id) throws ResourceException {
         OpenAcdAgentGroupRestInfo agentGroupRestInfo;
 
         try {
-            agentGroupRestInfo = createAgentGroupRestInfo(groupId);
+            agentGroupRestInfo = createAgentGroupRestInfo(id);
         }
         catch (Exception exception) {
-            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "Group ID " + groupId + " not found.");
+            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
         }
 
         return agentGroupRestInfo;
