@@ -342,7 +342,7 @@ public class OpenAcdSkillsResource extends UserResource {
         int groupId = 0;
         
         try {
-            groupId = skillRestInfo.getId();
+            groupId = skillRestInfo.getGroupId();
             skillGroup = m_openAcdContext.getSkillGroupById(groupId);
         }
         catch (Exception exception) {

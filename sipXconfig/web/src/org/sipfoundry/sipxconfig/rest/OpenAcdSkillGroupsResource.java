@@ -25,6 +25,8 @@ import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -173,19 +175,18 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     // ----------------------------
 
     // deleteSkillGroup() not available from openAcdContext
-    /*
     @Override
     public void removeRepresentations() throws ResourceException {
-        OpenAcdSkillGroup skillGroup;
-
-        // get id then delete a single group
+        Collection<Integer> skillGroupIds = new HashSet<Integer>();
+        
+        // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            skillGroup = m_openAcdContext.getSkillGroupById(idInt);
-
-            m_openAcdContext.deleteSkillGroup(skillGroup);
+            
+            skillGroupIds.add(idInt);
+            m_openAcdContext.removeSkillGroups(skillGroupIds);
 
             return;
         }
@@ -193,7 +194,6 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         // no id string
         getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
     }
-*/
 
     // Helper functions
     // ----------------
@@ -281,7 +281,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
             // must be reverse
             switch (sortField) {
             case NAME:
-                Collections.sort(skills, new Comparator(){
+                Collections.sort(skillGroups, new Comparator(){
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;

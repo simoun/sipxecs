@@ -256,4 +256,20 @@
   </bean>
   <alias name="openAcdSkillResource" alias="/openacd-skill/{id}" />
 
+  <bean id="openAcdSkillGroupsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdSkillGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdSkillGroupsResource" alias="/openacd-skill-group" />
+
+  <bean id="openAcdSkillGroupResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdSkillGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdSkillGroupResource" alias="/openacd-skill-group/{id}" />
+
 </beans>
