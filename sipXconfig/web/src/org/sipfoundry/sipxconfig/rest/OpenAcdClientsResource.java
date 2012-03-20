@@ -422,14 +422,14 @@ public class OpenAcdClientsResource extends UserResource {
     static class OpenAcdClientRestInfo {
         private final int m_id;
         private final String m_name;
-        private final String m_identity;
         private final String m_description;
+        private final String m_identity;
 
         public OpenAcdClientRestInfo(OpenAcdClient client) {
             m_id = client.getId();
             m_name = client.getName();
-            m_identity = client.getIdentity();
             m_description = client.getDescription();
+            m_identity = client.getIdentity();
         }
 
         public int getId() {
@@ -440,12 +440,12 @@ public class OpenAcdClientsResource extends UserResource {
             return m_name;
         }
 
-        public String getIdentity() {
-            return m_identity;
-        }
-
         public String getDescription() {
             return m_description;
+        }
+
+        public String getIdentity() {
+            return m_identity;
         }
     }
 
