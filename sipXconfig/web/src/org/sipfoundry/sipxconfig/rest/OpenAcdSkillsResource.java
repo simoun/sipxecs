@@ -51,7 +51,7 @@ public class OpenAcdSkillsResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    enum SortField
+    private enum SortField
     {
         NAME, DESCRIPTION, NONE;
 
