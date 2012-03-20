@@ -53,7 +53,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    enum SortField
+    private enum SortField
     {
         NAME, DESCRIPTION, NONE;
 
@@ -233,7 +233,10 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         agentGroup.setDescription(agentGroupRestInfo.getDescription());
 
-        // set skills (should this be a separate "setskills" api call?)
+        // remove all current skills
+        agentGroup.getSkills().clear();
+
+        // set skills
         OpenAcdSkill skill;
         List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
         for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
