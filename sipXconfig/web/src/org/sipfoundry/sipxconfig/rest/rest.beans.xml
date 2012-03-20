@@ -288,4 +288,20 @@
   </bean>
   <alias name="openAcdClientResource" alias="/openacd-client/{id}" />
 
+  <bean id="openAcdQueueGroupsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdQueueGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdQueueGroupsResource" alias="/openacd-queue-group" />
+
+  <bean id="openAcdQueueGroupResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdQueueGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdQueueGroupResource" alias="/openacd-queue-group/{id}" />
+
 </beans>
