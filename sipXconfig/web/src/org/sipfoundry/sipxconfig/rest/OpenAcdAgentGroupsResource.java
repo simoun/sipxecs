@@ -412,6 +412,24 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     // REST info objects
     // -----------------
 
+    static class OpenAcdAgentGroupsBundleRestInfo {
+        private final MetadataRestInfo m_metadata;
+        private final List<OpenAcdAgentGroupRestInfo> m_groups;
+
+        public OpenAcdAgentGroupsBundleRestInfo(List<OpenAcdAgentGroupRestInfo> agentGroups, MetadataRestInfo metadata) {
+            m_metadata = metadata;
+            m_groups = agentGroups;
+        }
+
+        public MetadataRestInfo getMetadata() {
+            return m_metadata;
+        }
+
+        public List<OpenAcdAgentGroupRestInfo> getGroups() {
+            return m_groups;
+        }
+    }
+
     static class OpenAcdAgentGroupRestInfo {
         private final String m_name;
         private final int m_id;
@@ -469,24 +487,6 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         public int getResultsPerPage() {
             return m_resultsPerPage;
-        }
-    }
-
-    static class OpenAcdAgentGroupsBundleRestInfo {
-        private final MetadataRestInfo m_metadata;
-        private final List<OpenAcdAgentGroupRestInfo> m_groups;
-
-        public OpenAcdAgentGroupsBundleRestInfo(List<OpenAcdAgentGroupRestInfo> agentGroups, MetadataRestInfo metadata) {
-            m_metadata = metadata;
-            m_groups = agentGroups;
-        }
-
-        public MetadataRestInfo getMetadata() {
-            return m_metadata;
-        }
-
-        public List<OpenAcdAgentGroupRestInfo> getGroups() {
-            return m_groups;
         }
     }
 
