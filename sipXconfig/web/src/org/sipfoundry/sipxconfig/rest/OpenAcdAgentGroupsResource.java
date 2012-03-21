@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Required;
 import com.thoughtworks.xstream.XStream;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
@@ -113,7 +114,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         if (idString != null) {
             int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            agentGroupRestInfo = getAgentGroupRestInfoById(idInt);
+            agentGroupRestInfo = createAgentGroupRestInfo(idInt);
 
             // finally return group representation
             return new OpenAcdAgentGroupRepresentation(variant.getMediaType(), agentGroupRestInfo);
@@ -198,11 +199,17 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    private OpenAcdAgentGroupRestInfo getAgentGroupRestInfoById(int id) throws ResourceException {
+    private OpenAcdAgentGroupRestInfo createAgentGroupRestInfo(int id) throws ResourceException {
         OpenAcdAgentGroupRestInfo agentGroupRestInfo;
 
         try {
-            agentGroupRestInfo = createAgentGroupRestInfo(id);
+            List<OpenAcdSkillRestInfo> skillsRestInfo;
+            List<OpenAcdQueueRestInfo> queuesRestInfo;
+            OpenAcdAgentGroup agentGroup = m_openAcdContext.getAgentGroupById(id);
+
+            skillsRestInfo = createSkillsRestInfo(agentGroup);
+            queuesRestInfo = createQueuesRestInfo(agentGroup);
+            agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo, queuesRestInfo);
         }
         catch (Exception exception) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
@@ -210,18 +217,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         return agentGroupRestInfo;
     }
-
-    private OpenAcdAgentGroupRestInfo createAgentGroupRestInfo(int groupId) {
-        List<OpenAcdSkillRestInfo> skillsRestInfo;
-        OpenAcdAgentGroupRestInfo agentGroupRestInfo;
-        OpenAcdAgentGroup agentGroup = m_openAcdContext.getAgentGroupById(groupId);
-
-        skillsRestInfo = createSkillsRestInfo(agentGroup);
-        agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo);
-
-        return agentGroupRestInfo;
-    }
-
+    
     private void updateAgentGroup(OpenAcdAgentGroup agentGroup, OpenAcdAgentGroupRestInfo agentGroupRestInfo) {
         String tempString;
 
@@ -247,6 +243,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
     private MetadataRestInfo addAgentGroups(List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo, List<OpenAcdAgentGroup> agentGroups) {
         List<OpenAcdSkillRestInfo> skillsRestInfo;
+        List<OpenAcdQueueRestInfo> queuesRestInfo;
 
         // determine pagination
         PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, agentGroups.size());
@@ -255,8 +252,9 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
             OpenAcdAgentGroup agentGroup = agentGroups.get(index);
             skillsRestInfo = createSkillsRestInfo(agentGroup);
-
-            OpenAcdAgentGroupRestInfo agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo);
+            queuesRestInfo = createQueuesRestInfo(agentGroup);
+            
+            OpenAcdAgentGroupRestInfo agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo, queuesRestInfo);
             agentGroupsRestInfo.add(agentGroupRestInfo);
         }
 
@@ -281,6 +279,22 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         return skillsRestInfo;
     }
 
+    private List<OpenAcdQueueRestInfo> createQueuesRestInfo(OpenAcdAgentGroup agentGroup) {
+        List<OpenAcdQueueRestInfo> queuesRestInfo;
+        OpenAcdQueueRestInfo queueRestInfo;
+
+        // create list of queue restinfos for single group
+        Set<OpenAcdQueue> groupQueues = agentGroup.getQueues();
+        queuesRestInfo = new ArrayList<OpenAcdQueueRestInfo>(groupQueues.size());
+
+        for (OpenAcdQueue groupQueue : groupQueues) {
+            queueRestInfo = new OpenAcdQueueRestInfo(groupQueue);
+            queuesRestInfo.add(queueRestInfo);
+        }
+
+        return queuesRestInfo;
+    }
+    
     private void sortGroups(List<OpenAcdAgentGroup> agentGroups) {
         // sort groups if requested
         SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
@@ -323,7 +337,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
             // must be reverse
             switch (sortField) {
             case NAME:
-                Collections.sort(agentGroups, new Comparator(){
+                Collections.sort(agentGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
@@ -388,6 +402,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
             xstream.alias("openacd-agent-group", OpenAcdAgentGroupsBundleRestInfo.class);
             xstream.alias("group", OpenAcdAgentGroupRestInfo.class);
             xstream.alias("skill", OpenAcdSkillRestInfo.class);
+            xstream.alias("queue", OpenAcdQueueRestInfo.class);
         }
     }
 
@@ -405,6 +420,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         protected void configureXStream(XStream xstream) {
             xstream.alias("group", OpenAcdAgentGroupRestInfo.class);
             xstream.alias("skill", OpenAcdSkillRestInfo.class);
+            xstream.alias("queue", OpenAcdQueueRestInfo.class);
         }
     }
 
@@ -435,12 +451,14 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         private final int m_id;
         private final String m_description;
         private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdQueueRestInfo> m_queues;
 
-        public OpenAcdAgentGroupRestInfo(OpenAcdAgentGroup agentGroup, List<OpenAcdSkillRestInfo> skills) {
+        public OpenAcdAgentGroupRestInfo(OpenAcdAgentGroup agentGroup, List<OpenAcdSkillRestInfo> skills, List<OpenAcdQueueRestInfo> queues) {
             m_name = agentGroup.getName();
             m_id = agentGroup.getId();
             m_description = agentGroup.getDescription();
             m_skills = skills;
+            m_queues = queues;
         }
 
         public String getName() {
@@ -457,6 +475,10 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         public List<OpenAcdSkillRestInfo> getSkills() {
             return m_skills;
+        }
+
+        public List<OpenAcdQueueRestInfo> getQueues() {
+            return m_queues;
         }
     }
 
@@ -520,6 +542,35 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         }
     }
 
+    static class OpenAcdQueueRestInfo {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+        private final String m_groupName;
+
+        public OpenAcdQueueRestInfo(OpenAcdQueue queue) {
+            m_id = queue.getId();
+            m_name = queue.getName();
+            m_description = queue.getDescription();
+            m_groupName = queue.getQueueGroup();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public String getGroupName() {
+            return m_groupName;
+        }
+    }
 
     // Injected objects
     // ----------------
