@@ -111,7 +111,7 @@ public class OpenAcdSkillsResource extends UserResource {
 
         if (idString != null) {
             int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            skillRestInfo = getSkillRestInfoById(idInt);
+            skillRestInfo = createSkillRestInfo(idInt);
 
             // finally return group representation
             return new OpenAcdSkillRepresentation(variant.getMediaType(), skillRestInfo);
@@ -196,24 +196,16 @@ public class OpenAcdSkillsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    private OpenAcdSkillRestInfo getSkillRestInfoById(int id) throws ResourceException {
+    private OpenAcdSkillRestInfo createSkillRestInfo(int id) throws ResourceException {
         OpenAcdSkillRestInfo skillRestInfo;
 
         try {
-            skillRestInfo = createSkillRestInfo(id);
+            OpenAcdSkill skill = m_openAcdContext.getSkillById(id);
+            skillRestInfo = new OpenAcdSkillRestInfo(skill);
         }
         catch (Exception exception) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
         }
-
-        return skillRestInfo;
-    }
-
-    private OpenAcdSkillRestInfo createSkillRestInfo(int id) {
-        OpenAcdSkillRestInfo skillRestInfo;
-        OpenAcdSkill skill = m_openAcdContext.getSkillById(id);
-
-        skillRestInfo = new OpenAcdSkillRestInfo(skill);
 
         return skillRestInfo;
     }

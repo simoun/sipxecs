@@ -113,7 +113,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
 
         if (idString != null) {
             int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            queueGroupRestInfo = getQueueGroupRestInfoById(idInt);
+            queueGroupRestInfo = createQueueGroupRestInfo(idInt);
 
             // finally return group representation
             return new OpenAcdQueueGroupRepresentation(variant.getMediaType(), queueGroupRestInfo);
@@ -198,11 +198,15 @@ public class OpenAcdQueueGroupsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    private OpenAcdQueueGroupRestInfo getQueueGroupRestInfoById(int id) throws ResourceException {
+    private OpenAcdQueueGroupRestInfo createQueueGroupRestInfo(int id) throws ResourceException {
         OpenAcdQueueGroupRestInfo queueGroupRestInfo;
 
         try {
-            queueGroupRestInfo = createQueueGroupRestInfo(id);
+            List<OpenAcdSkillRestInfo> skillsRestInfo;
+            OpenAcdQueueGroup agentGroup = m_openAcdContext.getQueueGroupById(id);
+
+            skillsRestInfo = createSkillsRestInfo(agentGroup);
+            queueGroupRestInfo = new OpenAcdQueueGroupRestInfo(agentGroup, skillsRestInfo);
         }
         catch (Exception exception) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
@@ -210,18 +214,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
 
         return queueGroupRestInfo;
     }
-
-    private OpenAcdQueueGroupRestInfo createQueueGroupRestInfo(int groupId) {
-        List<OpenAcdSkillRestInfo> skillsRestInfo;
-        OpenAcdQueueGroupRestInfo queueGroupRestInfo;
-        OpenAcdQueueGroup agentGroup = m_openAcdContext.getQueueGroupById(groupId);
-
-        skillsRestInfo = createSkillsRestInfo(agentGroup);
-        queueGroupRestInfo = new OpenAcdQueueGroupRestInfo(agentGroup, skillsRestInfo);
-
-        return queueGroupRestInfo;
-    }
-
+    
     private void updateQueueGroup(OpenAcdQueueGroup queueGroup, OpenAcdQueueGroupRestInfo queueGroupRestInfo) {
         String tempString;
 

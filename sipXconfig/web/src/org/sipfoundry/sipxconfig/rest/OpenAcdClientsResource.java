@@ -113,7 +113,7 @@ public class OpenAcdClientsResource extends UserResource {
 
         if (idString != null) {
             int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            clientRestInfo = getClientRestInfoById(idInt);
+            clientRestInfo = createClientRestInfo(idInt);
 
             // return representation
             return new OpenAcdClientRepresentation(variant.getMediaType(), clientRestInfo);
@@ -198,24 +198,16 @@ public class OpenAcdClientsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    private OpenAcdClientRestInfo getClientRestInfoById(int id) throws ResourceException {
+    private OpenAcdClientRestInfo createClientRestInfo(int id) throws ResourceException {
         OpenAcdClientRestInfo clientRestInfo;
 
         try {
-            clientRestInfo = createClientRestInfo(id);
+            OpenAcdClient client = m_openAcdContext.getClientById(id);
+            clientRestInfo = new OpenAcdClientRestInfo(client);
         }
         catch (Exception exception) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
         }
-
-        return clientRestInfo;
-    }
-
-    private OpenAcdClientRestInfo createClientRestInfo(int id) {
-        OpenAcdClientRestInfo clientRestInfo;
-        OpenAcdClient client = m_openAcdContext.getClientById(id);
-
-        clientRestInfo = new OpenAcdClientRestInfo(client);
 
         return clientRestInfo;
     }
