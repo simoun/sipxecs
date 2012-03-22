@@ -201,10 +201,10 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
     private OpenAcdAgentGroupRestInfo createAgentGroupRestInfo(int id) throws ResourceException {
         OpenAcdAgentGroupRestInfo agentGroupRestInfo;
+        List<OpenAcdSkillRestInfo> skillsRestInfo;
+        List<OpenAcdQueueRestInfo> queuesRestInfo;
 
         try {
-            List<OpenAcdSkillRestInfo> skillsRestInfo;
-            List<OpenAcdQueueRestInfo> queuesRestInfo;
             OpenAcdAgentGroup agentGroup = m_openAcdContext.getAgentGroupById(id);
 
             skillsRestInfo = createSkillsRestInfo(agentGroup);
