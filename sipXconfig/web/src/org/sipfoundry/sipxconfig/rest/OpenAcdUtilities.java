@@ -20,9 +20,19 @@
 
 package org.sipfoundry.sipxconfig.rest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+
+import org.restlet.data.MediaType;
 import org.restlet.data.Status;
 import org.restlet.data.Form;
+import org.restlet.data.Response;
+import org.restlet.resource.Representation;
+import org.restlet.resource.DomRepresentation;
 import org.restlet.resource.ResourceException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class OpenAcdUtilities {
 
@@ -141,7 +151,162 @@ public class OpenAcdUtilities {
         return sortInfo;
     }
 
+    public static void setResponse(Response response, ResponseCode code, String message) {
+        try {
+            DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
+            Document doc = representation.getDocument();
 
+            // set response status
+            setResponseStatus(response, code);
+
+            // create root node
+            Element elementResponse = doc.createElement("response");
+            doc.appendChild(elementResponse);
+
+            setResponseHeader(doc, elementResponse, code, message);
+            
+            // no data related to result (create function overloads to modify)
+
+            response.setEntity(new DomRepresentation(MediaType.TEXT_XML, doc));
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public static void setResponse(Response response, ResponseCode code, int id, String message) {
+        try {
+            DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
+            Document doc = representation.getDocument();
+
+            // set response status
+            setResponseStatus(response, code);
+
+            // create root node
+            Element elementResponse = doc.createElement("response");
+            doc.appendChild(elementResponse);
+
+            setResponseHeader(doc, elementResponse, code, message);
+            
+            // add data related to result
+            Element elementData = doc.createElement("data");
+            Element elementId = doc.createElement("id");
+            elementId.appendChild(doc.createTextNode(String.valueOf(id)));
+            elementData.appendChild(elementId);
+            elementResponse.appendChild(elementData);
+
+            response.setEntity(new DomRepresentation(MediaType.TEXT_XML, doc));
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public static void setResponseError(Response response, ResponseCode code, String message) {
+        Representation representation = getResponseError(response, code, message);
+
+        response.setEntity(representation);
+    }
+    
+    public static Representation getResponseError(Response response, ResponseCode code, String message) {
+        try {
+            DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
+            Document doc = representation.getDocument();
+
+            // set response status
+            setResponseStatus(response, code);
+
+            // create root node
+            Element elementResponse = doc.createElement("response");
+            doc.appendChild(elementResponse);
+
+            setResponseHeader(doc, elementResponse, code, message);
+            
+            return representation; //new DomRepresentation(MediaType.TEXT_XML, doc);
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+
+    public static Representation getResponseException(Response response, Exception exception) {
+        try {
+            DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
+            Document doc = representation.getDocument();
+
+            // set response status
+            setResponseStatus(response, ResponseCode.EXCEPTION);
+
+            // create root node
+            Element elementResponse = doc.createElement("response");
+            doc.appendChild(elementResponse);
+
+            setResponseHeader(doc, elementResponse, ResponseCode.EXCEPTION, "An Exception occurred");
+
+            // add data related to result
+            Element elementData = doc.createElement("data");
+            Element elementId = doc.createElement("exception");
+
+            // convert exception stack trace output to string
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            PrintStream printStream = new PrintStream(outputStream);
+            exception.printStackTrace(printStream);
+            
+            elementId.appendChild(doc.createTextNode(outputStream.toString()));
+            elementData.appendChild(elementId);
+            elementResponse.appendChild(elementData);
+            
+            return representation;
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+        
+    private static void setResponseStatus(Response response, ResponseCode code) {
+        // set response status based on code
+        switch (code) {
+        case CREATED:
+            response.setStatus(Status.SUCCESS_CREATED);
+            break;
+
+        case MISSING_INPUT:
+            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            break;
+            
+        case BAD_INPUT:
+            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            break;
+            
+        case EXCEPTION:
+            response.setStatus(Status.SERVER_ERROR_INTERNAL);
+            break;
+            
+        default:
+            response.setStatus(Status.SUCCESS_OK);
+        }
+    }
+
+    private static void setResponseHeader(Document doc, Element elementResponse, ResponseCode code, String message) {
+
+        // add standard elements
+        Element elementCode = doc.createElement("code");
+        elementCode.appendChild(doc.createTextNode(code.toString()));
+        elementResponse.appendChild(elementCode);
+
+        Element elementMessage = doc.createElement("message");
+        elementMessage.appendChild(doc.createTextNode(message));
+        elementResponse.appendChild(elementMessage);        
+    }
+    
     // Data objects
     // ------------
 
@@ -161,4 +326,7 @@ public class OpenAcdUtilities {
         String sortField = "";
     }
 
+    public static enum ResponseCode {
+        CREATED, UPDATED, DELETED, MISSING_INPUT, BAD_INPUT, EXCEPTION
+    }
 }
