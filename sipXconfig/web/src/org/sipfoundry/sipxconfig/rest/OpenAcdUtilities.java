@@ -237,20 +237,16 @@ public class OpenAcdUtilities {
     private static void setResponseStatus(Response response, ResponseCode code) {
         // set response status based on code
         switch (code) {
-        case CREATED:
+        case SUCCESS_CREATED:
             response.setStatus(Status.SUCCESS_CREATED);
             break;
 
-        case MISSING_INPUT:
+        case ERROR_MISSING_INPUT:
             response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             break;
             
-        case BAD_INPUT:
+        case ERROR_BAD_INPUT:
             response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            break;
-            
-        case EXCEPTION:
-            response.setStatus(Status.SERVER_ERROR_INTERNAL);
             break;
             
         default:
@@ -290,6 +286,6 @@ public class OpenAcdUtilities {
     }
 
     public static enum ResponseCode {
-        CREATED, UPDATED, DELETED, MISSING_INPUT, BAD_INPUT, EXCEPTION
+        SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT
     }
 }

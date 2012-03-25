@@ -115,7 +115,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 skillRestInfo = createSkillRestInfo(idInt);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
             // finally return group representation
@@ -162,7 +162,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 skill = m_openAcdContext.getSkillById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
 
@@ -170,7 +170,7 @@ public class OpenAcdSkillsResource extends UserResource {
             updateSkill(skill, skillRestInfo);
             m_openAcdContext.saveSkill(skill);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.UPDATED, skill.getId(), "Updated Skill");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, skill.getId(), "Updated Skill");
 
             return;
         }
@@ -180,7 +180,7 @@ public class OpenAcdSkillsResource extends UserResource {
         skill = createSkill(skillRestInfo);
         m_openAcdContext.saveSkill(skill);
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.CREATED, skill.getId(), "Created Skill");        
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, skill.getId(), "Created Skill");        
     }
 
 
@@ -201,19 +201,19 @@ public class OpenAcdSkillsResource extends UserResource {
                 skill = m_openAcdContext.getSkillById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
 
             m_openAcdContext.deleteSkill(skill);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.DELETED, skill.getId(), "Deleted Skill");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, skill.getId(), "Deleted Skill");
 
             return;
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.MISSING_INPUT, "ID value missing");
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
 

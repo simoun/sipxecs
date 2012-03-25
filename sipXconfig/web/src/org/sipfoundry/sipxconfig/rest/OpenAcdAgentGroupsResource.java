@@ -118,7 +118,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                 agentGroupRestInfo = createAgentGroupRestInfo(idInt);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
             // finally return group representation
@@ -165,7 +165,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                 agentGroup = m_openAcdContext.getAgentGroupById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
 
@@ -173,7 +173,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
             updateAgentGroup(agentGroup, agentGroupRestInfo);
             m_openAcdContext.saveAgentGroup(agentGroup);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.UPDATED, agentGroup.getId(), "Updated Agent Group");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, agentGroup.getId(), "Updated Agent Group");
 
             return;
         }
@@ -183,7 +183,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         agentGroup = createOpenAcdAgentGroup(agentGroupRestInfo);
         m_openAcdContext.saveAgentGroup(agentGroup);
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.CREATED, agentGroup.getId(), "Created Agent Group");        
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, agentGroup.getId(), "Created Agent Group");        
     }
 
 
@@ -204,19 +204,19 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                 agentGroup = m_openAcdContext.getAgentGroupById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
 
             m_openAcdContext.deleteAgentGroup(agentGroup);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.DELETED, agentGroup.getId(), "Deleted Agent Group");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, agentGroup.getId(), "Deleted Agent Group");
 
             return;
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.MISSING_INPUT, "ID value missing");
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
 
