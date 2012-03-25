@@ -320,4 +320,20 @@
   </bean>
   <alias name="openAcdReleaseCodeResource" alias="/openacd-release-code/{id}" />
 
+  <bean id="openAcdQueuesResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdQueuesResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdQueuesResource" alias="/openacd-queue" />
+
+  <bean id="openAcdQueueResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdQueuesResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdQueueResource" alias="/openacd-queue/{id}" />
+
 </beans>
