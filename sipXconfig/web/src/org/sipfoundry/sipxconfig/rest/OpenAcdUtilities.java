@@ -233,43 +233,6 @@ public class OpenAcdUtilities {
         
         return null;
     }
-
-    public static Representation getResponseException(Response response, Exception exception) {
-        try {
-            DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
-            Document doc = representation.getDocument();
-
-            // set response status
-            setResponseStatus(response, ResponseCode.EXCEPTION);
-
-            // create root node
-            Element elementResponse = doc.createElement("response");
-            doc.appendChild(elementResponse);
-
-            setResponseHeader(doc, elementResponse, ResponseCode.EXCEPTION, "An Exception occurred");
-
-            // add data related to result
-            Element elementData = doc.createElement("data");
-            Element elementId = doc.createElement("exception");
-
-            // convert exception stack trace output to string
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            PrintStream printStream = new PrintStream(outputStream);
-            exception.printStackTrace(printStream);
-            
-            elementId.appendChild(doc.createTextNode(outputStream.toString()));
-            elementData.appendChild(elementId);
-            elementResponse.appendChild(elementData);
-            
-            return representation;
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        return null;
-    }
         
     private static void setResponseStatus(Response response, ResponseCode code) {
         // set response status based on code

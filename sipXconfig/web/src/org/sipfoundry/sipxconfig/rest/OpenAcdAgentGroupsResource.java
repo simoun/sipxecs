@@ -113,13 +113,14 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            agentGroupRestInfo = createAgentGroupRestInfo(idInt);
-
-            if (agentGroupRestInfo == null) {
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                agentGroupRestInfo = createAgentGroupRestInfo(idInt);
+            }
+            catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
             }
-            
+
             // finally return group representation
             return new OpenAcdAgentGroupRepresentation(variant.getMediaType(), agentGroupRestInfo);
         }
@@ -167,13 +168,13 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
-            
+
             // copy values over to existing group
             updateAgentGroup(agentGroup, agentGroupRestInfo);
             m_openAcdContext.saveAgentGroup(agentGroup);
 
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.UPDATED, agentGroup.getId(), "Updated Agent Group");
-            
+
             return;
         }
 
@@ -206,11 +207,11 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
-            
+
             m_openAcdContext.deleteAgentGroup(agentGroup);
 
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.DELETED, agentGroup.getId(), "Deleted Agent Group");
-            
+
             return;
         }
 
@@ -227,20 +228,15 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         List<OpenAcdSkillRestInfo> skillsRestInfo;
         List<OpenAcdQueueRestInfo> queuesRestInfo;
 
-        try {
-            OpenAcdAgentGroup agentGroup = m_openAcdContext.getAgentGroupById(id);
+        OpenAcdAgentGroup agentGroup = m_openAcdContext.getAgentGroupById(id);
 
-            skillsRestInfo = createSkillsRestInfo(agentGroup);
-            queuesRestInfo = createQueuesRestInfo(agentGroup);
-            agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo, queuesRestInfo);
-        }
-        catch (Exception exception) {
-            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
-        }
+        skillsRestInfo = createSkillsRestInfo(agentGroup);
+        queuesRestInfo = createQueuesRestInfo(agentGroup);
+        agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo, queuesRestInfo);
 
         return agentGroupRestInfo;
     }
-    
+
     private void updateAgentGroup(OpenAcdAgentGroup agentGroup, OpenAcdAgentGroupRestInfo agentGroupRestInfo) {
         String tempString;
 
@@ -276,7 +272,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
             OpenAcdAgentGroup agentGroup = agentGroups.get(index);
             skillsRestInfo = createSkillsRestInfo(agentGroup);
             queuesRestInfo = createQueuesRestInfo(agentGroup);
-            
+
             OpenAcdAgentGroupRestInfo agentGroupRestInfo = new OpenAcdAgentGroupRestInfo(agentGroup, skillsRestInfo, queuesRestInfo);
             agentGroupsRestInfo.add(agentGroupRestInfo);
         }
@@ -317,7 +313,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         return queuesRestInfo;
     }
-    
+
     private void sortGroups(List<OpenAcdAgentGroup> agentGroups) {
         // sort groups if requested
         SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);

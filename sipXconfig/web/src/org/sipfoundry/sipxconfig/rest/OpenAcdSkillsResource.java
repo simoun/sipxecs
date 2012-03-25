@@ -110,10 +110,11 @@ public class OpenAcdSkillsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            skillRestInfo = createSkillRestInfo(idInt);
-
-            if (skillRestInfo == null) {
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                skillRestInfo = createSkillRestInfo(idInt);
+            }
+            catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
             }
 
@@ -164,7 +165,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
-            
+
             // copy values over to existing
             updateSkill(skill, skillRestInfo);
             m_openAcdContext.saveSkill(skill);
@@ -203,7 +204,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.BAD_INPUT, "ID " + idString + " not found.");
                 return;                
             }
-            
+
             m_openAcdContext.deleteSkill(skill);
 
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.DELETED, skill.getId(), "Deleted Skill");
@@ -222,14 +223,8 @@ public class OpenAcdSkillsResource extends UserResource {
     private OpenAcdSkillRestInfo createSkillRestInfo(int id) throws ResourceException {
         OpenAcdSkillRestInfo skillRestInfo = null;
 
-        try {
-            OpenAcdSkill skill = m_openAcdContext.getSkillById(id);
-            skillRestInfo = new OpenAcdSkillRestInfo(skill);
-        }
-        catch (Exception exception) {
-
-            //throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
-        }
+        OpenAcdSkill skill = m_openAcdContext.getSkillById(id);
+        skillRestInfo = new OpenAcdSkillRestInfo(skill);
 
         return skillRestInfo;
     }
