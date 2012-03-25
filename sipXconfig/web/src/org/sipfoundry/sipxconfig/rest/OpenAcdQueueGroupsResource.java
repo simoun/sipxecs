@@ -47,6 +47,8 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
 
 public class OpenAcdQueueGroupsResource extends UserResource {
 
@@ -514,59 +516,6 @@ public class OpenAcdQueueGroupsResource extends UserResource {
         }
     }
 
-    static class OpenAcdSkillRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-        private final String m_groupName;
-
-        public OpenAcdSkillRestInfo(OpenAcdSkill skill) {
-            m_id = skill.getId();
-            m_name = skill.getName();
-            m_description = skill.getDescription();
-            m_groupName = skill.getGroupName();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public String getGroupName() {
-            return m_groupName;
-        }
-    }
-
-    static class OpenAcdAgentGroupRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-
-        public OpenAcdAgentGroupRestInfo(OpenAcdAgentGroup agentGroup) {
-            m_id = agentGroup.getId();
-            m_name = agentGroup.getName();
-            m_description = agentGroup.getDescription();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-    }
 
     // Injected objects
     // ----------------

@@ -44,6 +44,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfoFull;
 
 public class OpenAcdSkillsResource extends UserResource {
 
@@ -106,7 +107,7 @@ public class OpenAcdSkillsResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdSkillRestInfo skillRestInfo;
+        OpenAcdSkillRestInfoFull skillRestInfo;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
@@ -125,7 +126,7 @@ public class OpenAcdSkillsResource extends UserResource {
 
         // if not single, process request for all
         List<OpenAcdSkill> skills = m_openAcdContext.getSkills();
-        List<OpenAcdSkillRestInfo> skillsRestInfo = new ArrayList<OpenAcdSkillRestInfo>();
+        List<OpenAcdSkillRestInfoFull> skillsRestInfo = new ArrayList<OpenAcdSkillRestInfoFull>();
         Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
@@ -149,7 +150,7 @@ public class OpenAcdSkillsResource extends UserResource {
     public void storeRepresentation(Representation entity) throws ResourceException {
         // get from request body
         OpenAcdSkillRepresentation representation = new OpenAcdSkillRepresentation(entity);
-        OpenAcdSkillRestInfo skillRestInfo = representation.getObject();
+        OpenAcdSkillRestInfoFull skillRestInfo = representation.getObject();
         OpenAcdSkill skill = null;
 
         // if have id then update single
@@ -220,17 +221,17 @@ public class OpenAcdSkillsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    private OpenAcdSkillRestInfo createSkillRestInfo(int id) throws ResourceException {
-        OpenAcdSkillRestInfo skillRestInfo = null;
+    private OpenAcdSkillRestInfoFull createSkillRestInfo(int id) throws ResourceException {
+        OpenAcdSkillRestInfoFull skillRestInfo = null;
 
         OpenAcdSkill skill = m_openAcdContext.getSkillById(id);
-        skillRestInfo = new OpenAcdSkillRestInfo(skill);
+        skillRestInfo = new OpenAcdSkillRestInfoFull(skill);
 
         return skillRestInfo;
     }
 
-    private MetadataRestInfo addSkills(List<OpenAcdSkillRestInfo> skillsRestInfo, List<OpenAcdSkill> skills) {
-        OpenAcdSkillRestInfo skillRestInfo;
+    private MetadataRestInfo addSkills(List<OpenAcdSkillRestInfoFull> skillsRestInfo, List<OpenAcdSkill> skills) {
+        OpenAcdSkillRestInfoFull skillRestInfo;
 
         // determine pagination
         PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, skills.size());
@@ -239,7 +240,7 @@ public class OpenAcdSkillsResource extends UserResource {
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
             OpenAcdSkill skill = skills.get(index);
 
-            skillRestInfo = new OpenAcdSkillRestInfo(skill);
+            skillRestInfo = new OpenAcdSkillRestInfoFull(skill);
             skillsRestInfo.add(skillRestInfo);
         }
 
@@ -316,7 +317,7 @@ public class OpenAcdSkillsResource extends UserResource {
         }
     }
 
-    private void updateSkill(OpenAcdSkill skill, OpenAcdSkillRestInfo skillRestInfo) throws ResourceException {
+    private void updateSkill(OpenAcdSkill skill, OpenAcdSkillRestInfoFull skillRestInfo) throws ResourceException {
         OpenAcdSkillGroup skillGroup;
         String tempString;
         int groupId = 0;
@@ -333,7 +334,7 @@ public class OpenAcdSkillsResource extends UserResource {
         skill.setGroup(skillGroup);
     }
 
-    private OpenAcdSkill createSkill(OpenAcdSkillRestInfo skillRestInfo) throws ResourceException {
+    private OpenAcdSkill createSkill(OpenAcdSkillRestInfoFull skillRestInfo) throws ResourceException {
         OpenAcdSkillGroup skillGroup;
         OpenAcdSkill skill = new OpenAcdSkill();
 
@@ -348,7 +349,7 @@ public class OpenAcdSkillsResource extends UserResource {
         return skill;
     }
 
-    private OpenAcdSkillGroup getSkillGroup(OpenAcdSkillRestInfo skillRestInfo) throws ResourceException {
+    private OpenAcdSkillGroup getSkillGroup(OpenAcdSkillRestInfoFull skillRestInfo) throws ResourceException {
         OpenAcdSkillGroup skillGroup;
         int groupId = 0;
 
@@ -380,13 +381,13 @@ public class OpenAcdSkillsResource extends UserResource {
         @Override
         protected void configureXStream(XStream xstream) {
             xstream.alias("openacd-skill", OpenAcdSkillsBundleRestInfo.class);
-            xstream.alias("skill", OpenAcdSkillRestInfo.class);
+            xstream.alias("skill", OpenAcdSkillRestInfoFull.class);
         }
     }
 
-    static class OpenAcdSkillRepresentation extends XStreamRepresentation<OpenAcdSkillRestInfo> {
+    static class OpenAcdSkillRepresentation extends XStreamRepresentation<OpenAcdSkillRestInfoFull> {
 
-        public OpenAcdSkillRepresentation(MediaType mediaType, OpenAcdSkillRestInfo object) {
+        public OpenAcdSkillRepresentation(MediaType mediaType, OpenAcdSkillRestInfoFull object) {
             super(mediaType, object);
         }
 
@@ -396,7 +397,7 @@ public class OpenAcdSkillsResource extends UserResource {
 
         @Override
         protected void configureXStream(XStream xstream) {
-            xstream.alias("skill", OpenAcdSkillRestInfo.class);
+            xstream.alias("skill", OpenAcdSkillRestInfoFull.class);
         }
     }
 
@@ -406,9 +407,9 @@ public class OpenAcdSkillsResource extends UserResource {
 
     static class OpenAcdSkillsBundleRestInfo {
         private final MetadataRestInfo m_metadata;
-        private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdSkillRestInfoFull> m_skills;
 
-        public OpenAcdSkillsBundleRestInfo(List<OpenAcdSkillRestInfo> skills, MetadataRestInfo metadata) {
+        public OpenAcdSkillsBundleRestInfo(List<OpenAcdSkillRestInfoFull> skills, MetadataRestInfo metadata) {
             m_metadata = metadata;
             m_skills = skills;
         }
@@ -417,7 +418,7 @@ public class OpenAcdSkillsResource extends UserResource {
             return m_metadata;
         }
 
-        public List<OpenAcdSkillRestInfo> getSkills() {
+        public List<OpenAcdSkillRestInfoFull> getSkills() {
             return m_skills;
         }
     }
@@ -449,48 +450,6 @@ public class OpenAcdSkillsResource extends UserResource {
 
         public int getResultsPerPage() {
             return m_resultsPerPage;
-        }
-    }
-
-    static class OpenAcdSkillRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-        private final String m_atom;
-        private final String m_groupName;
-        private final int m_groupId;
-
-        public OpenAcdSkillRestInfo(OpenAcdSkill skill) {
-            m_id = skill.getId();
-            m_name = skill.getName();
-            m_description = skill.getDescription();
-            m_atom = skill.getAtom();
-            m_groupName = skill.getGroupName();
-            m_groupId = skill.getGroup().getId();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public String getAtom() {
-            return m_atom;
-        }
-
-        public String getGroupName() {
-            return m_groupName;
-        }
-
-        public int getGroupId() {
-            return m_groupId;
         }
     }
 

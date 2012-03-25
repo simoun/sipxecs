@@ -20,9 +20,7 @@
 
 package org.sipfoundry.sipxconfig.rest;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
@@ -31,6 +29,12 @@ import org.restlet.data.Response;
 import org.restlet.resource.Representation;
 import org.restlet.resource.DomRepresentation;
 import org.restlet.resource.ResourceException;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -288,4 +292,196 @@ public class OpenAcdUtilities {
     public static enum ResponseCode {
         SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT
     }
+    
+    
+    // Common Rest Info objects (may be re-defined within Resource to include different fields
+    // ------------------------
+    
+    static class OpenAcdSkillRestInfo {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+        private final String m_groupName;
+
+        public OpenAcdSkillRestInfo(OpenAcdSkill skill) {
+            m_id = skill.getId();
+            m_name = skill.getName();
+            m_description = skill.getDescription();
+            m_groupName = skill.getGroupName();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public String getGroupName() {
+            return m_groupName;
+        }
+    }
+
+    static class OpenAcdSkillRestInfoFull extends OpenAcdSkillRestInfo {
+        private final String m_atom;
+        private final int m_groupId;
+
+        public OpenAcdSkillRestInfoFull(OpenAcdSkill skill) {
+            super(skill);
+            m_atom = skill.getAtom();
+            m_groupId = skill.getGroup().getId();
+        }
+
+        public String getAtom() {
+            return m_atom;
+        }
+
+        public int getGroupId() {
+            return m_groupId;
+        }
+    }
+
+    static class OpenAcdSkillGroupRestInfo {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+
+        public OpenAcdSkillGroupRestInfo(OpenAcdSkillGroup skillGroup) {
+            m_id = skillGroup.getId();
+            m_name = skillGroup.getName();
+            m_description = skillGroup.getDescription();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+    }
+
+    static class OpenAcdQueueRestInfo {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+        private final String m_groupName;
+
+        public OpenAcdQueueRestInfo(OpenAcdQueue queue) {
+            m_id = queue.getId();
+            m_name = queue.getName();
+            m_description = queue.getDescription();
+            m_groupName = queue.getQueueGroup();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public String getGroupName() {
+            return m_groupName;
+        }
+    }
+    
+    static class OpenAcdClientRestInfo {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+        private final String m_identity;
+
+        public OpenAcdClientRestInfo(OpenAcdClient client) {
+            m_id = client.getId();
+            m_name = client.getName();
+            m_description = client.getDescription();
+            m_identity = client.getIdentity();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public String getIdentity() {
+            return m_identity;
+        }
+    }
+    
+    static class OpenAcdAgentGroupRestInfo {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+
+        public OpenAcdAgentGroupRestInfo(OpenAcdAgentGroup agentGroup) {
+            m_id = agentGroup.getId();
+            m_name = agentGroup.getName();
+            m_description = agentGroup.getDescription();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+    }
+
+    static class OpenAcdReleaseCodeRestInfo {
+        private final int m_id;
+        private final String m_label;
+        private final String m_description;
+        private final int m_bias;
+
+        public OpenAcdReleaseCodeRestInfo(OpenAcdReleaseCode releaseCode) {
+            m_id = releaseCode.getId();
+            m_label = releaseCode.getLabel();
+            m_bias = releaseCode.getBias();
+            m_description = releaseCode.getDescription();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getLabel() {
+            return m_label;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public int getBias() {
+            return m_bias;
+        }
+    }
+
 }

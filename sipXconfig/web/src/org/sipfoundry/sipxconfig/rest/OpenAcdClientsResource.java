@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
 
 public class OpenAcdClientsResource extends UserResource {
 
@@ -408,36 +409,6 @@ public class OpenAcdClientsResource extends UserResource {
 
         public int getResultsPerPage() {
             return m_resultsPerPage;
-        }
-    }
-
-    static class OpenAcdClientRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-        private final String m_identity;
-
-        public OpenAcdClientRestInfo(OpenAcdClient client) {
-            m_id = client.getId();
-            m_name = client.getName();
-            m_description = client.getDescription();
-            m_identity = client.getIdentity();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public String getIdentity() {
-            return m_identity;
         }
     }
 

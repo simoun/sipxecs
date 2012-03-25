@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdReleaseCodeRestInfo;
 
 public class OpenAcdReleaseCodesResource extends UserResource {
 
@@ -412,36 +413,6 @@ public class OpenAcdReleaseCodesResource extends UserResource {
 
         public int getResultsPerPage() {
             return m_resultsPerPage;
-        }
-    }
-
-    static class OpenAcdReleaseCodeRestInfo {
-        private final int m_id;
-        private final String m_label;
-        private final String m_description;
-        private final int m_bias;
-
-        public OpenAcdReleaseCodeRestInfo(OpenAcdReleaseCode releaseCode) {
-            m_id = releaseCode.getId();
-            m_label = releaseCode.getLabel();
-            m_bias = releaseCode.getBias();
-            m_description = releaseCode.getDescription();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getLabel() {
-            return m_label;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public int getBias() {
-            return m_bias;
         }
     }
 

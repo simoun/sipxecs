@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillGroupRestInfo;
 
 public class OpenAcdSkillGroupsResource extends UserResource {
 
@@ -407,30 +408,6 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
         public int getResultsPerPage() {
             return m_resultsPerPage;
-        }
-    }
-
-    static class OpenAcdSkillGroupRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-
-        public OpenAcdSkillGroupRestInfo(OpenAcdSkillGroup skillGroup) {
-            m_id = skillGroup.getId();
-            m_name = skillGroup.getName();
-            m_description = skillGroup.getDescription();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
         }
     }
 

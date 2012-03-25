@@ -48,11 +48,10 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
-import org.sipfoundry.sipxconfig.rest.OpenAcdAgentGroupsResource.OpenAcdSkillRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdQueueGroupsResource.OpenAcdAgentGroupRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
 
 public class OpenAcdQueuesResource extends UserResource {
 
@@ -208,13 +207,13 @@ public class OpenAcdQueuesResource extends UserResource {
     private OpenAcdQueueRestInfo createQueueRestInfo(int id) throws ResourceException {
         OpenAcdQueueRestInfo queueRestInfo;
         List<OpenAcdSkillRestInfo> skillsRestInfo;
-        List<OpenAcdAgentGroupRestInfo> agentGroupRestInfo;
+        List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo;
 
         try {
             OpenAcdQueue queue = m_openAcdContext.getQueueById(id);
             skillsRestInfo = createSkillsRestInfo(queue);
-            agentGroupRestInfo = createAgentGroupsRestInfo(queue); 
-            queueRestInfo = new OpenAcdQueueRestInfo(queue, skillsRestInfo, agentGroupRestInfo);
+            agentGroupsRestInfo = createAgentGroupsRestInfo(queue); 
+            queueRestInfo = new OpenAcdQueueRestInfo(queue, skillsRestInfo, agentGroupsRestInfo);
         }
         catch (Exception exception) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
@@ -493,8 +492,8 @@ public class OpenAcdQueuesResource extends UserResource {
         public OpenAcdQueueRestInfo(OpenAcdQueue queue, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups) {
             m_id = queue.getId();
             m_name = queue.getName();
-            m_queueGroup = queue.getQueueGroup();
             m_description = queue.getDescription();
+            m_queueGroup = queue.getQueueGroup();
             m_skills = skills; 
             m_agentGroups = agentGroups;
         }
@@ -511,46 +510,21 @@ public class OpenAcdQueuesResource extends UserResource {
             return m_description;
         }
         
+        public String getQueueGroup()
+        {
+            return m_queueGroup;
+        }
+        
         public List<OpenAcdSkillRestInfo> getSkills() {
             return m_skills;
         }
-        
-        public String getQueueGroup()
-        {
-        	return m_queueGroup;
+
+        public List<OpenAcdAgentGroupRestInfo> getAgentGroups() {
+            return m_agentGroups;
         }
     }
 
-    static class OpenAcdSkillRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-        private final String m_groupName;
-
-        public OpenAcdSkillRestInfo(OpenAcdSkill skill) {
-            m_id = skill.getId();
-            m_name = skill.getName();
-            m_description = skill.getDescription();
-            m_groupName = skill.getGroupName();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public String getGroupName() {
-            return m_groupName;
-        }
-    }
-
+    
     // Injected objects
     // ----------------
 

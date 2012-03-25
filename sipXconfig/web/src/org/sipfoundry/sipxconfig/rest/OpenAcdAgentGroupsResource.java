@@ -47,6 +47,8 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfo;
 
 public class OpenAcdAgentGroupsResource extends UserResource {
 
@@ -531,66 +533,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         }
     }
 
-    static class OpenAcdSkillRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-        private final String m_groupName;
-
-        public OpenAcdSkillRestInfo(OpenAcdSkill skill) {
-            m_id = skill.getId();
-            m_name = skill.getName();
-            m_description = skill.getDescription();
-            m_groupName = skill.getGroupName();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public String getGroupName() {
-            return m_groupName;
-        }
-    }
-
-    static class OpenAcdQueueRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-        private final String m_groupName;
-
-        public OpenAcdQueueRestInfo(OpenAcdQueue queue) {
-            m_id = queue.getId();
-            m_name = queue.getName();
-            m_description = queue.getDescription();
-            m_groupName = queue.getQueueGroup();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public String getGroupName() {
-            return m_groupName;
-        }
-    }
-
+    
     // Injected objects
     // ----------------
 
