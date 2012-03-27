@@ -168,9 +168,15 @@ public class OpenAcdSkillsResource extends UserResource {
             }
 
             // copy values over to existing
-            updateSkill(skill, skillRestInfo);
-            m_openAcdContext.saveSkill(skill);
-
+            try {
+                updateSkill(skill, skillRestInfo);
+                m_openAcdContext.saveSkill(skill);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update skill failed");
+                return;                                
+            }
+            
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, skill.getId(), "Updated Skill");
 
             return;
@@ -178,9 +184,15 @@ public class OpenAcdSkillsResource extends UserResource {
 
 
         // otherwise add new
-        skill = createSkill(skillRestInfo);
-        m_openAcdContext.saveSkill(skill);
-
+        try {
+            skill = createSkill(skillRestInfo);
+            m_openAcdContext.saveSkill(skill);
+        }
+        catch (Exception exception) {
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update skill failed");
+            return;                                
+        }
+        
         OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, skill.getId(), "Created Skill");        
     }
 
@@ -317,10 +329,9 @@ public class OpenAcdSkillsResource extends UserResource {
         }
     }
 
-    private void updateSkill(OpenAcdSkill skill, OpenAcdSkillRestInfoFull skillRestInfo) throws ResourceException {
+    private void updateSkill(OpenAcdSkill skill, OpenAcdSkillRestInfoFull skillRestInfo) {
         OpenAcdSkillGroup skillGroup;
         String tempString;
-        int groupId = 0;
 
         // do not allow empty name
         tempString = skillRestInfo.getName();
@@ -349,17 +360,10 @@ public class OpenAcdSkillsResource extends UserResource {
         return skill;
     }
 
-    private OpenAcdSkillGroup getSkillGroup(OpenAcdSkillRestInfoFull skillRestInfo) throws ResourceException {
+    private OpenAcdSkillGroup getSkillGroup(OpenAcdSkillRestInfoFull skillRestInfo) {
         OpenAcdSkillGroup skillGroup;
-        int groupId = 0;
-
-        try {
-            groupId = skillRestInfo.getGroupId();
-            skillGroup = m_openAcdContext.getSkillGroupById(groupId);
-        }
-        catch (Exception exception) {
-            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "Skill Group ID " + groupId + " not found.");
-        }
+        int groupId = skillRestInfo.getGroupId();
+        skillGroup = m_openAcdContext.getSkillGroupById(groupId);
 
         return skillGroup;
     }
