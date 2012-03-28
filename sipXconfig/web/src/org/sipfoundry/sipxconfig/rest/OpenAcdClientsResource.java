@@ -25,8 +25,6 @@ import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -46,6 +44,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
 
 public class OpenAcdClientsResource extends UserResource {
@@ -113,8 +112,13 @@ public class OpenAcdClientsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            clientRestInfo = createClientRestInfo(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                clientRestInfo = createClientRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+            }
 
             // return representation
             return new OpenAcdClientRepresentation(variant.getMediaType(), clientRestInfo);
@@ -154,46 +158,74 @@ public class OpenAcdClientsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            client = m_openAcdContext.getClientById(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                client = m_openAcdContext.getClientById(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
 
             // copy values over to existing
-            updateClient(client, clientRestInfo);
-            m_openAcdContext.saveClient(client);
+            try {
+                updateClient(client, clientRestInfo);
+                m_openAcdContext.saveClient(client);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Client failed");
+                return;                                
+            }
 
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, client.getId(), "Updated Client");
+            
             return;
         }
 
 
         // otherwise add new
-        client = createClient(clientRestInfo);
-        m_openAcdContext.saveClient(client);
-        getResponse().setStatus(Status.SUCCESS_CREATED);
+        try {
+            client = createClient(clientRestInfo);
+            m_openAcdContext.saveClient(client);
+        }
+        catch (Exception exception) {
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Client failed");
+            return;                                
+        }
+        
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, client.getId(), "Created Client");        
     }
 
 
     // DELETE - Delete single Skill
     // ----------------------------
 
-    // deleteClient() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
-        Collection<Integer> clientIds = new HashSet<Integer>();
+        OpenAcdClient client;
 
         // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+            try{
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                client = m_openAcdContext.getClientById(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
 
-            clientIds.add(idInt);
-            m_openAcdContext.deleteClient(m_openAcdContext.getClientById(idInt));
+            m_openAcdContext.deleteClient(client);
+
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, client.getId(), "Deleted Client");
 
             return;
         }
 
         // no id string
-        getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
     // Helper functions
@@ -379,36 +411,6 @@ public class OpenAcdClientsResource extends UserResource {
 
         public List<OpenAcdClientRestInfo> getClients() {
             return m_clients;
-        }
-    }
-
-    static class MetadataRestInfo {
-        private final int m_totalResults;
-        private final int m_currentPage;
-        private final int m_totalPages;
-        private final int m_resultsPerPage;
-
-        public MetadataRestInfo(PaginationInfo paginationInfo) {
-            m_totalResults = paginationInfo.totalResults;
-            m_currentPage = paginationInfo.pageNumber;
-            m_totalPages = paginationInfo.totalPages;
-            m_resultsPerPage = paginationInfo.resultsPerPage;
-        }
-
-        public int getTotalResults() {
-            return m_totalResults;
-        }
-
-        public int getCurrentPage() {
-            return m_currentPage;
-        }
-
-        public int getTotalPages() {
-            return m_totalPages;
-        }
-
-        public int getResultsPerPage() {
-            return m_resultsPerPage;
         }
     }
 

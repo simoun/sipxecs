@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdReleaseCodeRestInfo;
 
 public class OpenAcdReleaseCodesResource extends UserResource {
@@ -113,8 +114,13 @@ public class OpenAcdReleaseCodesResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            releaseCodeRestInfo = createReleaseCodeRestInfo(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                releaseCodeRestInfo = createReleaseCodeRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+            }
 
             // return representation
             return new OpenAcdReleaseCodeRepresentation(variant.getMediaType(), releaseCodeRestInfo);
@@ -154,21 +160,42 @@ public class OpenAcdReleaseCodesResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            releaseCode = m_openAcdContext.getReleaseCodeById(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                releaseCode = m_openAcdContext.getReleaseCodeById(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
 
             // copy values over to existing
-            updateReleaseCode(releaseCode, releaseCodeRestInfo);
-            m_openAcdContext.saveReleaseCode(releaseCode);
+            try {
+                updateReleaseCode(releaseCode, releaseCodeRestInfo);
+                m_openAcdContext.saveReleaseCode(releaseCode);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Release Code failed");
+                return;                                
+            }
+
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, releaseCode.getId(), "Updated Release Code");
 
             return;
         }
 
 
         // otherwise add new
-        releaseCode = createReleaseCode(releaseCodeRestInfo);
-        m_openAcdContext.saveReleaseCode(releaseCode);
-        getResponse().setStatus(Status.SUCCESS_CREATED);
+        try {
+            releaseCode = createReleaseCode(releaseCodeRestInfo);
+            m_openAcdContext.saveReleaseCode(releaseCode);
+        }
+        catch (Exception exception) {
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Release Code failed");
+            return;                                
+        }
+
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, releaseCode.getId(), "Created Release Code");        
     }
 
 
@@ -178,25 +205,31 @@ public class OpenAcdReleaseCodesResource extends UserResource {
     // deleteReleaseCode() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
+        // for some reason release codes are deleted by providing collection of ids, not by providing release code object
         Collection<Integer> releaseCodeIds = new HashSet<Integer>();
-        OpenAcdReleaseCode releaseCode;
 
         // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            releaseCode = m_openAcdContext.getReleaseCodeById(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                releaseCodeIds.add(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
 
-            releaseCodeIds.add(idInt);
             m_openAcdContext.removeReleaseCodes(releaseCodeIds);
 
             return;
         }
 
         // no id string
-        getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
+
 
     // Helper functions
     // ----------------
@@ -383,36 +416,6 @@ public class OpenAcdReleaseCodesResource extends UserResource {
 
         public List<OpenAcdReleaseCodeRestInfo> getReleaseCodes() {
             return m_releaseCodes;
-        }
-    }
-
-    static class MetadataRestInfo {
-        private final int m_totalResults;
-        private final int m_currentPage;
-        private final int m_totalPages;
-        private final int m_resultsPerPage;
-
-        public MetadataRestInfo(PaginationInfo paginationInfo) {
-            m_totalResults = paginationInfo.totalResults;
-            m_currentPage = paginationInfo.pageNumber;
-            m_totalPages = paginationInfo.totalPages;
-            m_resultsPerPage = paginationInfo.resultsPerPage;
-        }
-
-        public int getTotalResults() {
-            return m_totalResults;
-        }
-
-        public int getCurrentPage() {
-            return m_currentPage;
-        }
-
-        public int getTotalPages() {
-            return m_totalPages;
-        }
-
-        public int getResultsPerPage() {
-            return m_resultsPerPage;
         }
     }
 

@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillGroupRestInfo;
 
 public class OpenAcdSkillGroupsResource extends UserResource {
@@ -113,8 +114,13 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            skillGroupRestInfo = createSkillGroupRestInfo(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                skillGroupRestInfo = createSkillGroupRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+            }
 
             // return representation
             return new OpenAcdSkillGroupRepresentation(variant.getMediaType(), skillGroupRestInfo);
@@ -149,26 +155,47 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         OpenAcdSkillGroupRepresentation representation = new OpenAcdSkillGroupRepresentation(entity);
         OpenAcdSkillGroupRestInfo skillGroupRestInfo = representation.getObject();
         OpenAcdSkillGroup skillGroup;
-        
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            skillGroup = m_openAcdContext.getSkillGroupById(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                skillGroup = m_openAcdContext.getSkillGroupById(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
 
             // copy values over to existing
-            updateSkillGroup(skillGroup, skillGroupRestInfo);
-            m_openAcdContext.saveSkillGroup(skillGroup);
+            try {
+                updateSkillGroup(skillGroup, skillGroupRestInfo);
+                m_openAcdContext.saveSkillGroup(skillGroup);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill Group failed");
+                return;                                
+            }
+
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, skillGroup.getId(), "Updated Skill Group");
 
             return;
         }
 
 
         // otherwise add new
-        skillGroup = createSkillGroup(skillGroupRestInfo);
-        m_openAcdContext.saveSkillGroup(skillGroup);
-        getResponse().setStatus(Status.SUCCESS_CREATED);
+        try {
+            skillGroup = createSkillGroup(skillGroupRestInfo);
+            m_openAcdContext.saveSkillGroup(skillGroup);
+        }
+        catch (Exception exception) {
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill failed");
+            return;                                
+        }
+
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, skillGroup.getId(), "Created Skill Group");        
     }
 
 
@@ -178,23 +205,31 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     // deleteSkillGroup() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
+        // for some reason skill groups are deleted by providing collection of ids, not by providing skill group object
         Collection<Integer> skillGroupIds = new HashSet<Integer>();
-        
+
         // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            
-            skillGroupIds.add(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);                
+                skillGroupIds.add(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
+
             m_openAcdContext.removeSkillGroups(skillGroupIds);
 
             return;
         }
 
         // no id string
-        getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
+
 
     // Helper functions
     // ----------------
@@ -215,7 +250,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
     private MetadataRestInfo addSkillGroups(List<OpenAcdSkillGroupRestInfo> skillsRestInfo, List<OpenAcdSkillGroup> skillGroups) {
         OpenAcdSkillGroupRestInfo skillRestInfo;
-        
+
         // determine pagination
         PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, skillGroups.size());
 
@@ -302,7 +337,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
     private void updateSkillGroup(OpenAcdSkillGroup skillGroup, OpenAcdSkillGroupRestInfo skillGroupRestInfo) throws ResourceException {
         String tempString;
-        
+
         // do not allow empty name
         tempString = skillGroupRestInfo.getName();
         if (!tempString.isEmpty()) {
@@ -322,7 +357,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         return skillGroup;
     }
 
-    
+
     // REST Representations
     // --------------------
 
@@ -378,36 +413,6 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
         public List<OpenAcdSkillGroupRestInfo> getSkills() {
             return m_skills;
-        }
-    }
-
-    static class MetadataRestInfo {
-        private final int m_totalResults;
-        private final int m_currentPage;
-        private final int m_totalPages;
-        private final int m_resultsPerPage;
-
-        public MetadataRestInfo(PaginationInfo paginationInfo) {
-            m_totalResults = paginationInfo.totalResults;
-            m_currentPage = paginationInfo.pageNumber;
-            m_totalPages = paginationInfo.totalPages;
-            m_resultsPerPage = paginationInfo.resultsPerPage;
-        }
-
-        public int getTotalResults() {
-            return m_totalResults;
-        }
-
-        public int getCurrentPage() {
-            return m_currentPage;
-        }
-
-        public int getTotalPages() {
-            return m_totalPages;
-        }
-
-        public int getResultsPerPage() {
-            return m_resultsPerPage;
         }
     }
 

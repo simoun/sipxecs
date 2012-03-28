@@ -33,7 +33,6 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.data.Form;
-import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
@@ -44,6 +43,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfoFull;
 
 public class OpenAcdSkillsResource extends UserResource {
@@ -157,9 +157,8 @@ public class OpenAcdSkillsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-
             try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
                 skill = m_openAcdContext.getSkillById(idInt);
             }
             catch (Exception exception) {
@@ -173,7 +172,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 m_openAcdContext.saveSkill(skill);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update skill failed");
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill failed");
                 return;                                
             }
             
@@ -189,7 +188,7 @@ public class OpenAcdSkillsResource extends UserResource {
             m_openAcdContext.saveSkill(skill);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update skill failed");
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill failed");
             return;                                
         }
         
@@ -208,9 +207,8 @@ public class OpenAcdSkillsResource extends UserResource {
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-
             try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
                 skill = m_openAcdContext.getSkillById(idInt);
             }
             catch (Exception exception) {
@@ -424,36 +422,6 @@ public class OpenAcdSkillsResource extends UserResource {
 
         public List<OpenAcdSkillRestInfoFull> getSkills() {
             return m_skills;
-        }
-    }
-
-    static class MetadataRestInfo {
-        private final int m_totalResults;
-        private final int m_currentPage;
-        private final int m_totalPages;
-        private final int m_resultsPerPage;
-
-        public MetadataRestInfo(PaginationInfo paginationInfo) {
-            m_totalResults = paginationInfo.totalResults;
-            m_currentPage = paginationInfo.pageNumber;
-            m_totalPages = paginationInfo.totalPages;
-            m_resultsPerPage = paginationInfo.resultsPerPage;
-        }
-
-        public int getTotalResults() {
-            return m_totalResults;
-        }
-
-        public int getCurrentPage() {
-            return m_currentPage;
-        }
-
-        public int getTotalPages() {
-            return m_totalPages;
-        }
-
-        public int getResultsPerPage() {
-            return m_resultsPerPage;
         }
     }
 

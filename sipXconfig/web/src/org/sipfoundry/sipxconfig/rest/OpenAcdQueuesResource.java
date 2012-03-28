@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Set;
 
+import org.jfree.chart.axis.QuarterDateFormat;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
@@ -50,6 +51,8 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
 
@@ -114,12 +117,17 @@ public class OpenAcdQueuesResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdQueueRestInfo queueRestInfo;
+        OpenAcdQueueRestInfoFull queueRestInfo;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            queueRestInfo = createQueueRestInfo(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                queueRestInfo = createQueueRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+            }
 
             // return representation
             return new OpenAcdQueueRepresentation(variant.getMediaType(), queueRestInfo);
@@ -128,7 +136,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
         // if not single, process request for list
         List<OpenAcdQueue> queues = m_openAcdContext.getQueues();
-        List<OpenAcdQueueRestInfo> queuesRestInfo = new ArrayList<OpenAcdQueueRestInfo>();
+        List<OpenAcdQueueRestInfoFull> queuesRestInfo = new ArrayList<OpenAcdQueueRestInfoFull>();
         Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
@@ -152,28 +160,49 @@ public class OpenAcdQueuesResource extends UserResource {
     public void storeRepresentation(Representation entity) throws ResourceException {
         // get from request body
         OpenAcdQueueRepresentation representation = new OpenAcdQueueRepresentation(entity);
-        OpenAcdQueueRestInfo queueRestInfo = representation.getObject();
+        OpenAcdQueueRestInfoFull queueRestInfo = representation.getObject();
         OpenAcdQueue queue;
 
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            queue = m_openAcdContext.getQueueById(idInt);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                queue = m_openAcdContext.getQueueById(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
 
             // copy values over to existing
-            updateQueue(queue, queueRestInfo);
-            m_openAcdContext.saveQueue(queue);
+            try {
+                updateQueue(queue, queueRestInfo);
+                m_openAcdContext.saveQueue(queue);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue failed");
+                return;                                
+            }
+
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, queue.getId(), "Updated Queue");
 
             return;
         }
 
 
         // otherwise add new
-        queue = createQueue(queueRestInfo);
-        m_openAcdContext.saveQueue(queue);
-        getResponse().setStatus(Status.SUCCESS_CREATED);
+        try {
+            queue = createQueue(queueRestInfo);
+            m_openAcdContext.saveQueue(queue);
+        }
+        catch (Exception exception) {
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Queue failed");
+            return;                                
+        }
+
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, queue.getId(), "Created Queue");        
     }
 
 
@@ -183,29 +212,38 @@ public class OpenAcdQueuesResource extends UserResource {
     // deleteQueue() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
-        Collection<Integer> queueIds = new HashSet<Integer>();
+        OpenAcdQueue queue;
 
         // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
-            int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+            try {
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                queue = m_openAcdContext.getQueueById(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return;                
+            }
 
-            queueIds.add(idInt);
-            m_openAcdContext.deleteQueue(m_openAcdContext.getQueueById(idInt));
+            m_openAcdContext.deleteQueue(queue);
+
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, queue.getId(), "Deleted Queue");
 
             return;
         }
 
         // no id string
-        getResponse().setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
+
 
     // Helper functions
     // ----------------
 
-    private OpenAcdQueueRestInfo createQueueRestInfo(int id) throws ResourceException {
-        OpenAcdQueueRestInfo queueRestInfo;
+    private OpenAcdQueueRestInfoFull createQueueRestInfo(int id) throws ResourceException {
+        OpenAcdQueueRestInfoFull queueRestInfo;
         List<OpenAcdSkillRestInfo> skillsRestInfo;
         List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo;
 
@@ -213,7 +251,7 @@ public class OpenAcdQueuesResource extends UserResource {
             OpenAcdQueue queue = m_openAcdContext.getQueueById(id);
             skillsRestInfo = createSkillsRestInfo(queue);
             agentGroupsRestInfo = createAgentGroupsRestInfo(queue); 
-            queueRestInfo = new OpenAcdQueueRestInfo(queue, skillsRestInfo, agentGroupsRestInfo);
+            queueRestInfo = new OpenAcdQueueRestInfoFull(queue, skillsRestInfo, agentGroupsRestInfo);
         }
         catch (Exception exception) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
@@ -253,9 +291,9 @@ public class OpenAcdQueuesResource extends UserResource {
 
         return agentGroupsRestInfo;
     }
-    
-    private MetadataRestInfo addQueues(List<OpenAcdQueueRestInfo> queuesRestInfo, List<OpenAcdQueue> queues) {
-        OpenAcdQueueRestInfo queueRestInfo;
+
+    private MetadataRestInfo addQueues(List<OpenAcdQueueRestInfoFull> queuesRestInfo, List<OpenAcdQueue> queues) {
+        OpenAcdQueueRestInfoFull queueRestInfo;
         List<OpenAcdSkillRestInfo> skillsRestInfo;
         List<OpenAcdAgentGroupRestInfo> agentGroupRestInfo;
 
@@ -268,7 +306,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
             skillsRestInfo = createSkillsRestInfo(queue);
             agentGroupRestInfo = createAgentGroupsRestInfo(queue); 
-            queueRestInfo = new OpenAcdQueueRestInfo(queue, skillsRestInfo, agentGroupRestInfo);
+            queueRestInfo = new OpenAcdQueueRestInfoFull(queue, skillsRestInfo, agentGroupRestInfo);
             queuesRestInfo.add(queueRestInfo);
         }
 
@@ -329,7 +367,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
                 });
                 break;
-                
+
             case DESCRIPTION:
                 Collections.sort(queues, new Comparator(){
 
@@ -345,7 +383,7 @@ public class OpenAcdQueuesResource extends UserResource {
         }
     }
 
-    private void updateQueue(OpenAcdQueue queue, OpenAcdQueueRestInfo queueRestInfo) throws ResourceException {
+    private void updateQueue(OpenAcdQueue queue, OpenAcdQueueRestInfoFull queueRestInfo) throws ResourceException {
         String tempString;
         OpenAcdQueueGroup queueGroup;
 
@@ -355,29 +393,29 @@ public class OpenAcdQueuesResource extends UserResource {
             queue.setName(tempString);
         }
         queueGroup = getQueueGroup(queueRestInfo);
-        
+
         queue.setGroup(queueGroup);
         queue.setDescription(queueRestInfo.getDescription());
     }
 
-    private OpenAcdQueue createQueue(OpenAcdQueueRestInfo queueRestInfo) throws ResourceException {
+    private OpenAcdQueue createQueue(OpenAcdQueueRestInfoFull queueRestInfo) throws ResourceException {
         OpenAcdQueue queue = new OpenAcdQueue();
         OpenAcdQueueGroup queueGroup;
 
         // copy fields from rest info
         queue.setName(queueRestInfo.getName());
         queueGroup = getQueueGroup(queueRestInfo);
-        
+
         queue.setGroup(queueGroup);
         queue.setDescription(queueRestInfo.getDescription());
 
         return queue;
     }
 
-    private OpenAcdQueueGroup getQueueGroup(OpenAcdQueueRestInfo queueRestInfo) throws ResourceException {
+    private OpenAcdQueueGroup getQueueGroup(OpenAcdQueueRestInfoFull queueRestInfo) throws ResourceException {
         OpenAcdQueueGroup queueGroup;
         int groupId = 0;
-        
+
         try {
             groupId = queueRestInfo.getId();
             queueGroup = m_openAcdContext.getQueueGroupById(groupId);
@@ -385,10 +423,11 @@ public class OpenAcdQueuesResource extends UserResource {
         catch (Exception exception) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "Queue Group ID " + groupId + " not found.");
         }
-        
+
         return queueGroup;
     }
-    
+
+
     // REST Representations
     // --------------------
 
@@ -405,15 +444,15 @@ public class OpenAcdQueuesResource extends UserResource {
         @Override
         protected void configureXStream(XStream xstream) {
             xstream.alias("openacd-queue", OpenAcdQueuesBundleRestInfo.class);
-            xstream.alias("queue", OpenAcdQueueRestInfo.class);
+            xstream.alias("queue", OpenAcdQueueRestInfoFull.class);
             xstream.alias("skill", OpenAcdSkillRestInfo.class);
             xstream.alias("agentGroup", OpenAcdAgentGroupRestInfo.class);
         }
     }
 
-    static class OpenAcdQueueRepresentation extends XStreamRepresentation<OpenAcdQueueRestInfo> {
+    static class OpenAcdQueueRepresentation extends XStreamRepresentation<OpenAcdQueueRestInfoFull> {
 
-        public OpenAcdQueueRepresentation(MediaType mediaType, OpenAcdQueueRestInfo object) {
+        public OpenAcdQueueRepresentation(MediaType mediaType, OpenAcdQueueRestInfoFull object) {
             super(mediaType, object);
         }
 
@@ -423,7 +462,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
         @Override
         protected void configureXStream(XStream xstream) {
-            xstream.alias("queue", OpenAcdQueueRestInfo.class);
+            xstream.alias("queue", OpenAcdQueueRestInfoFull.class);
             xstream.alias("skill", OpenAcdSkillRestInfo.class);
             xstream.alias("agentGroup", OpenAcdAgentGroupRestInfo.class);
         }
@@ -435,9 +474,9 @@ public class OpenAcdQueuesResource extends UserResource {
 
     static class OpenAcdQueuesBundleRestInfo {
         private final MetadataRestInfo m_metadata;
-        private final List<OpenAcdQueueRestInfo> m_queues;
+        private final List<OpenAcdQueueRestInfoFull> m_queues;
 
-        public OpenAcdQueuesBundleRestInfo(List<OpenAcdQueueRestInfo> queues, MetadataRestInfo metadata) {
+        public OpenAcdQueuesBundleRestInfo(List<OpenAcdQueueRestInfoFull> queues, MetadataRestInfo metadata) {
             m_metadata = metadata;
             m_queues = queues;
         }
@@ -446,85 +485,12 @@ public class OpenAcdQueuesResource extends UserResource {
             return m_metadata;
         }
 
-        public List<OpenAcdQueueRestInfo> getQueues() {
+        public List<OpenAcdQueueRestInfoFull> getQueues() {
             return m_queues;
         }
     }
 
-    static class MetadataRestInfo {
-        private final int m_totalResults;
-        private final int m_currentPage;
-        private final int m_totalPages;
-        private final int m_resultsPerPage;
 
-        public MetadataRestInfo(PaginationInfo paginationInfo) {
-            m_totalResults = paginationInfo.totalResults;
-            m_currentPage = paginationInfo.pageNumber;
-            m_totalPages = paginationInfo.totalPages;
-            m_resultsPerPage = paginationInfo.resultsPerPage;
-        }
-
-        public int getTotalResults() {
-            return m_totalResults;
-        }
-
-        public int getCurrentPage() {
-            return m_currentPage;
-        }
-
-        public int getTotalPages() {
-            return m_totalPages;
-        }
-
-        public int getResultsPerPage() {
-            return m_resultsPerPage;
-        }
-    }
-
-    static class OpenAcdQueueRestInfo {
-        private final int m_id;
-        private final String m_name;
-        private final String m_description;
-        private final List<OpenAcdSkillRestInfo> m_skills;
-        private final List<OpenAcdAgentGroupRestInfo> m_agentGroups;
-		private final String m_queueGroup;
-
-        public OpenAcdQueueRestInfo(OpenAcdQueue queue, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups) {
-            m_id = queue.getId();
-            m_name = queue.getName();
-            m_description = queue.getDescription();
-            m_queueGroup = queue.getQueueGroup();
-            m_skills = skills; 
-            m_agentGroups = agentGroups;
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-        
-        public String getQueueGroup()
-        {
-            return m_queueGroup;
-        }
-        
-        public List<OpenAcdSkillRestInfo> getSkills() {
-            return m_skills;
-        }
-
-        public List<OpenAcdAgentGroupRestInfo> getAgentGroups() {
-            return m_agentGroups;
-        }
-    }
-
-    
     // Injected objects
     // ----------------
 

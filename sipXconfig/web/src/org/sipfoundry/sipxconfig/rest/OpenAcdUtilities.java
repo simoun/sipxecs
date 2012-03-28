@@ -21,6 +21,7 @@
 package org.sipfoundry.sipxconfig.rest;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.restlet.data.MediaType;
 import org.restlet.data.Status;
@@ -32,6 +33,7 @@ import org.restlet.resource.ResourceException;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
@@ -155,6 +157,10 @@ public class OpenAcdUtilities {
         return sortInfo;
     }
 
+
+    // XML Response functions
+    // ----------------------
+
     public static void setResponse(Response response, ResponseCode code, String message) {
         try {
             DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
@@ -168,7 +174,7 @@ public class OpenAcdUtilities {
             doc.appendChild(elementResponse);
 
             setResponseHeader(doc, elementResponse, code, message);
-            
+
             // no data related to result (create function overloads to modify)
 
             response.setEntity(new DomRepresentation(MediaType.TEXT_XML, doc));
@@ -192,7 +198,7 @@ public class OpenAcdUtilities {
             doc.appendChild(elementResponse);
 
             setResponseHeader(doc, elementResponse, code, message);
-            
+
             // add data related to result
             Element elementData = doc.createElement("data");
             Element elementId = doc.createElement("id");
@@ -213,7 +219,7 @@ public class OpenAcdUtilities {
 
         response.setEntity(representation);
     }
-    
+
     public static Representation getResponseError(Response response, ResponseCode code, String message) {
         try {
             DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
@@ -227,39 +233,15 @@ public class OpenAcdUtilities {
             doc.appendChild(elementResponse);
 
             setResponseHeader(doc, elementResponse, code, message);
-            
+
             return representation; //new DomRepresentation(MediaType.TEXT_XML, doc);
 
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
-        return null;
-    }
-        
-    private static void setResponseStatus(Response response, ResponseCode code) {
-        // set response status based on code
-        switch (code) {
-        case SUCCESS_CREATED:
-            response.setStatus(Status.SUCCESS_CREATED);
-            break;
 
-        case ERROR_MISSING_INPUT:
-            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            break;
-            
-        case ERROR_BAD_INPUT:
-            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            break;
-            
-        case ERROR_WRITE_FAILED:
-            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
-            break;
-            
-        default:
-            response.setStatus(Status.SUCCESS_OK);
-        }
+        return null;
     }
 
     private static void setResponseHeader(Document doc, Element elementResponse, ResponseCode code, String message) {
@@ -273,8 +255,36 @@ public class OpenAcdUtilities {
         elementMessage.appendChild(doc.createTextNode(message));
         elementResponse.appendChild(elementMessage);        
     }
-    
-    
+
+    private static void setResponseStatus(Response response, ResponseCode code) {
+        // set response status based on code
+        switch (code) {
+        case SUCCESS_CREATED:
+            response.setStatus(Status.SUCCESS_CREATED);
+            break;
+
+        case ERROR_MISSING_INPUT:
+            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            break;
+
+        case ERROR_BAD_INPUT:
+            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            break;
+
+        case ERROR_WRITE_FAILED:
+            response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
+            break;
+
+        default:
+            response.setStatus(Status.SUCCESS_OK);
+        }
+    }
+
+    public static enum ResponseCode {
+        SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT, ERROR_WRITE_FAILED
+    }
+
+
     // Data objects
     // ------------
 
@@ -294,13 +304,39 @@ public class OpenAcdUtilities {
         String sortField = "";
     }
 
-    public static enum ResponseCode {
-        SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT, ERROR_WRITE_FAILED
-    }
-    
-    
-    // Common Rest Info objects (may be re-defined within Resource to include different fields
+
+    // Common Rest Info objects
     // ------------------------
+
+    static class MetadataRestInfo {
+        private final int m_totalResults;
+        private final int m_currentPage;
+        private final int m_totalPages;
+        private final int m_resultsPerPage;
+
+        public MetadataRestInfo(PaginationInfo paginationInfo) {
+            m_totalResults = paginationInfo.totalResults;
+            m_currentPage = paginationInfo.pageNumber;
+            m_totalPages = paginationInfo.totalPages;
+            m_resultsPerPage = paginationInfo.resultsPerPage;
+        }
+
+        public int getTotalResults() {
+            return m_totalResults;
+        }
+
+        public int getCurrentPage() {
+            return m_currentPage;
+        }
+
+        public int getTotalPages() {
+            return m_totalPages;
+        }
+
+        public int getResultsPerPage() {
+            return m_resultsPerPage;
+        }
+    }
     
     static class OpenAcdSkillRestInfo {
         private final int m_id;
@@ -405,6 +441,25 @@ public class OpenAcdUtilities {
         }
     }
     
+    static class OpenAcdQueueRestInfoFull extends OpenAcdQueueRestInfo {
+        private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdAgentGroupRestInfo> m_agentGroups;
+
+        public OpenAcdQueueRestInfoFull(OpenAcdQueue queue, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups) {
+            super(queue);
+            m_skills = skills; 
+            m_agentGroups = agentGroups;
+        }
+
+        public List<OpenAcdSkillRestInfo> getSkills() {
+            return m_skills;
+        }
+
+        public List<OpenAcdAgentGroupRestInfo> getAgentGroups() {
+            return m_agentGroups;
+        }
+    }
+
     static class OpenAcdClientRestInfo {
         private final int m_id;
         private final String m_name;
@@ -434,7 +489,7 @@ public class OpenAcdUtilities {
             return m_identity;
         }
     }
-    
+
     static class OpenAcdAgentGroupRestInfo {
         private final int m_id;
         private final String m_name;
@@ -456,6 +511,68 @@ public class OpenAcdUtilities {
 
         public String getDescription() {
             return m_description;
+        }
+    }
+
+    static class OpenAcdAgentGroupRestInfoFull extends OpenAcdAgentGroupRestInfo {
+        private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdQueueRestInfo> m_queues;
+        private final List<OpenAcdClientRestInfo> m_clients;
+
+        public OpenAcdAgentGroupRestInfoFull(OpenAcdAgentGroup agentGroup, List<OpenAcdSkillRestInfo> skills, 
+                List<OpenAcdQueueRestInfo> queues, List<OpenAcdClientRestInfo> clients) {
+            super(agentGroup);
+            m_skills = skills;
+            m_queues = queues;
+            m_clients = clients;
+        }
+
+        public List<OpenAcdSkillRestInfo> getSkills() {
+            return m_skills;
+        }
+
+        public List<OpenAcdQueueRestInfo> getQueues() {
+            return m_queues;
+        }
+        
+        public List<OpenAcdClientRestInfo> getClients() {
+            return m_clients;
+        }
+    }
+
+    static class OpenAcdQueueGroupRestInfoFull {
+        private final String m_name;
+        private final int m_id;
+        private final String m_description;
+        private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdAgentGroupRestInfo> m_agentGroups;
+
+        public OpenAcdQueueGroupRestInfoFull(OpenAcdQueueGroup queueGroup, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups) {
+            m_name = queueGroup.getName();
+            m_id = queueGroup.getId();
+            m_description = queueGroup.getDescription();
+            m_skills = skills;
+            m_agentGroups = agentGroups;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public List<OpenAcdSkillRestInfo> getSkills() {
+            return m_skills;
+        }
+
+        public List<OpenAcdAgentGroupRestInfo> getAgentGroups() {
+            return m_agentGroups;
         }
     }
 
