@@ -178,7 +178,7 @@ public class OpenAcdClientsResource extends UserResource {
             }
 
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, client.getId(), "Updated Client");
-            
+
             return;
         }
 
@@ -192,7 +192,7 @@ public class OpenAcdClientsResource extends UserResource {
             OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Client failed");
             return;                                
         }
-        
+
         OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, client.getId(), "Created Client");        
     }
 
@@ -227,6 +227,7 @@ public class OpenAcdClientsResource extends UserResource {
         // no id string
         OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
+
 
     // Helper functions
     // ----------------
