@@ -426,7 +426,8 @@ public class OpenAcdAgentsResource extends UserResource {
         agent.setGroup(agentGroup);
 
         agent.setSecurity(agentRestInfo.getSecurity());
-
+        agent.getUser().setPintoken(agentRestInfo.getPassword());
+        
         agent.getSkills().clear();
 
         OpenAcdSkill skill;

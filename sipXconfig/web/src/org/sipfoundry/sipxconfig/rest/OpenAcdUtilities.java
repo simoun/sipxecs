@@ -617,6 +617,7 @@ public class OpenAcdUtilities {
         private final int m_groupId;
         private final String m_groupName;
         private final String m_security;
+        private final String m_password;
         private final List<OpenAcdSkillRestInfo> m_skills;
         private final List<OpenAcdQueueRestInfo> m_queues;
         private final List<OpenAcdClientRestInfo> m_clients;
@@ -630,6 +631,7 @@ public class OpenAcdUtilities {
             m_groupId = agent.getGroup().getId();
             m_groupName = agent.getGroup().getName();
             m_security = agent.getSecurity();
+            m_password = "";  // only used on updates, not rest get
             m_skills = skills;
             m_queues = queues;
             m_clients = clients;            
@@ -665,6 +667,10 @@ public class OpenAcdUtilities {
 
         public String getSecurity() {
             return m_security;
+        }
+
+        public String getPassword() {
+            return m_password;
         }
 
         public List<OpenAcdSkillRestInfo> getSkills() {
