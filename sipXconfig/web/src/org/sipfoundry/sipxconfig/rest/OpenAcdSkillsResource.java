@@ -54,7 +54,7 @@ public class OpenAcdSkillsResource extends UserResource {
     // use to define all possible sort fields
     private enum SortField
     {
-        NAME, DESCRIPTION, NONE;
+        NAME, DESCRIPTION, ATOM, NONE;
 
         public static SortField toSortField(String fieldString)
         {
@@ -295,6 +295,19 @@ public class OpenAcdSkillsResource extends UserResource {
 
                 });
                 break;
+
+
+            case ATOM:
+                Collections.sort(skills, new Comparator(){
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
+                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
+                        return skill1.getAtom().compareToIgnoreCase(skill2.getAtom());
+                    }
+
+                });
+                break;
             }
         }
         else {
@@ -319,6 +332,18 @@ public class OpenAcdSkillsResource extends UserResource {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
                         OpenAcdSkill skill2 = (OpenAcdSkill) object2;
                         return skill2.getDescription().compareToIgnoreCase(skill1.getDescription());
+                    }
+
+                });
+                break;
+
+            case ATOM:
+                Collections.sort(skills, new Comparator(){
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
+                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
+                        return skill2.getAtom().compareToIgnoreCase(skill1.getAtom());
                     }
 
                 });
