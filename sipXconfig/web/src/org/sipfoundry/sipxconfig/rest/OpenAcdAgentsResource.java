@@ -426,7 +426,11 @@ public class OpenAcdAgentsResource extends UserResource {
         agent.setGroup(agentGroup);
 
         agent.setSecurity(agentRestInfo.getSecurity());
-        agent.getUser().setPintoken(agentRestInfo.getPassword());
+        
+        // only update password if it is not empty (since caller cannot obtain password to pass back for updating)
+        if (!agentRestInfo.getPassword().isEmpty()) {
+            agent.getUser().setPintoken(agentRestInfo.getPassword());
+        }
         
         agent.getSkills().clear();
 
