@@ -30,6 +30,7 @@ import org.restlet.data.Response;
 import org.restlet.resource.Representation;
 import org.restlet.resource.DomRepresentation;
 import org.restlet.resource.ResourceException;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdAgent;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
@@ -337,7 +338,7 @@ public class OpenAcdUtilities {
             return m_resultsPerPage;
         }
     }
-    
+
     static class OpenAcdSkillRestInfo {
         private final int m_id;
         private final String m_name;
@@ -440,7 +441,7 @@ public class OpenAcdUtilities {
             return m_groupName;
         }
     }
-    
+
     static class OpenAcdQueueRestInfoFull extends OpenAcdQueueRestInfo {
         private final List<OpenAcdSkillRestInfo> m_skills;
         private final List<OpenAcdAgentGroupRestInfo> m_agentGroups;
@@ -534,7 +535,7 @@ public class OpenAcdUtilities {
         public List<OpenAcdQueueRestInfo> getQueues() {
             return m_queues;
         }
-        
+
         public List<OpenAcdClientRestInfo> getClients() {
             return m_clients;
         }
@@ -603,6 +604,79 @@ public class OpenAcdUtilities {
 
         public int getBias() {
             return m_bias;
+        }
+    }
+
+    static class OpenAcdAgentRestInfoFull {
+
+        private final int m_id;
+        private final int m_userId;
+        private final String m_userName;
+        private final String m_firstName;
+        private final String m_lastName;
+        private final int m_groupId;
+        private final String m_groupName;
+        private final String m_security;
+        private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdQueueRestInfo> m_queues;
+        private final List<OpenAcdClientRestInfo> m_clients;
+
+        public OpenAcdAgentRestInfoFull(OpenAcdAgent agent, List<OpenAcdSkillRestInfo> skills, List<OpenAcdQueueRestInfo> queues, List<OpenAcdClientRestInfo> clients) {
+            m_id = agent.getId();
+            m_firstName = agent.getFirstName();
+            m_lastName = agent.getLastName();
+            m_userId = agent.getUser().getId();
+            m_userName = agent.getUser().getName();
+            m_groupId = agent.getGroup().getId();
+            m_groupName = agent.getGroup().getName();
+            m_security = agent.getSecurity();
+            m_skills = skills;
+            m_queues = queues;
+            m_clients = clients;            
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getFirstName() {
+            return m_firstName;
+        }
+
+        public String getLastName() {
+            return m_lastName;
+        }
+
+        public int getUserId() {
+            return m_userId;
+        }
+
+        public String getUserName() {
+            return m_userName;
+        }
+
+        public int getGroupId() {
+            return m_groupId;
+        }
+
+        public String getGroupName() {
+            return m_groupName;
+        }
+
+        public String getSecurity() {
+            return m_security;
+        }
+
+        public List<OpenAcdSkillRestInfo> getSkills() {
+            return m_skills;
+        }
+
+        public List<OpenAcdQueueRestInfo> getQueues() {
+            return m_queues;
+        }
+
+        public List<OpenAcdClientRestInfo> getClients() {
+            return m_clients;
         }
     }
 

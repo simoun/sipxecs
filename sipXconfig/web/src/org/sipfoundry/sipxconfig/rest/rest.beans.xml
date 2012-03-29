@@ -336,4 +336,20 @@
   </bean>
   <alias name="openAcdQueueResource" alias="/openacd-queue/{id}" />
 
+  <bean id="openAcdAgentsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdAgentsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdAgentsResource" alias="/openacd-agent" />
+
+  <bean id="openAcdAgentResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdAgentsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdAgentResource" alias="/openacd-agent/{id}" />
+
 </beans>
