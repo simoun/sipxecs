@@ -35,7 +35,6 @@ import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
 import org.restlet.data.Form;
-import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
@@ -199,7 +198,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
             OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Agent Group failed");
             return;                                
         }
-        
+
         OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, agentGroup.getId(), "Created Agent Group");        
     }
 
@@ -276,6 +275,28 @@ public class OpenAcdAgentGroupsResource extends UserResource {
             skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
             agentGroup.addSkill(skill);
         }
+
+        // remove all current queues
+        agentGroup.getQueues().clear();
+
+        // set queues
+        OpenAcdQueue queue;
+        List<OpenAcdQueueRestInfo> queuesRestInfo = agentGroupRestInfo.getQueues();
+        for (OpenAcdQueueRestInfo queueRestInfo : queuesRestInfo) {
+            queue = m_openAcdContext.getQueueById(queueRestInfo.getId());
+            agentGroup.addQueue(queue);
+        }
+
+        // remove all current clients
+        agentGroup.getClients().clear();
+
+        // set clients
+        OpenAcdClient client;
+        List<OpenAcdClientRestInfo> clientsRestInfo = agentGroupRestInfo.getClients();
+        for (OpenAcdClientRestInfo clientRestInfo : clientsRestInfo) {
+            client = m_openAcdContext.getClientById(clientRestInfo.getId());
+            agentGroup.addClient(client);
+        }
     }
 
     private MetadataRestInfo addAgentGroups(List<OpenAcdAgentGroupRestInfoFull> agentGroupsRestInfo, List<OpenAcdAgentGroup> agentGroups) {
@@ -349,7 +370,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         return clientsRestInfo;
     }
-    
+
     private void sortGroups(List<OpenAcdAgentGroup> agentGroups) {
         // sort groups if requested
         SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
@@ -503,7 +524,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         }
     }
 
-    
+
     // Injected objects
     // ----------------
 
