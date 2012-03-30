@@ -127,7 +127,6 @@ public class OpenAcdSkillsResource extends UserResource {
         // if not single, process request for all
         List<OpenAcdSkill> skills = m_openAcdContext.getSkills();
         List<OpenAcdSkillRestInfoFull> skillsRestInfo = new ArrayList<OpenAcdSkillRestInfoFull>();
-        Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
         // sort groups if specified

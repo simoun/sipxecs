@@ -134,7 +134,6 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         // if not single, process request for all
         List<OpenAcdAgentGroup> agentGroups = m_openAcdContext.getAgentGroups();
         List<OpenAcdAgentGroupRestInfoFull> agentGroupsRestInfo = new ArrayList<OpenAcdAgentGroupRestInfoFull>();
-        Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
         // sort if specified

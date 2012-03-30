@@ -128,7 +128,6 @@ public class OpenAcdClientsResource extends UserResource {
         // if not single, process request for list
         List<OpenAcdClient> clients = m_openAcdContext.getClients();
         List<OpenAcdClientRestInfo> clientsRestInfo = new ArrayList<OpenAcdClientRestInfo>();
-        Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
         // sort groups if specified

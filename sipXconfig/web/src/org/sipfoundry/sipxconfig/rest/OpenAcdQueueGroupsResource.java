@@ -133,7 +133,6 @@ public class OpenAcdQueueGroupsResource extends UserResource {
         // if not single, process request for all
         List<OpenAcdQueueGroup> queueGroups = m_openAcdContext.getQueueGroups();
         List<OpenAcdQueueGroupRestInfoFull> queueGroupsRestInfo = new ArrayList<OpenAcdQueueGroupRestInfoFull>();
-        Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
         // sort if specified

@@ -130,7 +130,6 @@ public class OpenAcdReleaseCodesResource extends UserResource {
         // if not single, process request for list
         List<OpenAcdReleaseCode> releaseCodes = m_openAcdContext.getReleaseCodes();
         List<OpenAcdReleaseCodeRestInfo> releaseCodesRestInfo = new ArrayList<OpenAcdReleaseCodeRestInfo>();
-        Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
         // sort groups if specified

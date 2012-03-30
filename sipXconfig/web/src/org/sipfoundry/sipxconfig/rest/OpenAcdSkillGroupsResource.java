@@ -130,7 +130,6 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         // if not single, process request for list
         List<OpenAcdSkillGroup> skillGroups = m_openAcdContext.getSkillGroups();
         List<OpenAcdSkillGroupRestInfo> skillGroupsRestInfo = new ArrayList<OpenAcdSkillGroupRestInfo>();
-        Form form = getRequest().getResourceRef().getQueryAsForm();
         MetadataRestInfo metadataRestInfo;
 
         // sort groups if specified
