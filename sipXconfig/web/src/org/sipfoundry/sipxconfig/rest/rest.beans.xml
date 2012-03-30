@@ -352,4 +352,20 @@
   </bean>
   <alias name="openAcdAgentResource" alias="/openacd-agent/{id}" />
 
+  <bean id="openAcdLinesResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdLinesResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdLinesResource" alias="/openacd-line" />
+
+  <bean id="openAcdLineResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdLinesResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdLineResource" alias="/openacd-line/{id}" />
+
 </beans>
