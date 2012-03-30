@@ -113,8 +113,8 @@ public class OpenAcdLinesResource extends UserResource {
     }
 
    
-    // GET - Retrieve all and single Line
-    // -----------------------------------
+    // GET - Retrieve all and single item
+    // ----------------------------------
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
@@ -155,8 +155,8 @@ public class OpenAcdLinesResource extends UserResource {
     }
 
 
-    // PUT - Update or Add single Skill
-    // --------------------------------
+    // PUT - Update or Add single item
+    // -------------------------------
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
@@ -208,10 +208,9 @@ public class OpenAcdLinesResource extends UserResource {
     }
 
 
-    // DELETE - Delete single Skill
-    // ----------------------------
+    // DELETE - Delete single item
+    // ---------------------------
 
-    // deleteLine() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
         OpenAcdLine line;
@@ -229,10 +228,10 @@ public class OpenAcdLinesResource extends UserResource {
                 return;                
             }
 
-            // need delete
+            // deleteLine() not available from openAcdContext
             m_openAcdContext.getLines().remove(line);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, line.getId(), "Deleted Skill");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, line.getId(), "Deleted Line");
             
             return;
         }
@@ -245,7 +244,7 @@ public class OpenAcdLinesResource extends UserResource {
     // Helper functions
     // ----------------
 
-    private OpenAcdLine getLineById(int id) {
+    private OpenAcdLine getLineById(int id) throws ResourceException {
         OpenAcdLine line = null;
         
         for (OpenAcdLine currentLine : m_openAcdContext.getLines()) {
@@ -254,6 +253,11 @@ public class OpenAcdLinesResource extends UserResource {
                 line = currentLine;
                 break;
             }
+        }
+        
+        // duplicate behavior of standard OpenAcdContext.getXById() functions
+        if (line == null) {
+            throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "No row with the given identifier exists: " + id);
         }
         
         return line;
