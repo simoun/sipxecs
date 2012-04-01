@@ -282,7 +282,7 @@ public class OpenAcdUtilities {
     }
 
     public static enum ResponseCode {
-        SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT, ERROR_WRITE_FAILED
+        SUCCESS, SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT, ERROR_WRITE_FAILED
     }
 
 
@@ -303,6 +303,12 @@ public class OpenAcdUtilities {
         Boolean sort = false;
         Boolean directionForward = true;
         String sortField = "";
+    }
+
+    public static class ValidationInfo {
+        Boolean valid = true;
+        String message = "Valid";
+        ResponseCode responseCode = ResponseCode.SUCCESS;
     }
 
 

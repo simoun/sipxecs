@@ -45,9 +45,11 @@ import com.thoughtworks.xstream.XStream;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdReleaseCodeRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 
 public class OpenAcdReleaseCodesResource extends UserResource {
 
@@ -155,6 +157,15 @@ public class OpenAcdReleaseCodesResource extends UserResource {
         OpenAcdReleaseCodeRestInfo releaseCodeRestInfo = representation.getObject();
         OpenAcdReleaseCode releaseCode;
 
+        // validate input for update or create
+        ValidationInfo validationInfo = validate(releaseCodeRestInfo);
+        
+        if (!validationInfo.valid) {
+            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            return;                            
+        }
+
+        
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -233,6 +244,26 @@ public class OpenAcdReleaseCodesResource extends UserResource {
     // Helper functions
     // ----------------
 
+    // basic interface level validation of data provided through REST interface for creation or update
+    // may also contain clean up of input data
+    // may create another validation function if different rules needed for update v. create
+    private ValidationInfo validate(OpenAcdReleaseCodeRestInfo restInfo) {
+        ValidationInfo validationInfo = new ValidationInfo();
+     
+        // release code object will allow store of bias other value than -1, 0, or 1,
+        // but then current SipXconfig administrative UI will display nothing for bias name.
+        int bias = restInfo.getBias();
+        if ((bias < -1) || (bias >1)) {
+            validationInfo.valid = false;
+            validationInfo.message = "Validation Error: Bias must be be -1, 0 or 1";
+            validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            
+            return validationInfo;
+        }
+        
+        return validationInfo;
+    }
+    
     private OpenAcdReleaseCodeRestInfo createReleaseCodeRestInfo(int id) throws ResourceException {
         OpenAcdReleaseCodeRestInfo releaseCodeRestInfo;
 
