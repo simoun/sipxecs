@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
 
+import org.sipfoundry.sipxconfig.freeswitch.FreeswitchCondition;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdLine;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
@@ -181,7 +182,7 @@ public class OpenAcdLinesResource extends UserResource {
             // copy values over to existing
             try {
                 updateLine(line, lineRestInfo);
-                // line in set should already be modified since got pointer, if not need a getLines().remove and add
+                saveLine(line);
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Line failed");
@@ -261,6 +262,11 @@ public class OpenAcdLinesResource extends UserResource {
         }
         
         return line;
+    }
+    
+    private void saveLine(OpenAcdLine line) throws ResourceException {
+        m_openAcdContext.getLines().remove(getLineById(line.getId()));
+        m_openAcdContext.getLines().add(line);
     }
     
     private OpenAcdLineRestInfo createLineRestInfo(int id) throws ResourceException {
@@ -371,6 +377,9 @@ public class OpenAcdLinesResource extends UserResource {
 
         //line.setExtension(lineRestInfo.getExtension());
         //line.setRegex(lineRestInfo.getRegex());
+        line.getNumberCondition().setExpression(lineRestInfo.getExtension());
+        line.getNumberCondition().setRegex(lineRestInfo.getRegex());
+        
         line.setDid(lineRestInfo.getDIDNumber());
         line.setDescription(lineRestInfo.getDescription());
         line.setAlias(lineRestInfo.getAlias());
@@ -381,8 +390,12 @@ public class OpenAcdLinesResource extends UserResource {
 
         // copy fields from rest info
         line.setName(lineRestInfo.getName());
+
         //line.setExtension(lineRestInfo.getExtension());
         //line.setRegex(lineRestInfo.getRegex());
+        line.getNumberCondition().setExpression(lineRestInfo.getExtension());
+        line.getNumberCondition().setRegex(lineRestInfo.getRegex());        
+        
         line.setDid(lineRestInfo.getDIDNumber());
         line.setDescription(lineRestInfo.getDescription());
         line.setAlias(lineRestInfo.getAlias());
@@ -450,19 +463,19 @@ public class OpenAcdLinesResource extends UserResource {
     static class OpenAcdLineRestInfo {
         private final int m_id;
         private final String m_name;
+        private final String m_description;
 		private final String m_extension;
 		private final boolean m_regex;
 		private final String m_didnumber;
-        private final String m_description;
 		private final String m_alias;
 
         public OpenAcdLineRestInfo(OpenAcdLine line) {
             m_id = line.getId();
             m_name = line.getName();
+            m_description = line.getDescription();
             m_extension = line.getExtension();
             m_regex = line.getRegex();
             m_didnumber = line.getDid();
-            m_description = line.getDescription();
             m_alias = line.getAlias();
         }
 
@@ -472,6 +485,10 @@ public class OpenAcdLinesResource extends UserResource {
 
         public String getName() {
             return m_name;
+        }
+        
+        public String getDescription() {
+            return m_description;
         }
         
         public String getExtension(){
@@ -486,13 +503,11 @@ public class OpenAcdLinesResource extends UserResource {
         	return m_didnumber;
         }
         
-        public String getDescription() {
-            return m_description;
-        }
-        
         public String getAlias() {
         	return m_alias;
         }
+        
+        // need queue, client, allow voicemail, answer supervision mode, welcome message, options (list)
     }
 
 
