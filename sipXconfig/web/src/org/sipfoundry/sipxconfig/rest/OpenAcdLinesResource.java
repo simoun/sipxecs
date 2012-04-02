@@ -1,7 +1,7 @@
 /*
  *
  *  OpenAcdLinesResource.java - A Restlet to read Skill data from OpenACD within SipXecs
- *  Copyright (C) 2012 PATLive, I. Wesson
+ *  Copyright (C) 2012 PATLive, I. Wesson, D. Chang
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -51,7 +51,7 @@ import com.thoughtworks.xstream.XStream;
 // --------------------------
 // Lines is inconsistent with other OpenACD objects.
 // OpenAcdContext does not contain functions for getLineById(), saveLine() or removeLine().
-// A Set of Lines is obtained using getLines() and only set operations are available  
+// It appears the OpenAcdExtension object is used for lines, and it has all the above functions   
 // so this API will appear slightly different than other APIs, although attempts have been made to preserve general structure.
 public class OpenAcdLinesResource extends UserResource {
     
@@ -175,7 +175,7 @@ public class OpenAcdLinesResource extends UserResource {
         if (idString != null) {
             try {
                 int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                line = getLineById(idInt);
+                line = (OpenAcdLine) m_openAcdContext.getExtensionById(idInt);
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
@@ -198,7 +198,7 @@ public class OpenAcdLinesResource extends UserResource {
             return;
         }
 
-
+        
         // otherwise add new
         try {
             line = createLine(lineRestInfo);
@@ -226,7 +226,7 @@ public class OpenAcdLinesResource extends UserResource {
         if (idString != null) {
             try {
                 int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                line = getLineById(idInt);
+                line = (OpenAcdLine) m_openAcdContext.getExtensionById(idInt);
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
@@ -258,29 +258,10 @@ public class OpenAcdLinesResource extends UserResource {
         return validationInfo;
     }
 
-    private OpenAcdLine getLineById(int id) throws ResourceException {
-        OpenAcdLine line = null;
-        
-        for (OpenAcdLine currentLine : m_openAcdContext.getLines()) {
-            if(currentLine.getId() == id)
-            {
-                line = currentLine;
-                break;
-            }
-        }
-        
-        // duplicate behavior of standard OpenAcdContext.getXById() functions
-        if (line == null) {
-            throw new ResourceException(Status.SERVER_ERROR_INTERNAL, "No row with the given identifier exists: " + id);
-        }
-        
-        return line;
-    }
-        
     private OpenAcdLineRestInfo createLineRestInfo(int id) throws ResourceException {
         OpenAcdLineRestInfo lineRestInfo;
 
-        OpenAcdLine line = getLineById(id);
+        OpenAcdLine line = (OpenAcdLine) m_openAcdContext.getExtensionById(id);
         lineRestInfo = new OpenAcdLineRestInfo(line);
 
         return lineRestInfo;
@@ -393,8 +374,10 @@ public class OpenAcdLinesResource extends UserResource {
     }
 
     private OpenAcdLine createLine(OpenAcdLineRestInfo lineRestInfo) throws ResourceException {
-        OpenAcdLine line = new OpenAcdLine();
-
+        // special steps to obtain new line (cannot just "new")
+        OpenAcdLine line = m_openAcdContext.newOpenAcdLine();
+        line.addCondition(OpenAcdLine.createLineCondition());
+        
         // copy fields from rest info
         line.setName(lineRestInfo.getName());
 
