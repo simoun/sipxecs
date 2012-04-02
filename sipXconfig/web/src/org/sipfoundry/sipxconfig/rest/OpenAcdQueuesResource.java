@@ -49,12 +49,14 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 
 public class OpenAcdQueuesResource extends UserResource {
 
@@ -162,6 +164,15 @@ public class OpenAcdQueuesResource extends UserResource {
         OpenAcdQueueRestInfoFull queueRestInfo = representation.getObject();
         OpenAcdQueue queue;
 
+        // validate input for update or create
+        ValidationInfo validationInfo = validate(queueRestInfo);
+
+        if (!validationInfo.valid) {
+            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            return;                            
+        }
+
+        
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -240,6 +251,15 @@ public class OpenAcdQueuesResource extends UserResource {
 
     // Helper functions
     // ----------------
+
+    // basic interface level validation of data provided through REST interface for creation or update
+    // may also contain clean up of input data
+    // may create another validation function if different rules needed for update v. create
+    private ValidationInfo validate(OpenAcdQueueRestInfoFull restInfo) {
+        ValidationInfo validationInfo = new ValidationInfo();
+
+        return validationInfo;
+    }
 
     private OpenAcdQueueRestInfoFull createQueueRestInfo(int id) throws ResourceException {
         OpenAcdQueueRestInfoFull queueRestInfo;

@@ -24,40 +24,41 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.LinkedHashSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.restlet.Context;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Form;
 import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.springframework.beans.factory.annotation.Required;
-import com.thoughtworks.xstream.XStream;
-
 import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.common.User;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgent;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentRestInfoFull;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.springframework.beans.factory.annotation.Required;
+
+import com.thoughtworks.xstream.XStream;
 
 
 public class OpenAcdAgentsResource extends UserResource {
@@ -94,7 +95,7 @@ public class OpenAcdAgentsResource extends UserResource {
         getVariants().add(new Variant(APPLICATION_JSON));
 
         m_coreContext = getCoreContext();
-        
+
         // pull parameters from url
         m_form = getRequest().getResourceRef().getQueryAsForm();
     }
@@ -168,6 +169,15 @@ public class OpenAcdAgentsResource extends UserResource {
         OpenAcdAgentRestInfoFull agentRestInfo = (OpenAcdAgentRestInfoFull) representation.getObject();
         OpenAcdAgent agent;
 
+        // validate input for update or create
+        ValidationInfo validationInfo = validate(agentRestInfo);
+
+        if (!validationInfo.valid) {
+            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            return;                            
+        }
+
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -240,6 +250,15 @@ public class OpenAcdAgentsResource extends UserResource {
 
     // Helper functions
     // ----------------
+
+    // basic interface level validation of data provided through REST interface for creation or update
+    // may also contain clean up of input data
+    // may create another validation function if different rules needed for update v. create
+    private ValidationInfo validate(OpenAcdAgentRestInfoFull restInfo) {
+        ValidationInfo validationInfo = new ValidationInfo();
+
+        return validationInfo;
+    }
 
     private OpenAcdAgentRestInfoFull createAgentRestInfo(int id) throws ResourceException {
         OpenAcdAgentRestInfoFull agentRestInfo;
@@ -426,12 +445,12 @@ public class OpenAcdAgentsResource extends UserResource {
         agent.setGroup(agentGroup);
 
         agent.setSecurity(agentRestInfo.getSecurity());
-        
+
         // only update password if it is not empty (since caller cannot obtain password to pass back for updating)
         if (!agentRestInfo.getPassword().isEmpty()) {
             agent.getUser().setPintoken(agentRestInfo.getPassword());
         }
-        
+
         agent.getSkills().clear();
 
         OpenAcdSkill skill;
@@ -481,7 +500,7 @@ public class OpenAcdAgentsResource extends UserResource {
         }
 
         agent.setUser(user);
-        
+
         Set<OpenAcdSkill> skills = new LinkedHashSet<OpenAcdSkill>();
         List<OpenAcdSkillRestInfo> skillsRestInfo = agentRestInfo.getSkills();
 

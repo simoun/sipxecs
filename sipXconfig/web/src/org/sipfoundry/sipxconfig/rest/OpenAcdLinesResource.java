@@ -24,33 +24,28 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.restlet.Context;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Form;
 import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdLine;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
-
-import org.sipfoundry.sipxconfig.freeswitch.FreeswitchCondition;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdLine;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeStep;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 
 // OpenAcdLines are different
 // --------------------------
@@ -122,7 +117,6 @@ public class OpenAcdLinesResource extends UserResource {
         // process request for single
         OpenAcdLineRestInfo lineRestInfo;
         String idString = (String) getRequest().getAttributes().get("id");
-
         
         if (idString != null) {
             try {
@@ -166,6 +160,15 @@ public class OpenAcdLinesResource extends UserResource {
         OpenAcdLineRestInfo lineRestInfo = representation.getObject();
         OpenAcdLine line = null;
 
+        // validate input for update or create
+        ValidationInfo validationInfo = validate(lineRestInfo);
+        
+        if (!validationInfo.valid) {
+            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            return;                            
+        }
+
+        
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -182,7 +185,8 @@ public class OpenAcdLinesResource extends UserResource {
             // copy values over to existing
             try {
                 updateLine(line, lineRestInfo);
-                saveLine(line);
+                //saveLine(line);
+                m_openAcdContext.saveExtension(line);
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Line failed");
@@ -197,8 +201,8 @@ public class OpenAcdLinesResource extends UserResource {
 
         // otherwise add new
         try {
-            // lines are created using a function without passing an object to it, so perform creation and assignment within createLine
-            createLine(lineRestInfo);
+            line = createLine(lineRestInfo);
+            m_openAcdContext.saveExtension(line);
         }
         catch (Exception exception) {
             OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Line failed");
@@ -245,6 +249,15 @@ public class OpenAcdLinesResource extends UserResource {
     // Helper functions
     // ----------------
 
+    // basic interface level validation of data provided through REST interface for creation or update
+    // may also contain clean up of input data
+    // may create another validation function if different rules needed for update v. create
+    private ValidationInfo validate(OpenAcdLineRestInfo restInfo) {
+        ValidationInfo validationInfo = new ValidationInfo();
+
+        return validationInfo;
+    }
+
     private OpenAcdLine getLineById(int id) throws ResourceException {
         OpenAcdLine line = null;
         
@@ -263,12 +276,7 @@ public class OpenAcdLinesResource extends UserResource {
         
         return line;
     }
-    
-    private void saveLine(OpenAcdLine line) throws ResourceException {
-        m_openAcdContext.getLines().remove(getLineById(line.getId()));
-        m_openAcdContext.getLines().add(line);
-    }
-    
+        
     private OpenAcdLineRestInfo createLineRestInfo(int id) throws ResourceException {
         OpenAcdLineRestInfo lineRestInfo;
 
@@ -375,8 +383,7 @@ public class OpenAcdLinesResource extends UserResource {
             line.setName(tempString);
         }
 
-        //line.setExtension(lineRestInfo.getExtension());
-        //line.setRegex(lineRestInfo.getRegex());
+        //"Expression" is the extension number, which may be a regular expression if regex is set
         line.getNumberCondition().setExpression(lineRestInfo.getExtension());
         line.getNumberCondition().setRegex(lineRestInfo.getRegex());
         
@@ -385,20 +392,21 @@ public class OpenAcdLinesResource extends UserResource {
         line.setAlias(lineRestInfo.getAlias());
     }
 
-    private void createLine(OpenAcdLineRestInfo lineRestInfo) throws ResourceException {
-        OpenAcdLine line = m_openAcdContext.newOpenAcdLine();
+    private OpenAcdLine createLine(OpenAcdLineRestInfo lineRestInfo) throws ResourceException {
+        OpenAcdLine line = new OpenAcdLine();
 
         // copy fields from rest info
         line.setName(lineRestInfo.getName());
 
-        //line.setExtension(lineRestInfo.getExtension());
-        //line.setRegex(lineRestInfo.getRegex());
+        //"Expression" is the extension number, which may be a regular expression if regex is set
         line.getNumberCondition().setExpression(lineRestInfo.getExtension());
         line.getNumberCondition().setRegex(lineRestInfo.getRegex());        
         
         line.setDid(lineRestInfo.getDIDNumber());
         line.setDescription(lineRestInfo.getDescription());
         line.setAlias(lineRestInfo.getAlias());
+        
+        return line;
     }
 
 

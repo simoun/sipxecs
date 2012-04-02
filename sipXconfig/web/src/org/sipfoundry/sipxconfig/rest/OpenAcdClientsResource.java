@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 
 public class OpenAcdClientsResource extends UserResource {
 
@@ -153,6 +154,15 @@ public class OpenAcdClientsResource extends UserResource {
         OpenAcdClientRestInfo clientRestInfo = representation.getObject();
         OpenAcdClient client;
 
+        // validate input for update or create
+        ValidationInfo validationInfo = validate(clientRestInfo);
+
+        if (!validationInfo.valid) {
+            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            return;                            
+        }
+
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -230,6 +240,15 @@ public class OpenAcdClientsResource extends UserResource {
 
     // Helper functions
     // ----------------
+
+    // basic interface level validation of data provided through REST interface for creation or update
+    // may also contain clean up of input data
+    // may create another validation function if different rules needed for update v. create
+    private ValidationInfo validate(OpenAcdClientRestInfo restInfo) {
+        ValidationInfo validationInfo = new ValidationInfo();
+
+        return validationInfo;
+    }
 
     private OpenAcdClientRestInfo createClientRestInfo(int id) throws ResourceException {
         OpenAcdClientRestInfo clientRestInfo;

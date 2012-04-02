@@ -48,6 +48,7 @@ import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 
 public class OpenAcdSkillGroupsResource extends UserResource {
 
@@ -155,6 +156,15 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         OpenAcdSkillGroupRestInfo skillGroupRestInfo = representation.getObject();
         OpenAcdSkillGroup skillGroup;
 
+        // validate input for update or create
+        ValidationInfo validationInfo = validate(skillGroupRestInfo);
+        
+        if (!validationInfo.valid) {
+            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            return;                            
+        }
+
+        
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -232,6 +242,15 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
     // Helper functions
     // ----------------
+
+    // basic interface level validation of data provided through REST interface for creation or update
+    // may also contain clean up of input data
+    // may create another validation function if different rules needed for update v. create
+    private ValidationInfo validate(OpenAcdSkillGroupRestInfo restInfo) {
+        ValidationInfo validationInfo = new ValidationInfo();
+
+        return validationInfo;
+    }
 
     private OpenAcdSkillGroupRestInfo createSkillGroupRestInfo(int id) throws ResourceException {
         OpenAcdSkillGroupRestInfo skillGroupRestInfo;

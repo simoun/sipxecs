@@ -45,6 +45,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
+import org.sipfoundry.sipxconfig.rest.OpenAcdLinesResource.OpenAcdLineRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
@@ -52,6 +53,7 @@ import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 
 public class OpenAcdAgentGroupsResource extends UserResource {
 
@@ -159,6 +161,15 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         OpenAcdAgentGroupRestInfoFull agentGroupRestInfo = representation.getObject();
         OpenAcdAgentGroup agentGroup;
 
+        // validate input for update or create
+        ValidationInfo validationInfo = validate(agentGroupRestInfo);
+
+        if (!validationInfo.valid) {
+            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            return;                            
+        }
+
+
         // if have id then update a single group
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -236,6 +247,15 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
     // Helper functions
     // ----------------
+
+    // basic interface level validation of data provided through REST interface for creation or update
+    // may also contain clean up of input data
+    // may create another validation function if different rules needed for update v. create
+    private ValidationInfo validate(OpenAcdAgentGroupRestInfoFull restInfo) {
+        ValidationInfo validationInfo = new ValidationInfo();
+
+        return validationInfo;
+    }
 
     private OpenAcdAgentGroupRestInfoFull createAgentGroupRestInfo(int id) throws ResourceException {
         OpenAcdAgentGroupRestInfoFull agentGroupRestInfo;
