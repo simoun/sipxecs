@@ -24,28 +24,30 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.restlet.Context;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Form;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.springframework.beans.factory.annotation.Required;
-import com.thoughtworks.xstream.XStream;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfoFull;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.springframework.beans.factory.annotation.Required;
+
+import com.thoughtworks.xstream.XStream;
 
 public class OpenAcdSkillsResource extends UserResource {
 
@@ -53,23 +55,21 @@ public class OpenAcdSkillsResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    private enum SortField
-    {
+    private enum SortField {
         NAME, DESCRIPTION, ATOM, NONE;
 
-        public static SortField toSortField(String fieldString)
-        {
+        public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
                 return NONE;
             }
 
             try {
                 return valueOf(fieldString.toUpperCase());
-            } 
+            }
             catch (Exception ex) {
                 return NONE;
             }
-        }   
+        }
     }
 
 
@@ -155,13 +155,13 @@ public class OpenAcdSkillsResource extends UserResource {
 
         // validate input for update or create
         ValidationInfo validationInfo = validate(skillRestInfo);
-        
+
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
-            return;                            
+            return;
         }
 
-        
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -172,7 +172,7 @@ public class OpenAcdSkillsResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             // copy values over to existing
@@ -182,9 +182,9 @@ public class OpenAcdSkillsResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill failed");
-                return;                                
+                return;
             }
-            
+
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, skill.getId(), "Updated Skill");
 
             return;
@@ -198,10 +198,10 @@ public class OpenAcdSkillsResource extends UserResource {
         }
         catch (Exception exception) {
             OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill failed");
-            return;                                
+            return;
         }
-        
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, skill.getId(), "Created Skill");        
+
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, skill.getId(), "Created Skill");
     }
 
 
@@ -222,7 +222,7 @@ public class OpenAcdSkillsResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             m_openAcdContext.deleteSkill(skill);
@@ -240,11 +240,31 @@ public class OpenAcdSkillsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    // basic interface level validation of data provided through REST interface for creation or update
+    // basic interface level validation of data provided through REST interface for creation or
+    // update
     // may also contain clean up of input data
     // may create another validation function if different rules needed for update v. create
     private ValidationInfo validate(OpenAcdSkillRestInfoFull restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
+
+        String name = restInfo.getName();
+        String atom = restInfo.getAtom();
+
+        for (int i = 0; i < name.length(); i++) {
+            if ((!Character.isLetterOrDigit(name.charAt(i)) && !(Character.getType(name.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && name.charAt(i) != '-') {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: Skill Group 'Name' must only contain letters, numbers, dashes, and underscores";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
+
+        for (int i = 0; i < atom.length(); i++) {
+            if ((!Character.isLetterOrDigit(atom.charAt(i)) && !(Character.getType(atom.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && atom.charAt(i) != '-') {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: 'Atom' must only contain letters, numbers, dashes, and underscores";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
 
         return validationInfo;
     }
@@ -291,7 +311,7 @@ public class OpenAcdSkillsResource extends UserResource {
 
             switch (sortField) {
             case NAME:
-                Collections.sort(skills, new Comparator(){
+                Collections.sort(skills, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
@@ -303,7 +323,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(skills, new Comparator(){
+                Collections.sort(skills, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
@@ -316,7 +336,7 @@ public class OpenAcdSkillsResource extends UserResource {
 
 
             case ATOM:
-                Collections.sort(skills, new Comparator(){
+                Collections.sort(skills, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
@@ -332,7 +352,7 @@ public class OpenAcdSkillsResource extends UserResource {
             // must be reverse
             switch (sortField) {
             case NAME:
-                Collections.sort(skills, new Comparator(){
+                Collections.sort(skills, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
@@ -344,7 +364,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(skills, new Comparator(){
+                Collections.sort(skills, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
@@ -356,7 +376,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 break;
 
             case ATOM:
-                Collections.sort(skills, new Comparator(){
+                Collections.sort(skills, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;

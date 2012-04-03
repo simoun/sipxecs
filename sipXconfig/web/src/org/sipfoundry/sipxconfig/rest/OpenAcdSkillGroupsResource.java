@@ -24,31 +24,33 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 
 import org.restlet.Context;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Form;
 import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.springframework.beans.factory.annotation.Required;
-import com.thoughtworks.xstream.XStream;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.springframework.beans.factory.annotation.Required;
+
+import com.thoughtworks.xstream.XStream;
 
 public class OpenAcdSkillGroupsResource extends UserResource {
 
@@ -56,23 +58,21 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    private enum SortField
-    {
+    private enum SortField {
         NAME, DESCRIPTION, NONE;
 
-        public static SortField toSortField(String fieldString)
-        {
+        public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
                 return NONE;
             }
 
             try {
                 return valueOf(fieldString.toUpperCase());
-            } 
+            }
             catch (Exception ex) {
                 return NONE;
             }
-        }   
+        }
     }
 
 
@@ -158,13 +158,13 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
         // validate input for update or create
         ValidationInfo validationInfo = validate(skillGroupRestInfo);
-        
+
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
-            return;                            
+            return;
         }
 
-        
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -175,7 +175,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             // copy values over to existing
@@ -185,7 +185,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill Group failed");
-                return;                                
+                return;
             }
 
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, skillGroup.getId(), "Updated Skill Group");
@@ -201,10 +201,10 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         }
         catch (Exception exception) {
             OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill failed");
-            return;                                
+            return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, skillGroup.getId(), "Created Skill Group");        
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, skillGroup.getId(), "Created Skill Group");
     }
 
 
@@ -214,7 +214,8 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     // deleteSkillGroup() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
-        // for some reason skill groups are deleted by providing collection of ids, not by providing skill group object
+        // for some reason skill groups are deleted by providing collection of ids, not by
+        // providing skill group object
         Collection<Integer> skillGroupIds = new HashSet<Integer>();
 
         // get id then delete single
@@ -222,12 +223,12 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);                
+                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
                 skillGroupIds.add(idInt);
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             m_openAcdContext.removeSkillGroups(skillGroupIds);
@@ -243,11 +244,22 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     // Helper functions
     // ----------------
 
-    // basic interface level validation of data provided through REST interface for creation or update
+    // basic interface level validation of data provided through REST interface for creation or
+    // update
     // may also contain clean up of input data
     // may create another validation function if different rules needed for update v. create
     private ValidationInfo validate(OpenAcdSkillGroupRestInfo restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
+
+        String name = restInfo.getName();
+
+        for (int i = 0; i < name.length(); i++) {
+            if ((!Character.isLetterOrDigit(name.charAt(i)) && !(Character.getType(name.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && name.charAt(i) != '-') {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: Skill group name must only contain letters, numbers, dashes, and underscores";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
 
         return validationInfo;
     }
@@ -299,7 +311,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
             switch (sortField) {
             case NAME:
-                Collections.sort(skillGroups, new Comparator(){
+                Collections.sort(skillGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
@@ -311,7 +323,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(skillGroups, new Comparator(){
+                Collections.sort(skillGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
@@ -327,7 +339,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
             // must be reverse
             switch (sortField) {
             case NAME:
-                Collections.sort(skillGroups, new Comparator(){
+                Collections.sort(skillGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
@@ -339,7 +351,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(skillGroups, new Comparator(){
+                Collections.sort(skillGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
