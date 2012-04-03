@@ -28,18 +28,23 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.restlet.Context;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
+import org.sipfoundry.sipxconfig.freeswitch.FreeswitchAction;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdLine;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
@@ -54,28 +59,26 @@ import com.thoughtworks.xstream.XStream;
 // It appears the OpenAcdExtension object is used for lines, and it has all the above functions   
 // so this API will appear slightly different than other APIs, although attempts have been made to preserve general structure.
 public class OpenAcdLinesResource extends UserResource {
-    
+
     private OpenAcdContext m_openAcdContext;
     private Form m_form;
 
     // use to define all possible sort fields
-    enum SortField
-    {
+    enum SortField {
         NAME, DESCRIPTION, NONE;
 
-        public static SortField toSortField(String fieldString)
-        {
+        public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
                 return NONE;
             }
 
             try {
                 return valueOf(fieldString.toUpperCase());
-            } 
+            }
             catch (Exception ex) {
                 return NONE;
             }
-        }   
+        }
     }
 
 
@@ -108,7 +111,7 @@ public class OpenAcdLinesResource extends UserResource {
         return true;
     }
 
-   
+
     // GET - Retrieve all and single item
     // ----------------------------------
 
@@ -117,7 +120,7 @@ public class OpenAcdLinesResource extends UserResource {
         // process request for single
         OpenAcdLineRestInfo lineRestInfo;
         String idString = (String) getRequest().getAttributes().get("id");
-        
+
         if (idString != null) {
             try {
                 int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
@@ -133,7 +136,7 @@ public class OpenAcdLinesResource extends UserResource {
 
 
         // if not single, process request for list
-        List<OpenAcdLine> lines = new ArrayList<OpenAcdLine> (m_openAcdContext.getLines());
+        List<OpenAcdLine> lines = new ArrayList<OpenAcdLine>(m_openAcdContext.getLines());
         List<OpenAcdLineRestInfo> linesRestInfo = new ArrayList<OpenAcdLineRestInfo>();
         MetadataRestInfo metadataRestInfo;
 
@@ -162,13 +165,13 @@ public class OpenAcdLinesResource extends UserResource {
 
         // validate input for update or create
         ValidationInfo validationInfo = validate(lineRestInfo);
-        
+
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
-            return;                            
+            return;
         }
 
-        
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -179,26 +182,25 @@ public class OpenAcdLinesResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             // copy values over to existing
             try {
                 updateLine(line, lineRestInfo);
-                //saveLine(line);
                 m_openAcdContext.saveExtension(line);
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Line failed");
-                return;                                
+                return;
             }
-            
+
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, line.getId(), "Updated Line");
 
             return;
         }
 
-        
+
         // otherwise add new
         try {
             line = createLine(lineRestInfo);
@@ -206,10 +208,10 @@ public class OpenAcdLinesResource extends UserResource {
         }
         catch (Exception exception) {
             OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Line failed");
-            return;                                
+            return;
         }
-        
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, line.getId(), "Created Line");        
+
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, line.getId(), "Created Line");
     }
 
 
@@ -219,7 +221,7 @@ public class OpenAcdLinesResource extends UserResource {
     @Override
     public void removeRepresentations() throws ResourceException {
         OpenAcdLine line;
-        
+
         // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -230,14 +232,13 @@ public class OpenAcdLinesResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
-            // deleteLine() not available from openAcdContext
-            m_openAcdContext.getLines().remove(line);
+            m_openAcdContext.deleteExtension(line);
 
             OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, line.getId(), "Deleted Line");
-            
+
             return;
         }
 
@@ -245,11 +246,12 @@ public class OpenAcdLinesResource extends UserResource {
         OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
-    
+
     // Helper functions
     // ----------------
 
-    // basic interface level validation of data provided through REST interface for creation or update
+    // basic interface level validation of data provided through REST interface for creation or
+    // update
     // may also contain clean up of input data
     // may create another validation function if different rules needed for update v. create
     private ValidationInfo validate(OpenAcdLineRestInfo restInfo) {
@@ -258,11 +260,68 @@ public class OpenAcdLinesResource extends UserResource {
         return validationInfo;
     }
 
-    private OpenAcdLineRestInfo createLineRestInfo(int id) throws ResourceException {
+    // parses OpenAcdLine contents instead of just an id because line is so different
+    private OpenAcdLineActionsBundleRestInfo createLineActionsBundleRestInfo(OpenAcdLine line) {
+        OpenAcdLineActionsBundleRestInfo lineActionsBundleRestInfo;
+        OpenAcdQueueRestInfo queueRestInfo;
+        OpenAcdClientRestInfo clientRestInfo;
+        List<OpenAcdLineActionRestInfo> customActions = new ArrayList<OpenAcdLineActionRestInfo>();
+        OpenAcdLineActionRestInfo customActionRestInfo;
+
+        OpenAcdQueue queue;
+        String queueName = "";
+        OpenAcdClient client;
+        String clientIdentity = "";
+        Boolean allowVoicemail = false;
+        String allowVoicemailString = "false";
+
+
+        List<FreeswitchAction> actions = line.getLineActions();
+        for (FreeswitchAction action : actions) {
+            String data = action.getData();
+            if (StringUtils.contains(data, OpenAcdLine.Q)) {
+                queueName = StringUtils.removeStart(data, OpenAcdLine.Q);
+            }
+            else if (StringUtils.contains(data, OpenAcdLine.BRAND)) {
+                clientIdentity = StringUtils.removeStart(data, OpenAcdLine.BRAND);
+            }
+            else if (StringUtils.contains(data, OpenAcdLine.ALLOW_VOICEMAIL)) {
+                allowVoicemailString = StringUtils.removeStart(data, OpenAcdLine.ALLOW_VOICEMAIL);
+            }
+            else {
+                customActionRestInfo = new OpenAcdLineActionRestInfo(action);
+                customActions.add(customActionRestInfo);
+            }
+        }
+
+        queue = m_openAcdContext.getQueueByName(queueName);
+        queueRestInfo = new OpenAcdQueueRestInfo(queue);
+
+        client = m_openAcdContext.getClientByIdentity(clientIdentity);
+        clientRestInfo = new OpenAcdClientRestInfo(client);
+
+        allowVoicemail = Boolean.parseBoolean(allowVoicemailString);
+
+        lineActionsBundleRestInfo = new OpenAcdLineActionsBundleRestInfo(queueRestInfo, clientRestInfo, allowVoicemail, customActions);
+
+        return lineActionsBundleRestInfo;
+    }
+
+    private OpenAcdLineRestInfo createLineRestInfo(int id) {
         OpenAcdLineRestInfo lineRestInfo;
 
         OpenAcdLine line = (OpenAcdLine) m_openAcdContext.getExtensionById(id);
-        lineRestInfo = new OpenAcdLineRestInfo(line);
+        lineRestInfo = createLineRestInfo(line);
+
+        return lineRestInfo;
+    }
+
+    private OpenAcdLineRestInfo createLineRestInfo(OpenAcdLine line) {
+        OpenAcdLineRestInfo lineRestInfo;
+        OpenAcdLineActionsBundleRestInfo lineActionsBundleRestInfo;
+
+        lineActionsBundleRestInfo = createLineActionsBundleRestInfo(line);
+        lineRestInfo = new OpenAcdLineRestInfo(line, lineActionsBundleRestInfo);
 
         return lineRestInfo;
     }
@@ -277,7 +336,7 @@ public class OpenAcdLinesResource extends UserResource {
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
             OpenAcdLine line = lines.get(index);
 
-            lineRestInfo = new OpenAcdLineRestInfo(line);
+            lineRestInfo = createLineRestInfo(line);
             linesRestInfo.add(lineRestInfo);
         }
 
@@ -300,7 +359,7 @@ public class OpenAcdLinesResource extends UserResource {
 
             switch (sortField) {
             case NAME:
-                Collections.sort(lines, new Comparator(){
+                Collections.sort(lines, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
@@ -312,7 +371,7 @@ public class OpenAcdLinesResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(lines, new Comparator(){
+                Collections.sort(lines, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
@@ -322,14 +381,14 @@ public class OpenAcdLinesResource extends UserResource {
 
                 });
                 break;
-                
+
             }
         }
         else {
             // must be reverse
             switch (sortField) {
             case NAME:
-                Collections.sort(lines, new Comparator(){
+                Collections.sort(lines, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
@@ -341,7 +400,7 @@ public class OpenAcdLinesResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(lines, new Comparator(){
+                Collections.sort(lines, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
@@ -364,31 +423,53 @@ public class OpenAcdLinesResource extends UserResource {
             line.setName(tempString);
         }
 
-        //"Expression" is the extension number, which may be a regular expression if regex is set
+        // "Expression" is the extension number, which may be a regular expression if regex is set
         line.getNumberCondition().setExpression(lineRestInfo.getExtension());
         line.getNumberCondition().setRegex(lineRestInfo.getRegex());
-        
+
         line.setDid(lineRestInfo.getDIDNumber());
         line.setDescription(lineRestInfo.getDescription());
         line.setAlias(lineRestInfo.getAlias());
+
+        // set standard actions
+        line.getNumberCondition().getActions().clear();
+        line.getNumberCondition().addAction(OpenAcdLine.createQueueAction(lineRestInfo.getActions().getQueue().getName()));
+        line.getNumberCondition().addAction(OpenAcdLine.createClientAction(lineRestInfo.getActions().getClient().getIdentity()));
+        line.getNumberCondition().addAction(OpenAcdLine.createVoicemailAction(lineRestInfo.getActions().getAllowVoicemail()));
+
+        // set custom actions
+        for (OpenAcdLineActionRestInfo actionRestInfo : lineRestInfo.getActions().getCustomActions()) {
+            line.getNumberCondition().addAction(OpenAcdLine.createAction(actionRestInfo.getApplication(), actionRestInfo.getData()));
+        }
     }
 
     private OpenAcdLine createLine(OpenAcdLineRestInfo lineRestInfo) throws ResourceException {
         // special steps to obtain new line (cannot just "new")
         OpenAcdLine line = m_openAcdContext.newOpenAcdLine();
         line.addCondition(OpenAcdLine.createLineCondition());
-        
+
         // copy fields from rest info
         line.setName(lineRestInfo.getName());
 
-        //"Expression" is the extension number, which may be a regular expression if regex is set
+        // "Expression" is the extension number, which may be a regular expression if regex is set
         line.getNumberCondition().setExpression(lineRestInfo.getExtension());
-        line.getNumberCondition().setRegex(lineRestInfo.getRegex());        
-        
+        line.getNumberCondition().setRegex(lineRestInfo.getRegex());
+
         line.setDid(lineRestInfo.getDIDNumber());
         line.setDescription(lineRestInfo.getDescription());
         line.setAlias(lineRestInfo.getAlias());
-        
+
+        // set standard actions
+        line.getNumberCondition().getActions().clear();
+        line.getNumberCondition().addAction(OpenAcdLine.createQueueAction(lineRestInfo.getActions().getQueue().getName()));
+        line.getNumberCondition().addAction(OpenAcdLine.createClientAction(lineRestInfo.getActions().getClient().getIdentity()));
+        line.getNumberCondition().addAction(OpenAcdLine.createVoicemailAction(lineRestInfo.getActions().getAllowVoicemail()));
+
+        // set custom actions
+        for (OpenAcdLineActionRestInfo actionRestInfo : lineRestInfo.getActions().getCustomActions()) {
+            line.getNumberCondition().addAction(OpenAcdLine.createAction(actionRestInfo.getApplication(), actionRestInfo.getData()));
+        }
+
         return line;
     }
 
@@ -455,12 +536,13 @@ public class OpenAcdLinesResource extends UserResource {
         private final int m_id;
         private final String m_name;
         private final String m_description;
-		private final String m_extension;
-		private final boolean m_regex;
-		private final String m_didnumber;
-		private final String m_alias;
+        private final String m_extension;
+        private final boolean m_regex;
+        private final String m_didnumber;
+        private final String m_alias;
+        private final OpenAcdLineActionsBundleRestInfo m_actions;
 
-        public OpenAcdLineRestInfo(OpenAcdLine line) {
+        public OpenAcdLineRestInfo(OpenAcdLine line, OpenAcdLineActionsBundleRestInfo lineActionsRestInfo) {
             m_id = line.getId();
             m_name = line.getName();
             m_description = line.getDescription();
@@ -468,6 +550,7 @@ public class OpenAcdLinesResource extends UserResource {
             m_regex = line.getRegex();
             m_didnumber = line.getDid();
             m_alias = line.getAlias();
+            m_actions = lineActionsRestInfo;
         }
 
         public int getId() {
@@ -477,28 +560,84 @@ public class OpenAcdLinesResource extends UserResource {
         public String getName() {
             return m_name;
         }
-        
+
         public String getDescription() {
             return m_description;
         }
-        
-        public String getExtension(){
-        	return m_extension;
+
+        public String getExtension() {
+            return m_extension;
         }
-        
-        public boolean getRegex(){
-        	return m_regex;
+
+        public boolean getRegex() {
+            return m_regex;
         }
-        
-        public String getDIDNumber(){
-        	return m_didnumber;
+
+        public String getDIDNumber() {
+            return m_didnumber;
         }
-        
+
         public String getAlias() {
-        	return m_alias;
+            return m_alias;
         }
-        
-        // need queue, client, allow voicemail, answer supervision mode, welcome message, options (list)
+
+        public OpenAcdLineActionsBundleRestInfo getActions() {
+            return m_actions;
+        }
+    }
+
+    static class OpenAcdLineActionRestInfo {
+        private final String m_application;
+        private final String m_data;
+
+        public OpenAcdLineActionRestInfo(FreeswitchAction action) {
+            m_application = action.getApplication();
+            m_data = action.getData();
+        }
+
+        public String getApplication() {
+            return m_application;
+        }
+
+        public String getData() {
+            return m_data;
+        }
+    }
+
+    static class OpenAcdLineActionsBundleRestInfo {
+        // standard (required?) actions
+        private final OpenAcdQueueRestInfo m_queue;
+        private final OpenAcdClientRestInfo m_client;
+        private final boolean m_allowVoicemail;
+
+
+        // additional (custom) actions
+        private final List<OpenAcdLineActionRestInfo> m_customActions;
+
+        public OpenAcdLineActionsBundleRestInfo(OpenAcdQueueRestInfo queueRestInfo, OpenAcdClientRestInfo clientRestInfo, boolean allowVoicemail, List<OpenAcdLineActionRestInfo> customActions) {
+            m_queue = queueRestInfo;
+            m_client = clientRestInfo;
+            m_allowVoicemail = allowVoicemail;
+            m_customActions = customActions;
+        }
+
+        public OpenAcdQueueRestInfo getQueue() {
+            return m_queue;
+        }
+
+        public OpenAcdClientRestInfo getClient() {
+            return m_client;
+        }
+
+        public boolean getAllowVoicemail() {
+            return m_allowVoicemail;
+        }
+
+        public List<OpenAcdLineActionRestInfo> getCustomActions() {
+            return m_customActions;
+        }
+
+        // allow answer supervision mode, welcome message
     }
 
 
