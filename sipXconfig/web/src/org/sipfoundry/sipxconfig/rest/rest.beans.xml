@@ -368,4 +368,20 @@
   </bean>
   <alias name="openAcdLineResource" alias="/openacd-line/{id}" />
 
+  <bean id="openAcdSettingsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdSettingsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdSettingsResource" alias="/openacd-setting" />
+  
+  <bean id="openAcdSettingResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdSettingsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdSettingResource" alias="/openacd-setting/{id}" />
+
 </beans>

@@ -23,12 +23,12 @@ package org.sipfoundry.sipxconfig.rest;
 import java.io.IOException;
 import java.util.List;
 
-import org.restlet.data.MediaType;
-import org.restlet.data.Status;
 import org.restlet.data.Form;
+import org.restlet.data.MediaType;
 import org.restlet.data.Response;
-import org.restlet.resource.Representation;
+import org.restlet.data.Status;
 import org.restlet.resource.DomRepresentation;
+import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgent;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
@@ -36,6 +36,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSettings;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
 import org.w3c.dom.Document;
@@ -92,7 +93,7 @@ public class OpenAcdUtilities {
             paginationInfo.totalPages = ((paginationInfo.totalResults - 1) / paginationInfo.resultsPerPage) + 1;
 
             // check if only one page
-            //if (resultsPerPage >= totalResults) {
+            // if (resultsPerPage >= totalResults) {
             if (paginationInfo.totalPages == 1) {
                 paginationInfo.startIndex = 0;
                 paginationInfo.endIndex = paginationInfo.totalResults - 1;
@@ -180,7 +181,8 @@ public class OpenAcdUtilities {
 
             response.setEntity(new DomRepresentation(MediaType.TEXT_XML, doc));
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -209,7 +211,8 @@ public class OpenAcdUtilities {
 
             response.setEntity(new DomRepresentation(MediaType.TEXT_XML, doc));
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -235,9 +238,10 @@ public class OpenAcdUtilities {
 
             setResponseHeader(doc, elementResponse, code, message);
 
-            return representation; //new DomRepresentation(MediaType.TEXT_XML, doc);
+            return representation; // new DomRepresentation(MediaType.TEXT_XML, doc);
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -254,7 +258,7 @@ public class OpenAcdUtilities {
 
         Element elementMessage = doc.createElement("message");
         elementMessage.appendChild(doc.createTextNode(message));
-        elementResponse.appendChild(elementMessage);        
+        elementResponse.appendChild(elementMessage);
     }
 
     private static void setResponseStatus(Response response, ResponseCode code) {
@@ -454,7 +458,7 @@ public class OpenAcdUtilities {
 
         public OpenAcdQueueRestInfoFull(OpenAcdQueue queue, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups) {
             super(queue);
-            m_skills = skills; 
+            m_skills = skills;
             m_agentGroups = agentGroups;
         }
 
@@ -526,8 +530,7 @@ public class OpenAcdUtilities {
         private final List<OpenAcdQueueRestInfo> m_queues;
         private final List<OpenAcdClientRestInfo> m_clients;
 
-        public OpenAcdAgentGroupRestInfoFull(OpenAcdAgentGroup agentGroup, List<OpenAcdSkillRestInfo> skills, 
-                List<OpenAcdQueueRestInfo> queues, List<OpenAcdClientRestInfo> clients) {
+        public OpenAcdAgentGroupRestInfoFull(OpenAcdAgentGroup agentGroup, List<OpenAcdSkillRestInfo> skills, List<OpenAcdQueueRestInfo> queues, List<OpenAcdClientRestInfo> clients) {
             super(agentGroup);
             m_skills = skills;
             m_queues = queues;
@@ -637,10 +640,10 @@ public class OpenAcdUtilities {
             m_groupId = agent.getGroup().getId();
             m_groupName = agent.getGroup().getName();
             m_security = agent.getSecurity();
-            m_password = "";  // only used on updates, not rest get
+            m_password = ""; // only used on updates, not rest get
             m_skills = skills;
             m_queues = queues;
-            m_clients = clients;            
+            m_clients = clients;
         }
 
         public int getId() {
@@ -692,4 +695,21 @@ public class OpenAcdUtilities {
         }
     }
 
+    static class OpenAcdSettingRestInfo {
+        private final int m_id;
+        private final String m_logLevel;
+
+        public OpenAcdSettingRestInfo(OpenAcdSettings setting) {
+            m_id = setting.getId();
+            m_logLevel = setting.getLogLevel();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getLogLevel() {
+            return m_logLevel;
+        }
+    }
 }
