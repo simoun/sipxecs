@@ -274,12 +274,23 @@ public class OpenAcdLinesResource extends UserResource {
         String clientIdentity = "";
         Boolean allowVoicemail = false;
         String allowVoicemailString = "false";
-
+        Boolean isFsSet = false;
+        Boolean isAgentSet = false;
+        String answerSupervisionType = "";
+        String welcomeMessage = "";
 
         List<FreeswitchAction> actions = line.getLineActions();
         for (FreeswitchAction action : actions) {
+            String application = action.getApplication();
             String data = action.getData();
-            if (StringUtils.contains(data, OpenAcdLine.Q)) {
+
+            if (StringUtils.equals(application, FreeswitchAction.PredefinedAction.answer.toString())) {
+                isFsSet = true;
+            }
+            else if (StringUtils.contains(data, OpenAcdLine.ERLANG_ANSWER)) {
+                isAgentSet = true;
+            }
+            else if (StringUtils.contains(data, OpenAcdLine.Q)) {
                 queueName = StringUtils.removeStart(data, OpenAcdLine.Q);
             }
             else if (StringUtils.contains(data, OpenAcdLine.BRAND)) {
@@ -287,6 +298,11 @@ public class OpenAcdLinesResource extends UserResource {
             }
             else if (StringUtils.contains(data, OpenAcdLine.ALLOW_VOICEMAIL)) {
                 allowVoicemailString = StringUtils.removeStart(data, OpenAcdLine.ALLOW_VOICEMAIL);
+            }
+            else if (StringUtils.equals(application, FreeswitchAction.PredefinedAction.playback.toString())) {
+                // web ui only displays filename and appends audio directory
+                //welcomeMessage = StringUtils.removeStart(data, m_openAcdContext.getSettings().getAudioDirectory() + "/");
+                welcomeMessage = data;
             }
             else {
                 customActionRestInfo = new OpenAcdLineActionRestInfo(action);
@@ -302,7 +318,17 @@ public class OpenAcdLinesResource extends UserResource {
 
         allowVoicemail = Boolean.parseBoolean(allowVoicemailString);
 
-        lineActionsBundleRestInfo = new OpenAcdLineActionsBundleRestInfo(queueRestInfo, clientRestInfo, allowVoicemail, customActions);
+        if (isFsSet) {
+            answerSupervisionType = "FS";
+        }
+        else if (isAgentSet) {
+            answerSupervisionType = "AGENT";
+        }
+        else {
+            answerSupervisionType = "ACD";
+        }
+
+        lineActionsBundleRestInfo = new OpenAcdLineActionsBundleRestInfo(queueRestInfo, clientRestInfo, allowVoicemail, customActions, answerSupervisionType, welcomeMessage);
 
         return lineActionsBundleRestInfo;
     }
@@ -423,24 +449,31 @@ public class OpenAcdLinesResource extends UserResource {
             line.setName(tempString);
         }
 
-        // "Expression" is the extension number, which may be a regular expression if regex is set
-        line.getNumberCondition().setExpression(lineRestInfo.getExtension());
-        line.getNumberCondition().setRegex(lineRestInfo.getRegex());
-
         line.setDid(lineRestInfo.getDIDNumber());
         line.setDescription(lineRestInfo.getDescription());
         line.setAlias(lineRestInfo.getAlias());
 
         // set standard actions
         line.getNumberCondition().getActions().clear();
+
+        // answer supervision type is an integer code from OpenAcdLine
+        line.getNumberCondition().addAction(OpenAcdLine.createAnswerAction(getAnswerSupervisionCode(lineRestInfo.getActions().getAnswerSupervisionType())));
+        line.getNumberCondition().addAction(OpenAcdLine.createVoicemailAction(lineRestInfo.getActions().getAllowVoicemail()));
         line.getNumberCondition().addAction(OpenAcdLine.createQueueAction(lineRestInfo.getActions().getQueue().getName()));
         line.getNumberCondition().addAction(OpenAcdLine.createClientAction(lineRestInfo.getActions().getClient().getIdentity()));
-        line.getNumberCondition().addAction(OpenAcdLine.createVoicemailAction(lineRestInfo.getActions().getAllowVoicemail()));
+
+        // web ui only displays filename and appends audio directory
+        //line.getNumberCondition().addAction(OpenAcdLine.createPlaybackAction(m_openAcdContext.getSettings().getAudioDirectory() + "/" + lineRestInfo.getActions().getWelcomeMessage()));
+        line.getNumberCondition().addAction(OpenAcdLine.createPlaybackAction(lineRestInfo.getActions().getWelcomeMessage()));
 
         // set custom actions
         for (OpenAcdLineActionRestInfo actionRestInfo : lineRestInfo.getActions().getCustomActions()) {
             line.getNumberCondition().addAction(OpenAcdLine.createAction(actionRestInfo.getApplication(), actionRestInfo.getData()));
         }
+
+        // "Expression" is the extension number, which may be a regular expression if regex is set
+        line.getNumberCondition().setExpression(lineRestInfo.getExtension());
+        line.getNumberCondition().setRegex(lineRestInfo.getRegex());
     }
 
     private OpenAcdLine createLine(OpenAcdLineRestInfo lineRestInfo) throws ResourceException {
@@ -450,27 +483,49 @@ public class OpenAcdLinesResource extends UserResource {
 
         // copy fields from rest info
         line.setName(lineRestInfo.getName());
-
-        // "Expression" is the extension number, which may be a regular expression if regex is set
-        line.getNumberCondition().setExpression(lineRestInfo.getExtension());
-        line.getNumberCondition().setRegex(lineRestInfo.getRegex());
-
         line.setDid(lineRestInfo.getDIDNumber());
         line.setDescription(lineRestInfo.getDescription());
         line.setAlias(lineRestInfo.getAlias());
 
         // set standard actions
         line.getNumberCondition().getActions().clear();
+
+        // answer supervision type is an integer code from OpenAcdLine
+        line.getNumberCondition().addAction(OpenAcdLine.createAnswerAction(getAnswerSupervisionCode(lineRestInfo.getActions().getAnswerSupervisionType())));
+        line.getNumberCondition().addAction(OpenAcdLine.createVoicemailAction(lineRestInfo.getActions().getAllowVoicemail()));
         line.getNumberCondition().addAction(OpenAcdLine.createQueueAction(lineRestInfo.getActions().getQueue().getName()));
         line.getNumberCondition().addAction(OpenAcdLine.createClientAction(lineRestInfo.getActions().getClient().getIdentity()));
-        line.getNumberCondition().addAction(OpenAcdLine.createVoicemailAction(lineRestInfo.getActions().getAllowVoicemail()));
+
+        // web ui only displays filename and appends audio directory
+        //line.getNumberCondition().addAction(OpenAcdLine.createPlaybackAction(m_openAcdContext.getSettings().getAudioDirectory() + "/" + lineRestInfo.getActions().getWelcomeMessage()));
+        line.getNumberCondition().addAction(OpenAcdLine.createPlaybackAction(lineRestInfo.getActions().getWelcomeMessage()));
 
         // set custom actions
         for (OpenAcdLineActionRestInfo actionRestInfo : lineRestInfo.getActions().getCustomActions()) {
             line.getNumberCondition().addAction(OpenAcdLine.createAction(actionRestInfo.getApplication(), actionRestInfo.getData()));
         }
 
+        // "Expression" is the extension number, which may be a regular expression if regex is set
+        line.getNumberCondition().setExpression(lineRestInfo.getExtension());
+        line.getNumberCondition().setRegex(lineRestInfo.getRegex());
+
         return line;
+    }
+
+    private Integer getAnswerSupervisionCode(String answerSupervisionType) {
+        Integer answerSupervisionCode;
+
+        if (StringUtils.equalsIgnoreCase(answerSupervisionType, "FS")) {
+            answerSupervisionCode = OpenAcdLine.FS;
+        }
+        else if (StringUtils.equalsIgnoreCase(answerSupervisionType, "AGENT")) {
+            answerSupervisionCode = OpenAcdLine.AGENT;
+        }
+        else {
+            answerSupervisionCode = OpenAcdLine.ACD;
+        }
+
+        return answerSupervisionCode;
     }
 
 
@@ -491,6 +546,7 @@ public class OpenAcdLinesResource extends UserResource {
         protected void configureXStream(XStream xstream) {
             xstream.alias("openacd-line", OpenAcdLinesBundleRestInfo.class);
             xstream.alias("line", OpenAcdLineRestInfo.class);
+            xstream.alias("action", OpenAcdLineActionRestInfo.class);
         }
     }
 
@@ -507,6 +563,7 @@ public class OpenAcdLinesResource extends UserResource {
         @Override
         protected void configureXStream(XStream xstream) {
             xstream.alias("line", OpenAcdLineRestInfo.class);
+            xstream.alias("action", OpenAcdLineActionRestInfo.class);
         }
     }
 
@@ -609,16 +666,19 @@ public class OpenAcdLinesResource extends UserResource {
         private final OpenAcdQueueRestInfo m_queue;
         private final OpenAcdClientRestInfo m_client;
         private final boolean m_allowVoicemail;
-
+        private final String m_answerSupervisionType;
+        private final String m_welcomeMessage;
 
         // additional (custom) actions
         private final List<OpenAcdLineActionRestInfo> m_customActions;
 
-        public OpenAcdLineActionsBundleRestInfo(OpenAcdQueueRestInfo queueRestInfo, OpenAcdClientRestInfo clientRestInfo, boolean allowVoicemail, List<OpenAcdLineActionRestInfo> customActions) {
+        public OpenAcdLineActionsBundleRestInfo(OpenAcdQueueRestInfo queueRestInfo, OpenAcdClientRestInfo clientRestInfo, boolean allowVoicemail, List<OpenAcdLineActionRestInfo> customActions, String answerSupervisionType, String welcomeMessage) {
             m_queue = queueRestInfo;
             m_client = clientRestInfo;
             m_allowVoicemail = allowVoicemail;
             m_customActions = customActions;
+            m_answerSupervisionType = answerSupervisionType;
+            m_welcomeMessage = welcomeMessage;
         }
 
         public OpenAcdQueueRestInfo getQueue() {
@@ -633,11 +693,17 @@ public class OpenAcdLinesResource extends UserResource {
             return m_allowVoicemail;
         }
 
+        public String getAnswerSupervisionType() {
+            return m_answerSupervisionType;
+        }
+
+        public String getWelcomeMessage() {
+            return m_welcomeMessage;
+        }
+
         public List<OpenAcdLineActionRestInfo> getCustomActions() {
             return m_customActions;
         }
-
-        // allow answer supervision mode, welcome message
     }
 
 
