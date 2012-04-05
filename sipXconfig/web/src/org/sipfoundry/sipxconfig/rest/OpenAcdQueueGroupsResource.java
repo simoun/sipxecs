@@ -24,34 +24,35 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.LinkedHashSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.restlet.Context;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Form;
 import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.springframework.beans.factory.annotation.Required;
-import com.thoughtworks.xstream.XStream;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueGroupRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.springframework.beans.factory.annotation.Required;
+
+import com.thoughtworks.xstream.XStream;
 
 public class OpenAcdQueueGroupsResource extends UserResource {
 
@@ -59,23 +60,21 @@ public class OpenAcdQueueGroupsResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    private enum SortField
-    {
+    private enum SortField {
         NAME, DESCRIPTION, NONE;
 
-        public static SortField toSortField(String fieldString)
-        {
+        public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
                 return NONE;
             }
 
             try {
                 return valueOf(fieldString.toUpperCase());
-            } 
+            }
             catch (Exception ex) {
                 return NONE;
             }
-        }   
+        }
     }
 
 
@@ -158,13 +157,13 @@ public class OpenAcdQueueGroupsResource extends UserResource {
         OpenAcdQueueGroupRepresentation representation = new OpenAcdQueueGroupRepresentation(entity);
         OpenAcdQueueGroupRestInfoFull queueGroupRestInfo = representation.getObject();
         OpenAcdQueueGroup queueGroup;
-        
+
         // validate input for update or create
         ValidationInfo validationInfo = validate(queueGroupRestInfo);
 
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
-            return;                            
+            return;
         }
 
 
@@ -178,7 +177,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             // copy values over to existing group
@@ -187,11 +186,11 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 m_openAcdContext.saveQueueGroup(queueGroup);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue Group failed");
-                return;                                
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue Group failed", exception.getLocalizedMessage());
+                return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, queueGroup.getId(), "Updated Queue");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Queue", queueGroup.getId());
 
             return;
         }
@@ -203,11 +202,11 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             m_openAcdContext.saveQueueGroup(queueGroup);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Queue Group failed");
-            return;                                
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Queue Group failed", exception.getLocalizedMessage());
+            return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, queueGroup.getId(), "Created Queue Group");        
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Queue Group", queueGroup.getId());
     }
 
 
@@ -228,12 +227,12 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
-            
+
             m_openAcdContext.deleteQueueGroup(queueGroup);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, queueGroup.getId(), "Deleted Queue Group");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Queue Group", queueGroup.getId());
 
             return;
         }
@@ -265,7 +264,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
 
             skillsRestInfo = createSkillsRestInfo(queueGroup);
             agentGroupRestInfo = createAgentGroupsRestInfo(queueGroup);
-            
+
             queueGroupRestInfo = new OpenAcdQueueGroupRestInfoFull(queueGroup, skillsRestInfo, agentGroupRestInfo);
         }
         catch (Exception exception) {
@@ -274,7 +273,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
 
         return queueGroupRestInfo;
     }
-    
+
     private void updateQueueGroup(OpenAcdQueueGroup queueGroup, OpenAcdQueueGroupRestInfoFull queueGroupRestInfo) {
         String tempString;
 
@@ -310,8 +309,8 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             OpenAcdQueueGroup queueGroup = queueGroups.get(index);
 
             skillsRestInfo = createSkillsRestInfo(queueGroup);
-            agentGroupRestInfo = createAgentGroupsRestInfo(queueGroup);            
-            
+            agentGroupRestInfo = createAgentGroupsRestInfo(queueGroup);
+
             OpenAcdQueueGroupRestInfoFull queueGroupRestInfo = new OpenAcdQueueGroupRestInfoFull(queueGroup, skillsRestInfo, agentGroupRestInfo);
             queueGroupsRestInfo.add(queueGroupRestInfo);
         }
@@ -367,7 +366,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
 
             switch (sortField) {
             case NAME:
-                Collections.sort(queueGroups, new Comparator(){
+                Collections.sort(queueGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;
@@ -379,7 +378,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(queueGroups, new Comparator(){
+                Collections.sort(queueGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;
@@ -395,7 +394,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             // must be reverse
             switch (sortField) {
             case NAME:
-                Collections.sort(queueGroups, new Comparator(){
+                Collections.sort(queueGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;
@@ -407,7 +406,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(queueGroups, new Comparator(){
+                Collections.sort(queueGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;

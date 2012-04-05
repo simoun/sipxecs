@@ -68,23 +68,21 @@ public class OpenAcdAgentsResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    private enum SortField
-    {
+    private enum SortField {
         NAME, GROUP, SECURITY, NONE;
 
-        public static SortField toSortField(String fieldString)
-        {
+        public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
                 return NONE;
             }
 
             try {
                 return valueOf(fieldString.toUpperCase());
-            } 
+            }
             catch (Exception ex) {
                 return NONE;
             }
-        }   
+        }
     }
 
 
@@ -132,9 +130,10 @@ public class OpenAcdAgentsResource extends UserResource {
             try {
                 int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
                 agentRestInfo = createAgentRestInfo(idInt);
-            } catch(Exception ex) {
+            }
+            catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-            }       
+            }
 
             // finally return group representation
             return new OpenAcdAgentRepresentation(variant.getMediaType(), agentRestInfo);
@@ -174,7 +173,7 @@ public class OpenAcdAgentsResource extends UserResource {
 
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
-            return;                            
+            return;
         }
 
 
@@ -185,8 +184,9 @@ public class OpenAcdAgentsResource extends UserResource {
             try {
                 int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
                 agent = m_openAcdContext.getAgentById(idInt);
-            } catch(Exception ex) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Agent failed");
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
@@ -194,8 +194,9 @@ public class OpenAcdAgentsResource extends UserResource {
             try {
                 updateAgent(agent, agentRestInfo);
                 m_openAcdContext.saveAgent(agent);
-            } catch(Exception ex) {
-                OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Agent failed");
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Agent failed", exception.getLocalizedMessage());
                 return;
             }
 
@@ -208,12 +209,13 @@ public class OpenAcdAgentsResource extends UserResource {
         try {
             agent = createOpenAcdAgent(agentRestInfo);
             m_openAcdContext.saveAgent(agent);
-        } catch(Exception ex) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Agent failed");
+        }
+        catch (Exception exception) {
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Agent failed", exception.getLocalizedMessage());
             return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, agent.getId(), "Created Skill");
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Agent", agent.getId());
     }
 
 
@@ -231,14 +233,15 @@ public class OpenAcdAgentsResource extends UserResource {
             try {
                 int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
                 agent = m_openAcdContext.getAgentById(idInt);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
             m_openAcdContext.deleteAgent(agent);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, agent.getId(), "Deleted Agent.");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Agent.", agent.getId());
 
             return;
         }
@@ -369,7 +372,7 @@ public class OpenAcdAgentsResource extends UserResource {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
 
-                        return agent1.getName().compareToIgnoreCase(agent2.getName());                        
+                        return agent1.getName().compareToIgnoreCase(agent2.getName());
                     }
 
                 });
@@ -387,12 +390,12 @@ public class OpenAcdAgentsResource extends UserResource {
                 break;
 
             case SECURITY:
-                Collections.sort(agents, new Comparator(){
+                Collections.sort(agents, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
-                        return agent1.getSecurity().compareToIgnoreCase(agent2.getSecurity());                        
+                        return agent1.getSecurity().compareToIgnoreCase(agent2.getSecurity());
                     }
 
                 });
@@ -425,7 +428,7 @@ public class OpenAcdAgentsResource extends UserResource {
                 break;
 
             case SECURITY:
-                Collections.sort(agents, new Comparator(){
+                Collections.sort(agents, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
@@ -455,16 +458,16 @@ public class OpenAcdAgentsResource extends UserResource {
 
         OpenAcdSkill skill;
         List<OpenAcdSkillRestInfo> skillsRestInfo = agentRestInfo.getSkills();
-        for(OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
+        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
             skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
-            agent.addSkill(skill);          
+            agent.addSkill(skill);
         }
 
         agent.getQueues().clear();
 
         OpenAcdQueue queue;
         List<OpenAcdQueueRestInfo> queuesRestInfo = agentRestInfo.getQueues();
-        for(OpenAcdQueueRestInfo queueRestInfo : queuesRestInfo) {
+        for (OpenAcdQueueRestInfo queueRestInfo : queuesRestInfo) {
             queue = m_openAcdContext.getQueueById(queueRestInfo.getId());
             agent.addQueue(queue);
         }
@@ -473,7 +476,7 @@ public class OpenAcdAgentsResource extends UserResource {
 
         OpenAcdClient client;
         List<OpenAcdClientRestInfo> clientsRestInfo = agentRestInfo.getClients();
-        for(OpenAcdClientRestInfo clientRestInfo : clientsRestInfo) {
+        for (OpenAcdClientRestInfo clientRestInfo : clientsRestInfo) {
             client = m_openAcdContext.getClientById(clientRestInfo.getId());
             agent.addClient(client);
         }
@@ -504,21 +507,21 @@ public class OpenAcdAgentsResource extends UserResource {
         Set<OpenAcdSkill> skills = new LinkedHashSet<OpenAcdSkill>();
         List<OpenAcdSkillRestInfo> skillsRestInfo = agentRestInfo.getSkills();
 
-        for(OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
+        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
             skills.add(m_openAcdContext.getSkillById(skillRestInfo.getId()));
         }
 
         Set<OpenAcdQueue> queues = new LinkedHashSet<OpenAcdQueue>();
         List<OpenAcdQueueRestInfo> queuesRestInfo = agentRestInfo.getQueues();
 
-        for(OpenAcdQueueRestInfo queueRestInfo : queuesRestInfo) {
+        for (OpenAcdQueueRestInfo queueRestInfo : queuesRestInfo) {
             queues.add(m_openAcdContext.getQueueById(queueRestInfo.getId()));
         }
 
         Set<OpenAcdClient> clients = new LinkedHashSet<OpenAcdClient>();
         List<OpenAcdClientRestInfo> clientsRestInfo = agentRestInfo.getClients();
 
-        for(OpenAcdClientRestInfo clientRestInfo : clientsRestInfo) {
+        for (OpenAcdClientRestInfo clientRestInfo : clientsRestInfo) {
             clients.add(m_openAcdContext.getClientById(clientRestInfo.getId()));
         }
 
@@ -528,6 +531,7 @@ public class OpenAcdAgentsResource extends UserResource {
 
         return agent;
     }
+
     private OpenAcdAgentGroup getAgentGroup(OpenAcdAgentRestInfoFull agentRestInfo) throws ResourceException {
         OpenAcdAgentGroup agentGroup;
         int groupId = 0;
@@ -535,7 +539,8 @@ public class OpenAcdAgentsResource extends UserResource {
         try {
             groupId = agentRestInfo.getGroupId();
             agentGroup = m_openAcdContext.getAgentGroupById(groupId);
-        } catch(Exception ex) {
+        }
+        catch (Exception ex) {
             throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "Agent Group ID " + groupId + " not found.");
         }
 

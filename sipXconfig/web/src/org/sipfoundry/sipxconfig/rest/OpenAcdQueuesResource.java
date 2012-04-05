@@ -24,39 +24,35 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
-import org.jfree.chart.axis.QuarterDateFormat;
 import org.restlet.Context;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Form;
 import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.springframework.beans.factory.annotation.Required;
-import com.thoughtworks.xstream.XStream;
-
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.springframework.beans.factory.annotation.Required;
+
+import com.thoughtworks.xstream.XStream;
 
 public class OpenAcdQueuesResource extends UserResource {
 
@@ -64,23 +60,21 @@ public class OpenAcdQueuesResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    enum SortField
-    {
+    enum SortField {
         NAME, DESCRIPTION, NONE;
 
-        public static SortField toSortField(String fieldString)
-        {
+        public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
                 return NONE;
             }
 
             try {
                 return valueOf(fieldString.toUpperCase());
-            } 
+            }
             catch (Exception ex) {
                 return NONE;
             }
-        }   
+        }
     }
 
 
@@ -169,10 +163,10 @@ public class OpenAcdQueuesResource extends UserResource {
 
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
-            return;                            
+            return;
         }
 
-        
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -183,7 +177,7 @@ public class OpenAcdQueuesResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             // copy values over to existing
@@ -192,11 +186,11 @@ public class OpenAcdQueuesResource extends UserResource {
                 m_openAcdContext.saveQueue(queue);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue failed");
-                return;                                
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue failed", exception.getLocalizedMessage());
+                return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, queue.getId(), "Updated Queue");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Queue", queue.getId());
 
             return;
         }
@@ -208,11 +202,11 @@ public class OpenAcdQueuesResource extends UserResource {
             m_openAcdContext.saveQueue(queue);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Queue failed");
-            return;                                
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Queue failed", exception.getLocalizedMessage());
+            return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, queue.getId(), "Created Queue");        
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Queue", queue.getId());
     }
 
 
@@ -234,12 +228,12 @@ public class OpenAcdQueuesResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             m_openAcdContext.deleteQueue(queue);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, queue.getId(), "Deleted Queue");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Queue", queue.getId());
 
             return;
         }
@@ -269,7 +263,7 @@ public class OpenAcdQueuesResource extends UserResource {
         try {
             OpenAcdQueue queue = m_openAcdContext.getQueueById(id);
             skillsRestInfo = createSkillsRestInfo(queue);
-            agentGroupsRestInfo = createAgentGroupsRestInfo(queue); 
+            agentGroupsRestInfo = createAgentGroupsRestInfo(queue);
             queueRestInfo = new OpenAcdQueueRestInfoFull(queue, skillsRestInfo, agentGroupsRestInfo);
         }
         catch (Exception exception) {
@@ -324,7 +318,7 @@ public class OpenAcdQueuesResource extends UserResource {
             OpenAcdQueue queue = queues.get(index);
 
             skillsRestInfo = createSkillsRestInfo(queue);
-            agentGroupRestInfo = createAgentGroupsRestInfo(queue); 
+            agentGroupRestInfo = createAgentGroupsRestInfo(queue);
             queueRestInfo = new OpenAcdQueueRestInfoFull(queue, skillsRestInfo, agentGroupRestInfo);
             queuesRestInfo.add(queueRestInfo);
         }
@@ -348,7 +342,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
             switch (sortField) {
             case NAME:
-                Collections.sort(queues, new Comparator(){
+                Collections.sort(queues, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;
@@ -360,7 +354,7 @@ public class OpenAcdQueuesResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(queues, new Comparator(){
+                Collections.sort(queues, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;
@@ -376,7 +370,7 @@ public class OpenAcdQueuesResource extends UserResource {
             // must be reverse
             switch (sortField) {
             case NAME:
-                Collections.sort(queues, new Comparator(){
+                Collections.sort(queues, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;
@@ -388,7 +382,7 @@ public class OpenAcdQueuesResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(queues, new Comparator(){
+                Collections.sort(queues, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;

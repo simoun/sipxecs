@@ -24,32 +24,32 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 
 import org.restlet.Context;
+import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Form;
 import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.springframework.beans.factory.annotation.Required;
-import com.thoughtworks.xstream.XStream;
-
-import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdReleaseCodeRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdReleaseCodeRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.springframework.beans.factory.annotation.Required;
+
+import com.thoughtworks.xstream.XStream;
 
 public class OpenAcdReleaseCodesResource extends UserResource {
 
@@ -57,23 +57,21 @@ public class OpenAcdReleaseCodesResource extends UserResource {
     private Form m_form;
 
     // use to define all possible sort fields
-    enum SortField
-    {
+    enum SortField {
         LABEL, DESCRIPTION, NONE;
 
-        public static SortField toSortField(String fieldString)
-        {
+        public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
                 return NONE;
             }
 
             try {
                 return valueOf(fieldString.toUpperCase());
-            } 
+            }
             catch (Exception ex) {
                 return NONE;
             }
-        }   
+        }
     }
 
 
@@ -159,13 +157,13 @@ public class OpenAcdReleaseCodesResource extends UserResource {
 
         // validate input for update or create
         ValidationInfo validationInfo = validate(releaseCodeRestInfo);
-        
+
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
-            return;                            
+            return;
         }
 
-        
+
         // if have id then update single
         String idString = (String) getRequest().getAttributes().get("id");
 
@@ -176,7 +174,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             // copy values over to existing
@@ -185,11 +183,11 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                 m_openAcdContext.saveReleaseCode(releaseCode);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Release Code failed");
-                return;                                
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Release Code failed", exception.getLocalizedMessage());
+                return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, releaseCode.getId(), "Updated Release Code");
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Release Code", releaseCode.getId());
 
             return;
         }
@@ -201,11 +199,11 @@ public class OpenAcdReleaseCodesResource extends UserResource {
             m_openAcdContext.saveReleaseCode(releaseCode);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Release Code failed");
-            return;                                
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Release Code failed", exception.getLocalizedMessage());
+            return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, releaseCode.getId(), "Created Release Code");        
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Release Code", releaseCode.getId());
     }
 
 
@@ -228,7 +226,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
             }
             catch (Exception exception) {
                 OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;                
+                return;
             }
 
             m_openAcdContext.removeReleaseCodes(releaseCodeIds);
@@ -249,21 +247,21 @@ public class OpenAcdReleaseCodesResource extends UserResource {
     // may create another validation function if different rules needed for update v. create
     private ValidationInfo validate(OpenAcdReleaseCodeRestInfo restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
-     
+
         // release code object will allow store of bias other value than -1, 0, or 1,
         // but then current SipXconfig administrative UI will display nothing for bias name.
         int bias = restInfo.getBias();
-        if ((bias < -1) || (bias >1)) {
+        if ((bias < -1) || (bias > 1)) {
             validationInfo.valid = false;
             validationInfo.message = "Validation Error: Bias must be be -1, 0 or 1";
             validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
-            
+
             return validationInfo;
         }
-        
+
         return validationInfo;
     }
-    
+
     private OpenAcdReleaseCodeRestInfo createReleaseCodeRestInfo(int id) throws ResourceException {
         OpenAcdReleaseCodeRestInfo releaseCodeRestInfo;
 
@@ -311,7 +309,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
 
             switch (sortField) {
             case LABEL:
-                Collections.sort(releaseCodes, new Comparator(){
+                Collections.sort(releaseCodes, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;
@@ -323,7 +321,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(releaseCodes, new Comparator(){
+                Collections.sort(releaseCodes, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;
@@ -339,7 +337,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
             // must be reverse
             switch (sortField) {
             case LABEL:
-                Collections.sort(releaseCodes, new Comparator(){
+                Collections.sort(releaseCodes, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;
@@ -351,7 +349,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                 break;
 
             case DESCRIPTION:
-                Collections.sort(releaseCodes, new Comparator(){
+                Collections.sort(releaseCodes, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;

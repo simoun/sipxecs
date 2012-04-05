@@ -1,6 +1,6 @@
 /*
  *
- *  OpenAcdUtilities.java - Support functionality for OpenAcd Restlets
+l *  OpenAcdUtilities.java - Support functionality for OpenAcd Restlets
  *  Copyright (C) 2012 PATLive, D. Chang
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -177,7 +177,7 @@ public class OpenAcdUtilities {
 
             setResponseHeader(doc, elementResponse, code, message);
 
-            // no data related to result (create function overloads to modify)
+            // no related data (create function overloads to modify)
 
             response.setEntity(new DomRepresentation(MediaType.TEXT_XML, doc));
 
@@ -188,7 +188,7 @@ public class OpenAcdUtilities {
         }
     }
 
-    public static void setResponse(Response response, ResponseCode code, int id, String message) {
+    public static void setResponse(Response response, ResponseCode code, String message, int id) {
         try {
             DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
             Document doc = representation.getDocument();
@@ -202,7 +202,7 @@ public class OpenAcdUtilities {
 
             setResponseHeader(doc, elementResponse, code, message);
 
-            // add data related to result
+            // add related data
             Element elementData = doc.createElement("data");
             Element elementId = doc.createElement("id");
             elementId.appendChild(doc.createTextNode(String.valueOf(id)));
@@ -237,6 +237,44 @@ public class OpenAcdUtilities {
             doc.appendChild(elementResponse);
 
             setResponseHeader(doc, elementResponse, code, message);
+
+            return representation; // new DomRepresentation(MediaType.TEXT_XML, doc);
+
+        }
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static void setResponseError(Response response, ResponseCode code, String message, String additionalMessage) {
+        Representation representation = getResponseError(response, code, message, additionalMessage);
+
+        response.setEntity(representation);
+    }
+
+    public static Representation getResponseError(Response response, ResponseCode code, String message, String additionalMessage) {
+        try {
+            DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
+            Document doc = representation.getDocument();
+
+            // set response status
+            setResponseStatus(response, code);
+
+            // create root node
+            Element elementResponse = doc.createElement("response");
+            doc.appendChild(elementResponse);
+
+            setResponseHeader(doc, elementResponse, code, message);
+
+            // add related data
+            Element elementData = doc.createElement("data");
+            Element elementId = doc.createElement("additionalMessage");
+            elementId.appendChild(doc.createTextNode(additionalMessage));
+            elementData.appendChild(elementId);
+            elementResponse.appendChild(elementData);
 
             return representation; // new DomRepresentation(MediaType.TEXT_XML, doc);
 
