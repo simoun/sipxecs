@@ -35,6 +35,9 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeAction;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeCondition;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeStep;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSettings;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
@@ -491,13 +494,27 @@ public class OpenAcdUtilities {
     }
 
     static class OpenAcdQueueRestInfoFull extends OpenAcdQueueRestInfo {
+        private final int m_groupId;
+        private final int m_weight;
         private final List<OpenAcdSkillRestInfo> m_skills;
         private final List<OpenAcdAgentGroupRestInfo> m_agentGroups;
+        private final List<OpenAcdRecipeStepRestInfo> m_steps;
 
-        public OpenAcdQueueRestInfoFull(OpenAcdQueue queue, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups) {
+        public OpenAcdQueueRestInfoFull(OpenAcdQueue queue, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups, List<OpenAcdRecipeStepRestInfo> steps) {
             super(queue);
+            m_groupId = queue.getGroup().getId();
+            m_weight = queue.getWeight();
             m_skills = skills;
             m_agentGroups = agentGroups;
+            m_steps = steps;
+        }
+
+        public int getGroupId() {
+            return m_groupId;
+        }
+
+        public int getWeight() {
+            return m_weight;
         }
 
         public List<OpenAcdSkillRestInfo> getSkills() {
@@ -506,6 +523,92 @@ public class OpenAcdUtilities {
 
         public List<OpenAcdAgentGroupRestInfo> getAgentGroups() {
             return m_agentGroups;
+        }
+
+        public List<OpenAcdRecipeStepRestInfo> getSteps() {
+            return m_steps;
+        }
+
+//        public Set<OpenAcdRecipeStep> getStep(OpenAcdQueue queue) {
+//            return queue.getSteps();
+//        }
+    }
+
+    static class OpenAcdRecipeActionRestInfo {
+        private final String m_action;
+        private final String m_actionValue;
+        private final List<String> m_skills;
+
+        public OpenAcdRecipeActionRestInfo(OpenAcdRecipeAction action) {
+            m_action = action.getAction();
+            m_actionValue = action.getActionValue();
+            m_skills = action.getAllSkillNames();
+        }
+
+        public String getAction() {
+            return m_action;
+        }
+
+        public String getActionValue() {
+            return m_action;
+        }
+
+        public List<String> getSkills() {
+            return m_skills;
+        }
+    }
+
+    static class OpenAcdRecipeStepRestInfo {
+        private final int m_id;
+        private final List<OpenAcdRecipeConditionRestInfo> m_conditions;
+        private final OpenAcdRecipeActionRestInfo m_action;
+        private final String m_frequency;
+
+        public OpenAcdRecipeStepRestInfo(OpenAcdRecipeStep step, OpenAcdRecipeActionRestInfo recipeActionRestInfo, List<OpenAcdRecipeConditionRestInfo> conditions) {
+            m_id = step.getId();
+            m_conditions = conditions;
+            m_action = recipeActionRestInfo;
+            m_frequency = step.getFrequency();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public List<OpenAcdRecipeConditionRestInfo> getCondition() {
+            return m_conditions;
+        }
+
+        public OpenAcdRecipeActionRestInfo getAction() {
+            return m_action;
+        }
+
+        public String getFrequency() {
+            return m_frequency;
+        }
+    }
+
+    static class OpenAcdRecipeConditionRestInfo {
+        private final String m_condition;
+        private final String m_relation;
+        private final String m_valueCondition;
+
+        public OpenAcdRecipeConditionRestInfo(OpenAcdRecipeCondition condition) {
+            m_condition = condition.getCondition();
+            m_relation = condition.getRelation();
+            m_valueCondition = condition.getValueCondition();
+        }
+
+        public String getCondition() {
+            return m_condition;
+        }
+
+        public String getRelation() {
+            return m_relation;
+        }
+
+        public String getValueCondition() {
+            return m_valueCondition;
         }
     }
 
