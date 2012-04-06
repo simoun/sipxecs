@@ -273,7 +273,7 @@ public class OpenAcdQueuesResource extends UserResource {
         List<OpenAcdRecipeStepRestInfo> recipeStepRestInfo;
 
         OpenAcdQueue queue = m_openAcdContext.getQueueById(id);
-        skillsRestInfo = createSkillsRestInfo(queue);
+        skillsRestInfo = createSkillsRestInfo(queue.getSkills());
         agentGroupsRestInfo = createAgentGroupsRestInfo(queue);
         recipeStepRestInfo = createRecipeStepsRestInfo(queue);
         queueRestInfo = new OpenAcdQueueRestInfoFull(queue, skillsRestInfo, agentGroupsRestInfo, recipeStepRestInfo);
@@ -297,9 +297,11 @@ public class OpenAcdQueuesResource extends UserResource {
 
     private OpenAcdRecipeActionRestInfo createRecipeActionRestInfo(OpenAcdRecipeStep step) {
         OpenAcdRecipeActionRestInfo recipeActionRestInfo;
+        List<OpenAcdSkillRestInfo> skillsRestInfo;
 
-        OpenAcdRecipeAction groupRecipeActions = step.getAction();
-        recipeActionRestInfo = new OpenAcdRecipeActionRestInfo(groupRecipeActions);
+        // get skills associated with action
+        skillsRestInfo = createSkillsRestInfo(step.getAction().getSkills());
+        recipeActionRestInfo = new OpenAcdRecipeActionRestInfo(step.getAction(), skillsRestInfo);
 
         return recipeActionRestInfo;
     }
@@ -320,16 +322,15 @@ public class OpenAcdQueuesResource extends UserResource {
         return recipeConditionsRestInfo;
     }
 
-    private List<OpenAcdSkillRestInfo> createSkillsRestInfo(OpenAcdQueue queue) {
+    private List<OpenAcdSkillRestInfo> createSkillsRestInfo(Set<OpenAcdSkill> skills) {
         List<OpenAcdSkillRestInfo> skillsRestInfo;
         OpenAcdSkillRestInfo skillRestInfo;
 
-        // create list of skill restinfos for single group
-        Set<OpenAcdSkill> groupSkills = queue.getSkills();
-        skillsRestInfo = new ArrayList<OpenAcdSkillRestInfo>(groupSkills.size());
+        // create list of skill restinfos from set of skills
+        skillsRestInfo = new ArrayList<OpenAcdSkillRestInfo>(skills.size());
 
-        for (OpenAcdSkill groupSkill : groupSkills) {
-            skillRestInfo = new OpenAcdSkillRestInfo(groupSkill);
+        for (OpenAcdSkill skill : skills) {
+            skillRestInfo = new OpenAcdSkillRestInfo(skill);
             skillsRestInfo.add(skillRestInfo);
         }
 
@@ -365,7 +366,7 @@ public class OpenAcdQueuesResource extends UserResource {
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
             OpenAcdQueue queue = queues.get(index);
 
-            skillsRestInfo = createSkillsRestInfo(queue);
+            skillsRestInfo = createSkillsRestInfo(queue.getSkills());
             agentGroupRestInfo = createAgentGroupsRestInfo(queue);
             recipeStepRestInfo = createRecipeStepsRestInfo(queue);
             queueRestInfo = new OpenAcdQueueRestInfoFull(queue, skillsRestInfo, agentGroupRestInfo, recipeStepRestInfo);
@@ -505,11 +506,40 @@ public class OpenAcdQueuesResource extends UserResource {
         queue.getSteps().clear();
 
         // set steps
-        // TODO: must add addition of conditions and actions
         OpenAcdRecipeStep step;
+        OpenAcdRecipeCondition condition;
+        OpenAcdRecipeAction action;
+        OpenAcdRecipeActionRestInfo actionRestInfo;
+
         List<OpenAcdRecipeStepRestInfo> recipeStepsRestInfo = queueRestInfo.getSteps();
         for (OpenAcdRecipeStepRestInfo recipeStepRestInfo : recipeStepsRestInfo) {
-            step = m_openAcdContext.getRecipeStepById(recipeStepRestInfo.getId());
+            //step = m_openAcdContext.getRecipeStepById(recipeStepRestInfo.getId());
+            step = new OpenAcdRecipeStep();
+
+            // add conditions
+            for (OpenAcdRecipeConditionRestInfo recipeConditionRestInfo : recipeStepRestInfo.getConditions()) {
+                condition = new OpenAcdRecipeCondition();
+                condition.setCondition(recipeConditionRestInfo.getCondition());
+                condition.setRelation(recipeConditionRestInfo.getRelation());
+                condition.setValueCondition(recipeConditionRestInfo.getValueCondition());
+
+                step.addCondition(condition);
+            }
+
+            // add action
+            action = new OpenAcdRecipeAction();
+            actionRestInfo = recipeStepRestInfo.getAction();
+            action.setAction(actionRestInfo.getAction());
+            action.setActionValue(actionRestInfo.getActionValue());
+
+            // set action skills (separate from skills assigned to queue
+            for (OpenAcdSkillRestInfo skillRestInfo : actionRestInfo.getSkills()) {
+                skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
+                action.addSkill(skill);
+            }
+
+            step.setAction(action);
+
             queue.addStep(step);
         }
     }

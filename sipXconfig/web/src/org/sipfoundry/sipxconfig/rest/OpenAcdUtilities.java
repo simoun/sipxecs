@@ -541,12 +541,12 @@ public class OpenAcdUtilities {
     static class OpenAcdRecipeActionRestInfo {
         private final String m_action;
         private final String m_actionValue;
-        private final List<String> m_skills;
+        private final List<OpenAcdSkillRestInfo> m_skills;
 
-        public OpenAcdRecipeActionRestInfo(OpenAcdRecipeAction action) {
+        public OpenAcdRecipeActionRestInfo(OpenAcdRecipeAction action, List<OpenAcdSkillRestInfo> skills) {
             m_action = action.getAction();
             m_actionValue = action.getActionValue();
-            m_skills = action.getAllSkillNames();
+            m_skills = skills;
         }
 
         public String getAction() {
@@ -554,10 +554,10 @@ public class OpenAcdUtilities {
         }
 
         public String getActionValue() {
-            return m_action;
+            return m_actionValue;
         }
 
-        public List<String> getSkills() {
+        public List<OpenAcdSkillRestInfo> getSkills() {
             return m_skills;
         }
     }
@@ -579,7 +579,7 @@ public class OpenAcdUtilities {
             return m_id;
         }
 
-        public List<OpenAcdRecipeConditionRestInfo> getCondition() {
+        public List<OpenAcdRecipeConditionRestInfo> getConditions() {
             return m_conditions;
         }
 
