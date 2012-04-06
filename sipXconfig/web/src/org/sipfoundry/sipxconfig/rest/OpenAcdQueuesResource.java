@@ -135,7 +135,7 @@ public class OpenAcdQueuesResource extends UserResource {
                 queueRestInfo = createQueueRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdQueueRepresentation(variant.getMediaType(), queueRestInfo);
@@ -459,6 +459,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
         queue.setGroup(queueGroup);
         queue.setDescription(queueRestInfo.getDescription());
+        queue.setWeight(queueRestInfo.getWeight());
 
         addLists(queue, queueRestInfo);
     }
@@ -473,6 +474,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
         queue.setGroup(queueGroup);
         queue.setDescription(queueRestInfo.getDescription());
+        queue.setWeight(queueRestInfo.getWeight());
 
         addLists(queue, queueRestInfo);
 
@@ -513,10 +515,12 @@ public class OpenAcdQueuesResource extends UserResource {
 
         List<OpenAcdRecipeStepRestInfo> recipeStepsRestInfo = queueRestInfo.getSteps();
         for (OpenAcdRecipeStepRestInfo recipeStepRestInfo : recipeStepsRestInfo) {
-            //step = m_openAcdContext.getRecipeStepById(recipeStepRestInfo.getId());
             step = new OpenAcdRecipeStep();
+            step.setFrequency(recipeStepRestInfo.getFrequency());
+
 
             // add conditions
+            step.getConditions().clear();
             for (OpenAcdRecipeConditionRestInfo recipeConditionRestInfo : recipeStepRestInfo.getConditions()) {
                 condition = new OpenAcdRecipeCondition();
                 condition.setCondition(recipeConditionRestInfo.getCondition());
@@ -542,6 +546,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
             queue.addStep(step);
         }
+
     }
 
     private OpenAcdQueueGroup getQueueGroup(OpenAcdQueueRestInfoFull queueRestInfo) throws ResourceException {
