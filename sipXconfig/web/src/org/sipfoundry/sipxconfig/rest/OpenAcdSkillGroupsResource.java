@@ -436,19 +436,19 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
     static class OpenAcdSkillGroupsBundleRestInfo {
         private final MetadataRestInfo m_metadata;
-        private final List<OpenAcdSkillGroupRestInfo> m_skills;
+        private final List<OpenAcdSkillGroupRestInfo> m_groups;
 
-        public OpenAcdSkillGroupsBundleRestInfo(List<OpenAcdSkillGroupRestInfo> skills, MetadataRestInfo metadata) {
+        public OpenAcdSkillGroupsBundleRestInfo(List<OpenAcdSkillGroupRestInfo> skillGroups, MetadataRestInfo metadata) {
             m_metadata = metadata;
-            m_skills = skills;
+            m_groups = skillGroups;
         }
 
         public MetadataRestInfo getMetadata() {
             return m_metadata;
         }
 
-        public List<OpenAcdSkillGroupRestInfo> getSkills() {
-            return m_skills;
+        public List<OpenAcdSkillGroupRestInfo> getGroups() {
+            return m_groups;
         }
     }
 
