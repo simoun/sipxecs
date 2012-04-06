@@ -113,19 +113,25 @@ public class OpenAcdQueueGroupsResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdQueueGroupRestInfoFull queueGroupRestInfo;
+        int idInt;
+        OpenAcdQueueGroupRestInfoFull queueGroupRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                queueGroupRestInfo = createQueueGroupRestInfo(idInt);
+                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
-            // finally return group representation
+            try {
+                queueGroupRestInfo = createQueueGroupRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue Group failed", exception.getLocalizedMessage());
+            }
+
             return new OpenAcdQueueGroupRepresentation(variant.getMediaType(), queueGroupRestInfo);
         }
 

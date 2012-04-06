@@ -1,7 +1,7 @@
 /*
  *
  *  OpenAcdQueuesResource.java - A Restlet to read Skill data from OpenACD within SipXecs
- *  Copyright (C) 2012 PATLive, I. Wesson
+ *  Copyright (C) 2012 PATLive, I. Wesson, D. Waseem, D. Chang
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -26,7 +26,6 @@ import static org.restlet.data.MediaType.TEXT_XML;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -120,19 +119,25 @@ public class OpenAcdQueuesResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdQueueRestInfoFull queueRestInfo;
+        int idInt;
+        OpenAcdQueueRestInfoFull queueRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                queueRestInfo = createQueueRestInfo(idInt);
+                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
-            // return representation
+            try {
+                queueRestInfo = createQueueRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue failed", exception.getLocalizedMessage());
+            }
+
             return new OpenAcdQueueRepresentation(variant.getMediaType(), queueRestInfo);
         }
 
@@ -220,7 +225,6 @@ public class OpenAcdQueuesResource extends UserResource {
     // DELETE - Delete single Skill
     // ----------------------------
 
-    // deleteQueue() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
         OpenAcdQueue queue;
@@ -285,13 +289,13 @@ public class OpenAcdQueuesResource extends UserResource {
         recipeStepsRestInfo = new ArrayList<OpenAcdRecipeStepRestInfo>(groupRecipeSteps.size());
 
         for (OpenAcdRecipeStep groupRecipeStep : groupRecipeSteps) {
-            recipeStepRestInfo = new OpenAcdRecipeStepRestInfo(groupRecipeStep, createRecipeActionsRestInfo(groupRecipeStep), createRecipeConditionsRestInfo(groupRecipeStep));
+            recipeStepRestInfo = new OpenAcdRecipeStepRestInfo(groupRecipeStep, createRecipeActionRestInfo(groupRecipeStep), createRecipeConditionsRestInfo(groupRecipeStep));
             recipeStepsRestInfo.add(recipeStepRestInfo);
         }
         return recipeStepsRestInfo;
     }
 
-    private OpenAcdRecipeActionRestInfo createRecipeActionsRestInfo(OpenAcdRecipeStep step) {
+    private OpenAcdRecipeActionRestInfo createRecipeActionRestInfo(OpenAcdRecipeStep step) {
         OpenAcdRecipeActionRestInfo recipeActionRestInfo;
 
         OpenAcdRecipeAction groupRecipeActions = step.getAction();
@@ -455,14 +459,7 @@ public class OpenAcdQueuesResource extends UserResource {
         queue.setGroup(queueGroup);
         queue.setDescription(queueRestInfo.getDescription());
 
-        queue.getSteps().clear();
-
-        OpenAcdRecipeStep step;
-        List<OpenAcdRecipeStepRestInfo> recipeStepsRestInfo = queueRestInfo.getSteps();
-        for (OpenAcdRecipeStepRestInfo recipeStepRestInfo : recipeStepsRestInfo) {
-            step = m_openAcdContext.getRecipeStepById(recipeStepRestInfo.getId());
-            queue.addStep(step);
-        }
+        addLists(queue, queueRestInfo);
     }
 
     private OpenAcdQueue createQueue(OpenAcdQueueRestInfoFull queueRestInfo) throws ResourceException {
@@ -476,14 +473,45 @@ public class OpenAcdQueuesResource extends UserResource {
         queue.setGroup(queueGroup);
         queue.setDescription(queueRestInfo.getDescription());
 
-        Set<OpenAcdRecipeStep> steps = new LinkedHashSet<OpenAcdRecipeStep>();
-        List<OpenAcdRecipeStepRestInfo> recipeStepsRestInfo = queueRestInfo.getSteps();
-
-        for (OpenAcdRecipeStepRestInfo recipeStepRestInfo : recipeStepsRestInfo) {
-            steps.add(m_openAcdContext.getRecipeStepById(recipeStepRestInfo.getId()));
-        }
+        addLists(queue, queueRestInfo);
 
         return queue;
+    }
+
+    private void addLists(OpenAcdQueue queue, OpenAcdQueueRestInfoFull queueRestInfo) {
+        // remove all skills
+        queue.getSkills().clear();
+
+        // set skills
+        OpenAcdSkill skill;
+        List<OpenAcdSkillRestInfo> skillsRestInfo = queueRestInfo.getSkills();
+        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
+            skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
+            queue.addSkill(skill);
+        }
+
+        // remove all agent groups
+        queue.getAgentGroups().clear();
+
+        // set agent groups
+        OpenAcdAgentGroup agentGroup;
+        List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo = queueRestInfo.getAgentGroups();
+        for (OpenAcdAgentGroupRestInfo agentGroupRestInfo : agentGroupsRestInfo) {
+            agentGroup = m_openAcdContext.getAgentGroupById(agentGroupRestInfo.getId());
+            queue.addAgentGroup(agentGroup);
+        }
+
+        // remove all current steps
+        queue.getSteps().clear();
+
+        // set steps
+        // TODO: must add addition of conditions and actions
+        OpenAcdRecipeStep step;
+        List<OpenAcdRecipeStepRestInfo> recipeStepsRestInfo = queueRestInfo.getSteps();
+        for (OpenAcdRecipeStepRestInfo recipeStepRestInfo : recipeStepsRestInfo) {
+            step = m_openAcdContext.getRecipeStepById(recipeStepRestInfo.getId());
+            queue.addStep(step);
+        }
     }
 
     private OpenAcdQueueGroup getQueueGroup(OpenAcdQueueRestInfoFull queueRestInfo) throws ResourceException {

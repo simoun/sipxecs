@@ -26,7 +26,6 @@ import static org.restlet.data.MediaType.TEXT_XML;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -115,19 +114,25 @@ public class OpenAcdAgentGroupsResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdAgentGroupRestInfoFull agentGroupRestInfo;
+        int idInt;
+        OpenAcdAgentGroupRestInfoFull agentGroupRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                agentGroupRestInfo = createAgentGroupRestInfo(idInt);
+                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
-            // finally return group representation
+            try {
+                agentGroupRestInfo = createAgentGroupRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent Group failed", exception.getLocalizedMessage());
+            }
+
             return new OpenAcdAgentGroupRepresentation(variant.getMediaType(), agentGroupRestInfo);
         }
 
@@ -200,7 +205,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
 
         // otherwise add new agent group
         try {
-            agentGroup = createOpenAcdAgentGroup(agentGroupRestInfo);
+            agentGroup = createAgentGroup(agentGroupRestInfo);
             m_openAcdContext.saveAgentGroup(agentGroup);
         }
         catch (Exception exception) {
@@ -281,51 +286,6 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         agentGroupRestInfo = new OpenAcdAgentGroupRestInfoFull(agentGroup, skillsRestInfo, queuesRestInfo, clientsRestInfo);
 
         return agentGroupRestInfo;
-    }
-
-    private void updateAgentGroup(OpenAcdAgentGroup agentGroup, OpenAcdAgentGroupRestInfoFull agentGroupRestInfo) {
-        String tempString;
-
-        // do not allow empty name
-        tempString = agentGroupRestInfo.getName();
-        if (!tempString.isEmpty()) {
-            agentGroup.setName(tempString);
-        }
-
-        agentGroup.setDescription(agentGroupRestInfo.getDescription());
-
-        // remove all current skills
-        agentGroup.getSkills().clear();
-
-        // set skills
-        OpenAcdSkill skill;
-        List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
-        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
-            skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
-            agentGroup.addSkill(skill);
-        }
-
-        // remove all current queues
-        agentGroup.getQueues().clear();
-
-        // set queues
-        OpenAcdQueue queue;
-        List<OpenAcdQueueRestInfo> queuesRestInfo = agentGroupRestInfo.getQueues();
-        for (OpenAcdQueueRestInfo queueRestInfo : queuesRestInfo) {
-            queue = m_openAcdContext.getQueueById(queueRestInfo.getId());
-            agentGroup.addQueue(queue);
-        }
-
-        // remove all current clients
-        agentGroup.getClients().clear();
-
-        // set clients
-        OpenAcdClient client;
-        List<OpenAcdClientRestInfo> clientsRestInfo = agentGroupRestInfo.getClients();
-        for (OpenAcdClientRestInfo clientRestInfo : clientsRestInfo) {
-            client = m_openAcdContext.getClientById(clientRestInfo.getId());
-            agentGroup.addClient(client);
-        }
     }
 
     private MetadataRestInfo addAgentGroups(List<OpenAcdAgentGroupRestInfoFull> agentGroupsRestInfo, List<OpenAcdAgentGroup> agentGroups) {
@@ -468,24 +428,65 @@ public class OpenAcdAgentGroupsResource extends UserResource {
         }
     }
 
-    private OpenAcdAgentGroup createOpenAcdAgentGroup(OpenAcdAgentGroupRestInfoFull agentGroupRestInfo) {
+    private void updateAgentGroup(OpenAcdAgentGroup agentGroup, OpenAcdAgentGroupRestInfoFull agentGroupRestInfo) {
+        String tempString;
+
+        // do not allow empty name
+        tempString = agentGroupRestInfo.getName();
+        if (!tempString.isEmpty()) {
+            agentGroup.setName(tempString);
+        }
+
+        agentGroup.setDescription(agentGroupRestInfo.getDescription());
+
+        addLists(agentGroup, agentGroupRestInfo);
+    }
+
+    private OpenAcdAgentGroup createAgentGroup(OpenAcdAgentGroupRestInfoFull agentGroupRestInfo) {
         OpenAcdAgentGroup agentGroup = new OpenAcdAgentGroup();
 
         // copy fields from rest info
         agentGroup.setName(agentGroupRestInfo.getName());
         agentGroup.setDescription(agentGroupRestInfo.getDescription());
 
-        // add skills
-        Set<OpenAcdSkill> skills = new LinkedHashSet<OpenAcdSkill>();
-        List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
-
-        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
-            skills.add(m_openAcdContext.getSkillById(skillRestInfo.getId()));
-        }
-
-        agentGroup.setSkills(skills);
+        addLists(agentGroup, agentGroupRestInfo);
 
         return agentGroup;
+    }
+
+    private void addLists(OpenAcdAgentGroup agentGroup, OpenAcdAgentGroupRestInfoFull agentGroupRestInfo) {
+        // remove all current skills
+        agentGroup.getSkills().clear();
+
+        // set skills
+        OpenAcdSkill skill;
+        List<OpenAcdSkillRestInfo> skillsRestInfo = agentGroupRestInfo.getSkills();
+        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
+            skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
+            agentGroup.addSkill(skill);
+        }
+
+        // remove all current queues
+        agentGroup.getQueues().clear();
+
+        // set queues
+        OpenAcdQueue queue;
+        List<OpenAcdQueueRestInfo> queuesRestInfo = agentGroupRestInfo.getQueues();
+        for (OpenAcdQueueRestInfo queueRestInfo : queuesRestInfo) {
+            queue = m_openAcdContext.getQueueById(queueRestInfo.getId());
+            agentGroup.addQueue(queue);
+        }
+
+        // remove all current clients
+        agentGroup.getClients().clear();
+
+        // set clients
+        OpenAcdClient client;
+        List<OpenAcdClientRestInfo> clientsRestInfo = agentGroupRestInfo.getClients();
+        for (OpenAcdClientRestInfo clientRestInfo : clientsRestInfo) {
+            client = m_openAcdContext.getClientById(clientRestInfo.getId());
+            agentGroup.addClient(client);
+        }
     }
 
 

@@ -108,19 +108,25 @@ public class OpenAcdClientsResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdClientRestInfo clientRestInfo;
+        int idInt;
+        OpenAcdClientRestInfo clientRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                clientRestInfo = createClientRestInfo(idInt);
+                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
-            // return representation
+            try {
+                clientRestInfo = createClientRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Client failed", exception.getLocalizedMessage());
+            }
+
             return new OpenAcdClientRepresentation(variant.getMediaType(), clientRestInfo);
         }
 

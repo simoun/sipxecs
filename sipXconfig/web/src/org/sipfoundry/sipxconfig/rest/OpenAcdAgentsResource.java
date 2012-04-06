@@ -123,19 +123,26 @@ public class OpenAcdAgentsResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdAgentRestInfoFull agentRestInfo;
+        int idInt;
+        OpenAcdAgentRestInfoFull agentRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
                 agentRestInfo = createAgentRestInfo(idInt);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
-            // finally return group representation
+            try {
+                agentRestInfo = createAgentRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent failed", exception.getLocalizedMessage());
+            }
+
             return new OpenAcdAgentRepresentation(variant.getMediaType(), agentRestInfo);
         }
 

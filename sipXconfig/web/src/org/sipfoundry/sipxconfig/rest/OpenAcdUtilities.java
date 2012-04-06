@@ -321,13 +321,17 @@ public class OpenAcdUtilities {
             response.setStatus(Status.CLIENT_ERROR_BAD_REQUEST);
             break;
 
+        case ERROR_READ_FAILED:
+            response.setStatus(Status.SERVER_ERROR_INTERNAL);
+            break;
+
         default:
             response.setStatus(Status.SUCCESS_OK);
         }
     }
 
     public static enum ResponseCode {
-        SUCCESS, SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT, ERROR_WRITE_FAILED
+        SUCCESS, SUCCESS_CREATED, SUCCESS_UPDATED, SUCCESS_DELETED, ERROR_MISSING_INPUT, ERROR_BAD_INPUT, ERROR_WRITE_FAILED, ERROR_READ_FAILED
     }
 
 

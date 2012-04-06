@@ -111,19 +111,25 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdSkillGroupRestInfo skillGroupRestInfo;
+        int idInt;
+        OpenAcdSkillGroupRestInfo skillGroupRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                skillGroupRestInfo = createSkillGroupRestInfo(idInt);
+                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
-            // return representation
+            try {
+                skillGroupRestInfo = createSkillGroupRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skill Group failed", exception.getLocalizedMessage());
+            }
+
             return new OpenAcdSkillGroupRepresentation(variant.getMediaType(), skillGroupRestInfo);
         }
 

@@ -118,19 +118,25 @@ public class OpenAcdLinesResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        OpenAcdLineRestInfo lineRestInfo;
+        int idInt;
+        OpenAcdLineRestInfo lineRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                lineRestInfo = createLineRestInfo(idInt);
+                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
-            // return representation
+            try {
+                lineRestInfo = createLineRestInfo(idInt);
+            }
+            catch (Exception exception) {
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Line failed", exception.getLocalizedMessage());
+            }
+
             return new OpenAcdLineRepresentation(variant.getMediaType(), lineRestInfo);
         }
 
