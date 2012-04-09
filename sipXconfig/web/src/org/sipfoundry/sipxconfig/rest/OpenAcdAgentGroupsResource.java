@@ -130,7 +130,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                 agentGroupRestInfo = createAgentGroupRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent Group failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent Group failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdAgentGroupRepresentation(variant.getMediaType(), agentGroupRestInfo);

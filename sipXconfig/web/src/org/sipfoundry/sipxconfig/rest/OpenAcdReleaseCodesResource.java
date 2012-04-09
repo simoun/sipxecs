@@ -126,7 +126,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                 releaseCodeRestInfo = createReleaseCodeRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Release Code failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Release Code failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdReleaseCodeRepresentation(variant.getMediaType(), releaseCodeRestInfo);

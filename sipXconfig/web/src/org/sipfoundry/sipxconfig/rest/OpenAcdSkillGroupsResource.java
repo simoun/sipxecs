@@ -127,7 +127,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                 skillGroupRestInfo = createSkillGroupRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skill Group failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skill Group failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdSkillGroupRepresentation(variant.getMediaType(), skillGroupRestInfo);

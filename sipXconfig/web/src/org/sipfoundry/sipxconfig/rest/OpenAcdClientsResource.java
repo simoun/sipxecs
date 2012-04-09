@@ -124,7 +124,7 @@ public class OpenAcdClientsResource extends UserResource {
                 clientRestInfo = createClientRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Client failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Client failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdClientRepresentation(variant.getMediaType(), clientRestInfo);

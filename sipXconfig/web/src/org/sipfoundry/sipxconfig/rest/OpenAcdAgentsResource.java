@@ -140,7 +140,7 @@ public class OpenAcdAgentsResource extends UserResource {
                 agentRestInfo = createAgentRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdAgentRepresentation(variant.getMediaType(), agentRestInfo);

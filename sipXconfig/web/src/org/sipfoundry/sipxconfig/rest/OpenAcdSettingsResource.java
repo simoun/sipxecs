@@ -97,7 +97,7 @@ public class OpenAcdSettingsResource extends UserResource {
                 settingRestInfo = createSettingRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Settings failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Settings failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdSettingRepresentation(variant.getMediaType(), settingRestInfo);

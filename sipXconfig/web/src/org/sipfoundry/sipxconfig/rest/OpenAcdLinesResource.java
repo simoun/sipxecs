@@ -134,7 +134,7 @@ public class OpenAcdLinesResource extends UserResource {
                 lineRestInfo = createLineRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Line failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Line failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdLineRepresentation(variant.getMediaType(), lineRestInfo);

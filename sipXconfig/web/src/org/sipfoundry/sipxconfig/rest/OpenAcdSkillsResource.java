@@ -124,7 +124,7 @@ public class OpenAcdSkillsResource extends UserResource {
                 skillRestInfo = createSkillRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skills failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skills failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdSkillRepresentation(variant.getMediaType(), skillRestInfo);

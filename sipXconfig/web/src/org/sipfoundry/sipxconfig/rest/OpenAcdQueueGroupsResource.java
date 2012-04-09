@@ -129,7 +129,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 queueGroupRestInfo = createQueueGroupRestInfo(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue Group failed", exception.getLocalizedMessage());
+                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue Group failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdQueueGroupRepresentation(variant.getMediaType(), queueGroupRestInfo);
