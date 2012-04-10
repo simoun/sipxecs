@@ -47,15 +47,15 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueue;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentRestInfoFull;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdAgentGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdAgentRestInfoFull;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdClientRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdQueueRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdSkillRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
@@ -129,18 +129,18 @@ public class OpenAcdAgentsResource extends UserResource {
 
         if (idString != null) {
             try {
-                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                idInt = RestUtilities.getIntFromAttribute(idString);
                 agentRestInfo = createAgentRestInfo(idInt);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
             try {
                 agentRestInfo = createAgentRestInfo(idInt);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent failed", exception.getLocalizedMessage());
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read Agent failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdAgentRepresentation(variant.getMediaType(), agentRestInfo);
@@ -179,7 +179,7 @@ public class OpenAcdAgentsResource extends UserResource {
         ValidationInfo validationInfo = validate(agentRestInfo);
 
         if (!validationInfo.valid) {
-            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            RestUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
             return;
         }
 
@@ -189,11 +189,11 @@ public class OpenAcdAgentsResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 agent = m_openAcdContext.getAgentById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
@@ -203,11 +203,11 @@ public class OpenAcdAgentsResource extends UserResource {
                 m_openAcdContext.saveAgent(agent);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Agent failed", exception.getLocalizedMessage());
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Agent failed", exception.getLocalizedMessage());
                 return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Agent");
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Agent");
             return;
         }
 
@@ -218,11 +218,11 @@ public class OpenAcdAgentsResource extends UserResource {
             m_openAcdContext.saveAgent(agent);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Agent failed", exception.getLocalizedMessage());
+            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Agent failed", exception.getLocalizedMessage());
             return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Agent", agent.getId());
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created Agent", agent.getId());
     }
 
 
@@ -238,23 +238,23 @@ public class OpenAcdAgentsResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 agent = m_openAcdContext.getAgentById(idInt);
             }
             catch (Exception ex) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
             m_openAcdContext.deleteAgent(agent);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Agent.", agent.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Agent.", agent.getId());
 
             return;
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value is missing.");
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value is missing.");
     }
 
 
@@ -292,7 +292,7 @@ public class OpenAcdAgentsResource extends UserResource {
         List<OpenAcdClientRestInfo> clientsRestInfo;
 
         // determine pagination
-        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, agents.size());
+        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, agents.size());
 
         // create list of agent restinfos
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
@@ -361,7 +361,7 @@ public class OpenAcdAgentsResource extends UserResource {
 
     private void sortAgents(List<OpenAcdAgent> agents) {
         // sort groups if requested
-        SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
+        SortInfo sortInfo = RestUtilities.calculateSorting(m_form);
 
         if (!sortInfo.sort) {
             return;

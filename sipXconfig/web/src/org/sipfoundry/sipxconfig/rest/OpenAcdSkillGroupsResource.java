@@ -42,12 +42,12 @@ import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillGroupRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdSkillGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ResponseCode;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
@@ -117,17 +117,17 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
         if (idString != null) {
             try {
-                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                idInt = RestUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
             try {
                 skillGroupRestInfo = createSkillGroupRestInfo(idInt);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skill Group failed", exception.getLocalizedMessage());
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skill Group failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdSkillGroupRepresentation(variant.getMediaType(), skillGroupRestInfo);
@@ -166,7 +166,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         ValidationInfo validationInfo = validate(skillGroupRestInfo);
 
         if (!validationInfo.valid) {
-            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            RestUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
             return;
         }
 
@@ -176,11 +176,11 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 skillGroup = m_openAcdContext.getSkillGroupById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
@@ -190,11 +190,11 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                 m_openAcdContext.saveSkillGroup(skillGroup);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill Group failed", exception.getLocalizedMessage());
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill Group failed", exception.getLocalizedMessage());
                 return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Skill Group", skillGroup.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Skill Group", skillGroup.getId());
 
             return;
         }
@@ -206,11 +206,11 @@ public class OpenAcdSkillGroupsResource extends UserResource {
             m_openAcdContext.saveSkillGroup(skillGroup);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill Group failed", exception.getLocalizedMessage());
+            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill Group failed", exception.getLocalizedMessage());
             return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Skill Group", skillGroup.getId());
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created Skill Group", skillGroup.getId());
     }
 
 
@@ -229,11 +229,11 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 skillGroupIds.add(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
@@ -243,7 +243,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
 
@@ -288,7 +288,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         OpenAcdSkillGroupRestInfo skillRestInfo;
 
         // determine pagination
-        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, skillGroups.size());
+        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, skillGroups.size());
 
         // create list of skill restinfos
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
@@ -305,7 +305,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
     private void sortSkillGroups(List<OpenAcdSkillGroup> skillGroups) {
         // sort groups if requested
-        SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
+        SortInfo sortInfo = RestUtilities.calculateSorting(m_form);
 
         if (!sortInfo.sort) {
             return;

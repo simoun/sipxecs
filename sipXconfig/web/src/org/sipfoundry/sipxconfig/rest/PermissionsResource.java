@@ -38,10 +38,10 @@ import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.permission.Permission;
 import org.sipfoundry.sipxconfig.permission.PermissionManager;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
@@ -114,7 +114,7 @@ public class PermissionsResource extends UserResource {
                 permissionRestInfo = createPermissionRestInfo(nameString);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read permissions failed", exception.getLocalizedMessage());
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read permissions failed", exception.getLocalizedMessage());
             }
 
             return new PermissionRepresentation(variant.getMediaType(), permissionRestInfo);
@@ -153,7 +153,7 @@ public class PermissionsResource extends UserResource {
         ValidationInfo validationInfo = validate(permissionRestInfo);
 
         if (!validationInfo.valid) {
-            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            RestUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
             return;
         }
 
@@ -166,7 +166,7 @@ public class PermissionsResource extends UserResource {
                 permission = m_permissionManager.getPermissionByName(nameString);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "Name " + nameString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "Name " + nameString + " not found.");
                 return;
             }
 
@@ -176,11 +176,11 @@ public class PermissionsResource extends UserResource {
                 m_permissionManager.saveCallPermission(permission);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Permission failed", exception.getLocalizedMessage());
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Permission failed", exception.getLocalizedMessage());
                 return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Permission", permission.getName());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Permission", permission.getName());
 
             return;
         }
@@ -192,11 +192,11 @@ public class PermissionsResource extends UserResource {
             m_permissionManager.saveCallPermission(permission);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Permission failed", exception.getLocalizedMessage());
+            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Permission failed", exception.getLocalizedMessage());
             return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Permission", permission.getName());
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created Permission", permission.getName());
     }
 
 
@@ -215,19 +215,19 @@ public class PermissionsResource extends UserResource {
                 permission = m_permissionManager.getPermissionByName(nameString);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "Name " + nameString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "Name " + nameString + " not found.");
                 return;
             }
 
             m_permissionManager.deleteCallPermission(permission);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Permission", permission.getName());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Permission", permission.getName());
 
             return;
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "Name value missing");
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "Name value missing");
     }
 
 
@@ -257,7 +257,7 @@ public class PermissionsResource extends UserResource {
         PermissionRestInfoFull permissionRestInfo;
 
         // determine pagination
-        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, permissions.size());
+        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, permissions.size());
 
         // create list of restinfos
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
@@ -274,7 +274,7 @@ public class PermissionsResource extends UserResource {
 
     private void sortPermissions(List<Permission> permissions) {
         // sort if requested
-        SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
+        SortInfo sortInfo = RestUtilities.calculateSorting(m_form);
 
         if (!sortInfo.sort) {
             return;

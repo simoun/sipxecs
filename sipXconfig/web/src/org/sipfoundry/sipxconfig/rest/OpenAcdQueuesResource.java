@@ -46,16 +46,16 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeAction;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeCondition;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeStep;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfoFull;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdRecipeActionRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdRecipeConditionRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdRecipeStepRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdAgentGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdQueueRestInfoFull;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdRecipeActionRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdRecipeConditionRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdRecipeStepRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdSkillRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
@@ -125,17 +125,17 @@ public class OpenAcdQueuesResource extends UserResource {
 
         if (idString != null) {
             try {
-                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                idInt = RestUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
             try {
                 queueRestInfo = createQueueRestInfo(idInt);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue failed", exception.getLocalizedMessage());
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdQueueRepresentation(variant.getMediaType(), queueRestInfo);
@@ -174,7 +174,7 @@ public class OpenAcdQueuesResource extends UserResource {
         ValidationInfo validationInfo = validate(queueRestInfo);
 
         if (!validationInfo.valid) {
-            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            RestUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
             return;
         }
 
@@ -184,11 +184,11 @@ public class OpenAcdQueuesResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 queue = m_openAcdContext.getQueueById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
@@ -198,11 +198,11 @@ public class OpenAcdQueuesResource extends UserResource {
                 m_openAcdContext.saveQueue(queue);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue failed", exception.getLocalizedMessage());
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue failed", exception.getLocalizedMessage());
                 return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Queue", queue.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Queue", queue.getId());
 
             return;
         }
@@ -214,11 +214,11 @@ public class OpenAcdQueuesResource extends UserResource {
             m_openAcdContext.saveQueue(queue);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Queue failed", exception.getLocalizedMessage());
+            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Queue failed", exception.getLocalizedMessage());
             return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Queue", queue.getId());
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created Queue", queue.getId());
     }
 
 
@@ -234,23 +234,23 @@ public class OpenAcdQueuesResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 queue = m_openAcdContext.getQueueById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
             m_openAcdContext.deleteQueue(queue);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Queue", queue.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Queue", queue.getId());
 
             return;
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
 
@@ -360,7 +360,7 @@ public class OpenAcdQueuesResource extends UserResource {
         List<OpenAcdRecipeStepRestInfo> recipeStepRestInfo;
 
         // determine pagination
-        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, queues.size());
+        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, queues.size());
 
         // create list of queue restinfos
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
@@ -380,7 +380,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
     private void sortQueues(List<OpenAcdQueue> queues) {
         // sort groups if requested
-        SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
+        SortInfo sortInfo = RestUtilities.calculateSorting(m_form);
 
         if (!sortInfo.sort) {
             return;

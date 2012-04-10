@@ -39,12 +39,12 @@ import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdClientRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ResponseCode;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
@@ -114,17 +114,17 @@ public class OpenAcdClientsResource extends UserResource {
 
         if (idString != null) {
             try {
-                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                idInt = RestUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
             try {
                 clientRestInfo = createClientRestInfo(idInt);
             }
             catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read Client failed", exception.getLocalizedMessage());
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read Client failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdClientRepresentation(variant.getMediaType(), clientRestInfo);
@@ -163,7 +163,7 @@ public class OpenAcdClientsResource extends UserResource {
         ValidationInfo validationInfo = validate(clientRestInfo);
 
         if (!validationInfo.valid) {
-            OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
+            RestUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
             return;
         }
 
@@ -173,11 +173,11 @@ public class OpenAcdClientsResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 client = m_openAcdContext.getClientById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
@@ -187,11 +187,11 @@ public class OpenAcdClientsResource extends UserResource {
                 m_openAcdContext.saveClient(client);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Client failed", exception.getLocalizedMessage());
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Client failed", exception.getLocalizedMessage());
                 return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Client", client.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Client", client.getId());
 
             return;
         }
@@ -203,11 +203,11 @@ public class OpenAcdClientsResource extends UserResource {
             m_openAcdContext.saveClient(client);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Client failed", exception.getLocalizedMessage());
+            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Client failed", exception.getLocalizedMessage());
             return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Client", client.getId());
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created Client", client.getId());
     }
 
 
@@ -223,23 +223,23 @@ public class OpenAcdClientsResource extends UserResource {
 
         if (idString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
+                int idInt = RestUtilities.getIntFromAttribute(idString);
                 client = m_openAcdContext.getClientById(idInt);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
             m_openAcdContext.deleteClient(client);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Client", client.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Client", client.getId());
 
             return;
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
 
@@ -284,7 +284,7 @@ public class OpenAcdClientsResource extends UserResource {
         OpenAcdClientRestInfo clientRestInfo;
 
         // determine pagination
-        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, clients.size());
+        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, clients.size());
 
         // create list of client restinfos
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
@@ -301,7 +301,7 @@ public class OpenAcdClientsResource extends UserResource {
 
     private void sortClients(List<OpenAcdClient> clients) {
         // sort groups if requested
-        SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
+        SortInfo sortInfo = RestUtilities.calculateSorting(m_form);
 
         if (!sortInfo.sort) {
             return;
