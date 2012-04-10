@@ -400,4 +400,20 @@
   </bean>
   <alias name="permissionResource" alias="/permission/{name}" />
 
+  <bean id="branchesResource" class="org.sipfoundry.sipxconfig.rest.BranchesResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="branchManager" ref="branchManager" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="branchesResource" alias="/branch" />
+  
+  <bean id="branchResource" class="org.sipfoundry.sipxconfig.rest.BranchesResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="branchManager" ref="branchManager" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="branchResource" alias="/branch/{id}" />
+
 </beans>

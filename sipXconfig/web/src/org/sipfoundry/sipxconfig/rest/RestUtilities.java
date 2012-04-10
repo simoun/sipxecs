@@ -30,6 +30,7 @@ import org.restlet.data.Status;
 import org.restlet.resource.DomRepresentation;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
+import org.sipfoundry.sipxconfig.branch.Branch;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgent;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
@@ -43,6 +44,8 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdSettings;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
 import org.sipfoundry.sipxconfig.permission.Permission;
+import org.sipfoundry.sipxconfig.phonebook.Address;
+import org.sipfoundry.sipxconfig.setting.Group;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -434,6 +437,78 @@ public class RestUtilities {
 
         public boolean getBuiltIn() {
             return m_builtIn;
+        }
+    }
+
+    static class BranchRestInfoFull {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+        private final Address m_address;
+        private final String m_phoneNumber;
+        private final String m_faxNumber;
+
+        public BranchRestInfoFull(Branch branch) {
+            m_id = branch.getId();
+            m_name = branch.getName();
+            m_description = branch.getDescription();
+            m_address = branch.getAddress();
+            m_phoneNumber = branch.getPhoneNumber();
+            m_faxNumber = branch.getFaxNumber();
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public Address getAddress() {
+            return m_address;
+        }
+
+        public String getPhoneNumber() {
+            return m_phoneNumber;
+        }
+
+        public String getFaxNumber() {
+            return m_faxNumber;
+        }
+    }
+
+    static class UserGroupRestInfoFull {
+        private final int m_id;
+        private final String m_name;
+        private final String m_description;
+        private final BranchRestInfoFull m_branch;
+
+        public UserGroupRestInfoFull(Group userGroup, BranchRestInfoFull branchRestInfo) {
+            m_id = userGroup.getId();
+            m_name = userGroup.getName();
+            m_description = userGroup.getDescription();
+            m_branch = branchRestInfo;
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public BranchRestInfoFull getBranch() {
+            return m_branch;
         }
     }
 

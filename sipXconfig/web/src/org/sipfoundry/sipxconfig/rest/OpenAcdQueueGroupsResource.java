@@ -471,9 +471,6 @@ public class OpenAcdQueueGroupsResource extends UserResource {
 
         queueGroup.setDescription(queueGroupRestInfo.getDescription());
 
-        // remove all current skills
-        queueGroup.getSkills().clear();
-
         addLists(queueGroup, queueGroupRestInfo);
     }
 
