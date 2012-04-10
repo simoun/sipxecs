@@ -54,7 +54,7 @@ public class PermissionsResource extends UserResource {
 
     // use to define all possible sort fields
     private enum SortField {
-        NAME, DESCRIPTION, ATOM, NONE;
+        NAME, DESCRIPTION, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
