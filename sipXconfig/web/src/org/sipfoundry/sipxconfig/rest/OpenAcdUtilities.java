@@ -221,6 +221,36 @@ public class OpenAcdUtilities {
         }
     }
 
+    public static void setResponse(Response response, ResponseCode code, String message, String id) {
+        try {
+            DomRepresentation representation = new DomRepresentation(MediaType.TEXT_XML);
+            Document doc = representation.getDocument();
+
+            // set response status
+            setResponseStatus(response, code);
+
+            // create root node
+            Element elementResponse = doc.createElement("response");
+            doc.appendChild(elementResponse);
+
+            setResponseHeader(doc, elementResponse, code, message);
+
+            // add related data
+            Element elementData = doc.createElement("data");
+            Element elementId = doc.createElement("id");
+            elementId.appendChild(doc.createTextNode(id));
+            elementData.appendChild(elementId);
+            elementResponse.appendChild(elementData);
+
+            response.setEntity(new DomRepresentation(MediaType.TEXT_XML, doc));
+
+        }
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     public static void setResponseError(Response response, ResponseCode code, String message) {
         Representation representation = getResponseError(response, code, message);
 

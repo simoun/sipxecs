@@ -386,7 +386,6 @@
 
   <bean id="permissionsResource" class="org.sipfoundry.sipxconfig.rest.PermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
-    <property name="openAcdContext" ref="openAcdContext" />
     <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
@@ -395,11 +394,10 @@
   
   <bean id="permissionResource" class="org.sipfoundry.sipxconfig.rest.PermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
-    <property name="openAcdContext" ref="openAcdContext" />
     <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
   </bean>
-  <alias name="permissionResource" alias="/permission/{id}" />
+  <alias name="permissionResource" alias="/permission/{name}" />
 
 </beans>

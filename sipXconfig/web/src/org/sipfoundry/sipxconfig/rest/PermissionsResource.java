@@ -33,20 +33,13 @@ import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
 import org.sipfoundry.sipxconfig.permission.Permission;
 import org.sipfoundry.sipxconfig.permission.PermissionManager;
-import org.sipfoundry.sipxconfig.rest.OpenAcdSkillsResource.OpenAcdSkillRepresentation;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
@@ -55,7 +48,6 @@ import com.thoughtworks.xstream.XStream;
 
 public class PermissionsResource extends UserResource {
 
-    private OpenAcdContext m_openAcdContext;
     private PermissionManager m_permissionManager;
     private Form m_form;
 
@@ -113,20 +105,13 @@ public class PermissionsResource extends UserResource {
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
-        int idInt;
+        // Permissions do not use Id, so must key off Name 
         PermissionRestInfoFull permissionRestInfo = null;
-        String idString = (String) getRequest().getAttributes().get("id");
+        String nameString = (String) getRequest().getAttributes().get("name");
 
-        if (idString != null) {
+        if (nameString != null) {
             try {
-                idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-            }
-            catch (Exception exception) {
-                return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-            }
-
-            try {
-                permissionRestInfo = createPermissionRestInfo(idInt);
+                permissionRestInfo = createPermissionRestInfo(nameString);
             }
             catch (Exception exception) {
                 return OpenAcdUtilities.getResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_READ_FAILED, "Read permissions failed", exception.getLocalizedMessage());
@@ -137,7 +122,7 @@ public class PermissionsResource extends UserResource {
 
 
         // if not single, process request for all
-        List<Permission> permissions = (List<Permission>) m_permissionManager.getPermissions();
+        List<Permission> permissions = new ArrayList<Permission>(m_permissionManager.getPermissions());
         List<PermissionRestInfoFull> permissionsRestInfo = new ArrayList<PermissionRestInfoFull>();
         MetadataRestInfo metadataRestInfo;
 
@@ -160,12 +145,12 @@ public class PermissionsResource extends UserResource {
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
         // get from request body
-        OpenAcdSkillRepresentation representation = new OpenAcdSkillRepresentation(entity);
-        OpenAcdSkillRestInfoFull skillRestInfo = representation.getObject();
-        OpenAcdSkill skill = null;
+        PermissionRepresentation representation = new PermissionRepresentation(entity);
+        PermissionRestInfoFull permissionRestInfo = representation.getObject();
+        Permission permission = null;
 
         // validate input for update or create
-        ValidationInfo validationInfo = validate(skillRestInfo);
+        ValidationInfo validationInfo = validate(permissionRestInfo);
 
         if (!validationInfo.valid) {
             OpenAcdUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
@@ -174,29 +159,28 @@ public class PermissionsResource extends UserResource {
 
 
         // if have id then update single
-        String idString = (String) getRequest().getAttributes().get("id");
+        String nameString = (String) getRequest().getAttributes().get("name");
 
-        if (idString != null) {
+        if (nameString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                skill = m_openAcdContext.getSkillById(idInt);
+                permission = m_permissionManager.getPermissionByName(nameString);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "Name " + nameString + " not found.");
                 return;
             }
 
             // copy values over to existing
             try {
-                updateSkill(skill, skillRestInfo);
-                m_openAcdContext.saveSkill(skill);
+                updatePermission(permission, permissionRestInfo);
+                m_permissionManager.saveCallPermission(permission);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill failed", exception.getLocalizedMessage());
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Permission failed", exception.getLocalizedMessage());
                 return;
             }
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Skill", skill.getId());
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Permission", permission.getName());
 
             return;
         }
@@ -204,15 +188,15 @@ public class PermissionsResource extends UserResource {
 
         // otherwise add new
         try {
-            skill = createSkill(skillRestInfo);
-            m_openAcdContext.saveSkill(skill);
+            permission = createPermission(permissionRestInfo);
+            m_permissionManager.saveCallPermission(permission);
         }
         catch (Exception exception) {
-            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill failed", exception.getLocalizedMessage());
+            OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Permission failed", exception.getLocalizedMessage());
             return;
         }
 
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Skill", skill.getId());
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_CREATED, "Created Permission", permission.getName());
     }
 
 
@@ -221,30 +205,29 @@ public class PermissionsResource extends UserResource {
 
     @Override
     public void removeRepresentations() throws ResourceException {
-        OpenAcdSkill skill;
+        Permission permission;
 
         // get id then delete single
-        String idString = (String) getRequest().getAttributes().get("id");
+        String nameString = (String) getRequest().getAttributes().get("name");
 
-        if (idString != null) {
+        if (nameString != null) {
             try {
-                int idInt = OpenAcdUtilities.getIntFromAttribute(idString);
-                skill = m_openAcdContext.getSkillById(idInt);
+                permission = m_permissionManager.getPermissionByName(nameString);
             }
             catch (Exception exception) {
-                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                OpenAcdUtilities.setResponseError(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_BAD_INPUT, "Name " + nameString + " not found.");
                 return;
             }
 
-            m_openAcdContext.deleteSkill(skill);
+            m_permissionManager.deleteCallPermission(permission);
 
-            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Skill", skill.getId());
+            OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Permission", permission.getName());
 
             return;
         }
 
         // no id string
-        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
+        OpenAcdUtilities.setResponse(getResponse(), OpenAcdUtilities.ResponseCode.ERROR_MISSING_INPUT, "Name value missing");
     }
 
 
@@ -255,51 +238,16 @@ public class PermissionsResource extends UserResource {
     // update
     // may also contain clean up of input data
     // may create another validation function if different rules needed for update v. create
-    private ValidationInfo validate(OpenAcdSkillRestInfoFull restInfo) {
+    private ValidationInfo validate(PermissionRestInfoFull restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
-
-        String name = restInfo.getName();
-        String atom = restInfo.getAtom();
-
-        for (int i = 0; i < name.length(); i++) {
-            if ((!Character.isLetterOrDigit(name.charAt(i)) && !(Character.getType(name.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && name.charAt(i) != '-') {
-                validationInfo.valid = false;
-                validationInfo.message = "Validation Error: Skill Group 'Name' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
-            }
-        }
-
-        for (int i = 0; i < atom.length(); i++) {
-            if ((!Character.isLetterOrDigit(atom.charAt(i)) && !(Character.getType(atom.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && atom.charAt(i) != '-') {
-                validationInfo.valid = false;
-                validationInfo.message = "Validation Error: 'Atom' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
-            }
-        }
 
         return validationInfo;
     }
 
-    private Permission getPermissionById(int id) throws ResourceException {
-        Permission foundPermission = null;
-
-        for (Permission permission : m_permissionManager.getPermissions()) {
-            if (permission.getId().equals(id)) {
-                foundPermission = permission;
-            }
-        }
-
-        if (foundPermission == null) {
-            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "Id " + id + "not found.");
-        }
-
-        return foundPermission;
-    }
-
-    private PermissionRestInfoFull createPermissionRestInfo(int id) throws ResourceException {
+    private PermissionRestInfoFull createPermissionRestInfo(String name) throws ResourceException {
         PermissionRestInfoFull permissionRestInfo = null;
 
-        Permission permission = getPermissionById(id);
+        Permission permission = m_permissionManager.getPermissionByName(name);
         permissionRestInfo = new PermissionRestInfoFull(permission);
 
         return permissionRestInfo;
@@ -392,45 +340,32 @@ public class PermissionsResource extends UserResource {
         }
     }
 
-    private void updateSkill(OpenAcdSkill skill, OpenAcdSkillRestInfoFull skillRestInfo) {
-        OpenAcdSkillGroup skillGroup;
+    private void updatePermission(Permission permission, PermissionRestInfoFull permissionRestInfo) {
         String tempString;
 
-        // do not allow empty name
-        tempString = skillRestInfo.getName();
+        // do not allow empty label
+        tempString = permissionRestInfo.getLabel();
         if (!tempString.isEmpty()) {
-            skill.setName(tempString);
+            permission.setLabel(tempString);
         }
 
-        skill.setDescription(skillRestInfo.getDescription());
-
-        skillGroup = getSkillGroup(skillRestInfo);
-        skill.setGroup(skillGroup);
+        permission.setDescription(permissionRestInfo.getDescription());
+        permission.setDefaultValue(permissionRestInfo.getDefaultValue());
     }
 
-    private OpenAcdSkill createSkill(OpenAcdSkillRestInfoFull skillRestInfo) throws ResourceException {
-        OpenAcdSkillGroup skillGroup;
-        OpenAcdSkill skill = new OpenAcdSkill();
+    private Permission createPermission(PermissionRestInfoFull permissionRestInfo) throws ResourceException {
+        Permission permission = new Permission();
 
         // copy fields from rest info
-        skill.setName(skillRestInfo.getName());
-        skill.setDescription(skillRestInfo.getDescription());
-        skill.setAtom(skillRestInfo.getAtom());
+        permission.setLabel(permissionRestInfo.getLabel());
+        permission.setDescription(permissionRestInfo.getDescription());
+        permission.setDefaultValue(permissionRestInfo.getDefaultValue());
 
-        skillGroup = getSkillGroup(skillRestInfo);
-        skill.setGroup(skillGroup);
+        // only available is custom call types
+        permission.setType(Permission.Type.CALL);
 
-        return skill;
+        return permission;
     }
-
-    private OpenAcdSkillGroup getSkillGroup(OpenAcdSkillRestInfoFull skillRestInfo) {
-        OpenAcdSkillGroup skillGroup;
-        int groupId = skillRestInfo.getGroupId();
-        skillGroup = m_openAcdContext.getSkillGroupById(groupId);
-
-        return skillGroup;
-    }
-
 
     // REST Representations
     // --------------------
@@ -491,26 +426,28 @@ public class PermissionsResource extends UserResource {
     }
 
     static class PermissionRestInfoFull {
-        private final int m_id;
         private final String m_name;
-        private final String m_description;
         private final String m_label;
+        private final String m_description;
         private final boolean m_defaultValue;
+        private final Permission.Type m_type;
+        private final boolean m_builtIn;
 
         public PermissionRestInfoFull(Permission permission) {
-            m_id = permission.getId();
             m_name = permission.getName();
-            m_description = permission.getDescription();
             m_label = permission.getLabel();
+            m_description = permission.getDescription();
             m_defaultValue = permission.getDefaultValue();
-        }
-
-        public int getId() {
-            return m_id;
+            m_type = permission.getType();
+            m_builtIn = permission.isBuiltIn();
         }
 
         public String getName() {
             return m_name;
+        }
+
+        public String getLabel() {
+            return m_label;
         }
 
         public String getDescription() {
@@ -520,16 +457,19 @@ public class PermissionsResource extends UserResource {
         public boolean getDefaultValue() {
             return m_defaultValue;
         }
+
+        public Permission.Type getType() {
+            return m_type;
+        }
+
+        public boolean getBuiltIn() {
+            return m_builtIn;
+        }
     }
 
 
     // Injected objects
     // ----------------
-
-    @Required
-    public void setOpenAcdContext(OpenAcdContext openAcdContext) {
-        m_openAcdContext = openAcdContext;
-    }
 
     @Required
     public void setPermissionManager(PermissionManager permissionManager) {
