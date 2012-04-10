@@ -42,6 +42,7 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSettings;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
+import org.sipfoundry.sipxconfig.permission.Permission;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -392,6 +393,52 @@ public class RestUtilities {
 
 
     // Common Rest Info objects
+    // ------------------------
+
+    static class PermissionRestInfoFull {
+        private final String m_name;
+        private final String m_label;
+        private final String m_description;
+        private final boolean m_defaultValue;
+        private final Permission.Type m_type;
+        private final boolean m_builtIn;
+
+        public PermissionRestInfoFull(Permission permission) {
+            m_name = permission.getName();
+            m_label = permission.getLabel();
+            m_description = permission.getDescription();
+            m_defaultValue = permission.getDefaultValue();
+            m_type = permission.getType();
+            m_builtIn = permission.isBuiltIn();
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public String getLabel() {
+            return m_label;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public boolean getDefaultValue() {
+            return m_defaultValue;
+        }
+
+        public Permission.Type getType() {
+            return m_type;
+        }
+
+        public boolean getBuiltIn() {
+            return m_builtIn;
+        }
+    }
+
+
+    // Common OpenACD Rest Info objects
     // ------------------------
 
     static class MetadataRestInfo {
