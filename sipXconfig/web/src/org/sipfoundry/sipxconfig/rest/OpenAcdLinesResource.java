@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdClientRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
@@ -262,6 +263,42 @@ public class OpenAcdLinesResource extends UserResource {
     // may create another validation function if different rules needed for update v. create
     private ValidationInfo validate(OpenAcdLineRestInfo restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
+
+        String name = restInfo.getName();
+        String ext = restInfo.getExtension();
+        String did = restInfo.getDIDNumber();
+        String alias = restInfo.getAlias();
+        for (int i = 0; i < name.length(); i++) {
+            if (name.charAt(i) == ' ') {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: 'Name' must only contain letters, numbers, dashes, underscores, and symbols";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
+
+        for (int i = 0; i < ext.length(); i++) {
+            if ((!Character.isDigit(ext.charAt(i)))) {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: 'Extension' must only contain numbers";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
+
+        for (int i = 0; i < did.length(); i++) {
+            if ((!Character.isDigit(did.charAt(i)))) {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: 'DID Number' must only contain numbers";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
+
+        for (int i = 0; i < alias.length(); i++) {
+            if ((!Character.isDigit(alias.charAt(i)))) {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: 'Alias' must only contain numbers";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
 
         return validationInfo;
     }
