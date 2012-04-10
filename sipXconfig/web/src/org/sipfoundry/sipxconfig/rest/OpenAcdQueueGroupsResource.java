@@ -26,7 +26,6 @@ import static org.restlet.data.MediaType.TEXT_XML;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -35,19 +34,25 @@ import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdQueueGroup;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeAction;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeCondition;
+import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeStep;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdAgentGroupRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdQueueGroupRestInfoFull;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdRecipeActionRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdRecipeConditionRestInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdRecipeStepRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.OpenAcdSkillRestInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.OpenAcdUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
@@ -142,7 +147,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
         MetadataRestInfo metadataRestInfo;
 
         // sort if specified
-        sortGroups(queueGroups);
+        sortQueueGroups(queueGroups);
 
         // set requested based on pagination and get resulting metadata
         metadataRestInfo = addQueueGroups(queueGroupsRestInfo, queueGroups);
@@ -204,7 +209,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
 
         // otherwise add new agent group
         try {
-            queueGroup = createOpenAcdQueueGroup(queueGroupRestInfo);
+            queueGroup = createQueueGroup(queueGroupRestInfo);
             m_openAcdContext.saveQueueGroup(queueGroup);
         }
         catch (Exception exception) {
@@ -257,6 +262,22 @@ public class OpenAcdQueueGroupsResource extends UserResource {
     private ValidationInfo validate(OpenAcdQueueGroupRestInfoFull restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
 
+        String name = restInfo.getName();
+
+        for (int i = 0; i < name.length(); i++) {
+            if ((!Character.isLetterOrDigit(name.charAt(i)) && !(Character.getType(name.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && name.charAt(i) != '-') {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: 'Name' must only contain letters, numbers, dashes, and underscores";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
+        for (int i = 0; i < restInfo.getSteps().size(); i++) {
+            if (restInfo.getSteps().get(i).getAction() == null) {
+                validationInfo.valid = false;
+                validationInfo.message = "Validation Error: 'Action' must only contain letters, numbers, dashes, and underscores";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+            }
+        }
         return validationInfo;
     }
 
@@ -264,74 +285,22 @@ public class OpenAcdQueueGroupsResource extends UserResource {
         OpenAcdQueueGroupRestInfoFull queueGroupRestInfo;
         List<OpenAcdSkillRestInfo> skillsRestInfo;
         List<OpenAcdAgentGroupRestInfo> agentGroupRestInfo;
+        List<OpenAcdRecipeStepRestInfo> recipeStepRestInfo;
 
-        try {
-            OpenAcdQueueGroup queueGroup = m_openAcdContext.getQueueGroupById(id);
-
-            skillsRestInfo = createSkillsRestInfo(queueGroup);
-            agentGroupRestInfo = createAgentGroupsRestInfo(queueGroup);
-
-            queueGroupRestInfo = new OpenAcdQueueGroupRestInfoFull(queueGroup, skillsRestInfo, agentGroupRestInfo);
-        }
-        catch (Exception exception) {
-            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
-        }
+        OpenAcdQueueGroup queueGroup = m_openAcdContext.getQueueGroupById(id);
+        skillsRestInfo = createSkillsRestInfo(queueGroup.getSkills());
+        agentGroupRestInfo = createAgentGroupsRestInfo(queueGroup);
+        recipeStepRestInfo = createRecipeStepsRestInfo(queueGroup);
+        queueGroupRestInfo = new OpenAcdQueueGroupRestInfoFull(queueGroup, skillsRestInfo, agentGroupRestInfo, recipeStepRestInfo);
 
         return queueGroupRestInfo;
     }
 
-    private void updateQueueGroup(OpenAcdQueueGroup queueGroup, OpenAcdQueueGroupRestInfoFull queueGroupRestInfo) {
-        String tempString;
-
-        // do not allow empty name
-        tempString = queueGroupRestInfo.getName();
-        if (!tempString.isEmpty()) {
-            queueGroup.setName(tempString);
-        }
-
-        queueGroup.setDescription(queueGroupRestInfo.getDescription());
-
-        // remove all current skills
-        queueGroup.getSkills().clear();
-
-        // set skills
-        OpenAcdSkill skill;
-        List<OpenAcdSkillRestInfo> skillsRestInfo = queueGroupRestInfo.getSkills();
-        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
-            skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
-            queueGroup.addSkill(skill);
-        }
-    }
-
-    private MetadataRestInfo addQueueGroups(List<OpenAcdQueueGroupRestInfoFull> queueGroupsRestInfo, List<OpenAcdQueueGroup> queueGroups) {
-        List<OpenAcdSkillRestInfo> skillsRestInfo;
-        List<OpenAcdAgentGroupRestInfo> agentGroupRestInfo;
-
-        // determine pagination
-        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, queueGroups.size());
-
-        // create list of group restinfos
-        for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
-            OpenAcdQueueGroup queueGroup = queueGroups.get(index);
-
-            skillsRestInfo = createSkillsRestInfo(queueGroup);
-            agentGroupRestInfo = createAgentGroupsRestInfo(queueGroup);
-
-            OpenAcdQueueGroupRestInfoFull queueGroupRestInfo = new OpenAcdQueueGroupRestInfoFull(queueGroup, skillsRestInfo, agentGroupRestInfo);
-            queueGroupsRestInfo.add(queueGroupRestInfo);
-        }
-
-        // create metadata about agent groups
-        MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
-        return metadata;
-    }
-
-    private List<OpenAcdSkillRestInfo> createSkillsRestInfo(OpenAcdQueueGroup queueGroup) {
+    private List<OpenAcdSkillRestInfo> createSkillsRestInfo(Set<OpenAcdSkill> groupSkills) {
         List<OpenAcdSkillRestInfo> skillsRestInfo;
         OpenAcdSkillRestInfo skillRestInfo;
 
         // create list of skill restinfos for single group
-        Set<OpenAcdSkill> groupSkills = queueGroup.getSkills();
         skillsRestInfo = new ArrayList<OpenAcdSkillRestInfo>(groupSkills.size());
 
         for (OpenAcdSkill groupSkill : groupSkills) {
@@ -358,7 +327,72 @@ public class OpenAcdQueueGroupsResource extends UserResource {
         return agentGroupsRestInfo;
     }
 
-    private void sortGroups(List<OpenAcdQueueGroup> queueGroups) {
+    private List<OpenAcdRecipeStepRestInfo> createRecipeStepsRestInfo(OpenAcdQueueGroup queueGroup) {
+        List<OpenAcdRecipeStepRestInfo> recipeStepsRestInfo;
+        OpenAcdRecipeStepRestInfo recipeStepRestInfo;
+
+        Set<OpenAcdRecipeStep> groupRecipeSteps = queueGroup.getSteps();
+        recipeStepsRestInfo = new ArrayList<OpenAcdRecipeStepRestInfo>(groupRecipeSteps.size());
+
+        for (OpenAcdRecipeStep groupRecipeStep : groupRecipeSteps) {
+            recipeStepRestInfo = new OpenAcdRecipeStepRestInfo(groupRecipeStep, createRecipeActionRestInfo(groupRecipeStep), createRecipeConditionsRestInfo(groupRecipeStep));
+            recipeStepsRestInfo.add(recipeStepRestInfo);
+        }
+        return recipeStepsRestInfo;
+    }
+
+    private OpenAcdRecipeActionRestInfo createRecipeActionRestInfo(OpenAcdRecipeStep step) {
+        OpenAcdRecipeActionRestInfo recipeActionRestInfo;
+        List<OpenAcdSkillRestInfo> skillsRestInfo;
+
+        // get skills associated with action
+        skillsRestInfo = createSkillsRestInfo(step.getAction().getSkills());
+        recipeActionRestInfo = new OpenAcdRecipeActionRestInfo(step.getAction(), skillsRestInfo);
+
+        return recipeActionRestInfo;
+    }
+
+    private List<OpenAcdRecipeConditionRestInfo> createRecipeConditionsRestInfo(OpenAcdRecipeStep step) {
+        List<OpenAcdRecipeConditionRestInfo> recipeConditionsRestInfo;
+        OpenAcdRecipeConditionRestInfo recipeConditionRestInfo;
+
+
+        List<OpenAcdRecipeCondition> groupRecipeConditions = step.getConditions();
+        recipeConditionsRestInfo = new ArrayList<OpenAcdRecipeConditionRestInfo>(groupRecipeConditions.size());
+
+        for (OpenAcdRecipeCondition groupRecipeCondition : groupRecipeConditions) {
+            recipeConditionRestInfo = new OpenAcdRecipeConditionRestInfo(groupRecipeCondition);
+            recipeConditionsRestInfo.add(recipeConditionRestInfo);
+        }
+
+        return recipeConditionsRestInfo;
+    }
+
+    private MetadataRestInfo addQueueGroups(List<OpenAcdQueueGroupRestInfoFull> queueGroupsRestInfo, List<OpenAcdQueueGroup> queueGroups) {
+        List<OpenAcdSkillRestInfo> skillsRestInfo;
+        List<OpenAcdAgentGroupRestInfo> agentGroupRestInfo;
+        List<OpenAcdRecipeStepRestInfo> recipeStepRestInfo;
+        // determine pagination
+        PaginationInfo paginationInfo = OpenAcdUtilities.calculatePagination(m_form, queueGroups.size());
+
+        // create list of group restinfos
+        for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
+            OpenAcdQueueGroup queueGroup = queueGroups.get(index);
+
+            skillsRestInfo = createSkillsRestInfo(queueGroup.getSkills());
+            agentGroupRestInfo = createAgentGroupsRestInfo(queueGroup);
+            recipeStepRestInfo = createRecipeStepsRestInfo(queueGroup);
+
+            OpenAcdQueueGroupRestInfoFull queueGroupRestInfo = new OpenAcdQueueGroupRestInfoFull(queueGroup, skillsRestInfo, agentGroupRestInfo, recipeStepRestInfo);
+            queueGroupsRestInfo.add(queueGroupRestInfo);
+        }
+
+        // create metadata about agent groups
+        MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
+        return metadata;
+    }
+
+    private void sortQueueGroups(List<OpenAcdQueueGroup> queueGroups) {
         // sort groups if requested
         SortInfo sortInfo = OpenAcdUtilities.calculateSorting(m_form);
 
@@ -426,24 +460,100 @@ public class OpenAcdQueueGroupsResource extends UserResource {
         }
     }
 
-    private OpenAcdQueueGroup createOpenAcdQueueGroup(OpenAcdQueueGroupRestInfoFull queueGroupRestInfo) {
+    private void updateQueueGroup(OpenAcdQueueGroup queueGroup, OpenAcdQueueGroupRestInfoFull queueGroupRestInfo) {
+        String tempString;
+
+        // do not allow empty name
+        tempString = queueGroupRestInfo.getName();
+        if (!tempString.isEmpty()) {
+            queueGroup.setName(tempString);
+        }
+
+        queueGroup.setDescription(queueGroupRestInfo.getDescription());
+
+        // remove all current skills
+        queueGroup.getSkills().clear();
+
+        addLists(queueGroup, queueGroupRestInfo);
+    }
+
+    private OpenAcdQueueGroup createQueueGroup(OpenAcdQueueGroupRestInfoFull queueGroupRestInfo) {
         OpenAcdQueueGroup queueGroup = new OpenAcdQueueGroup();
 
         // copy fields from rest info
         queueGroup.setName(queueGroupRestInfo.getName());
         queueGroup.setDescription(queueGroupRestInfo.getDescription());
 
-        // add skills
-        Set<OpenAcdSkill> skills = new LinkedHashSet<OpenAcdSkill>();
-        List<OpenAcdSkillRestInfo> skillsRestInfo = queueGroupRestInfo.getSkills();
-
-        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
-            skills.add(m_openAcdContext.getSkillById(skillRestInfo.getId()));
-        }
-
-        queueGroup.setSkills(skills);
+        addLists(queueGroup, queueGroupRestInfo);
 
         return queueGroup;
+    }
+
+    private void addLists(OpenAcdQueueGroup queueGroup, OpenAcdQueueGroupRestInfoFull queueGroupRestInfo) {
+        // remove all skills
+        queueGroup.getSkills().clear();
+
+        // set skills
+        OpenAcdSkill skill;
+        List<OpenAcdSkillRestInfo> skillsRestInfo = queueGroupRestInfo.getSkills();
+        for (OpenAcdSkillRestInfo skillRestInfo : skillsRestInfo) {
+            skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
+            queueGroup.addSkill(skill);
+        }
+
+        // remove all agent groups
+        queueGroup.getAgentGroups().clear();
+
+        // set agent groups
+        OpenAcdAgentGroup agentGroup;
+        List<OpenAcdAgentGroupRestInfo> agentGroupsRestInfo = queueGroupRestInfo.getAgentGroups();
+        for (OpenAcdAgentGroupRestInfo agentGroupRestInfo : agentGroupsRestInfo) {
+            agentGroup = m_openAcdContext.getAgentGroupById(agentGroupRestInfo.getId());
+            queueGroup.addAgentGroup(agentGroup);
+        }
+
+        // remove all current steps
+        queueGroup.getSteps().clear();
+
+        // set steps
+        OpenAcdRecipeStep step;
+        OpenAcdRecipeCondition condition;
+        OpenAcdRecipeAction action;
+        OpenAcdRecipeActionRestInfo actionRestInfo;
+
+        List<OpenAcdRecipeStepRestInfo> recipeStepsRestInfo = queueGroupRestInfo.getSteps();
+        for (OpenAcdRecipeStepRestInfo recipeStepRestInfo : recipeStepsRestInfo) {
+            step = new OpenAcdRecipeStep();
+            step.setFrequency(recipeStepRestInfo.getFrequency());
+
+
+            // add conditions
+            step.getConditions().clear();
+            for (OpenAcdRecipeConditionRestInfo recipeConditionRestInfo : recipeStepRestInfo.getConditions()) {
+                condition = new OpenAcdRecipeCondition();
+                condition.setCondition(recipeConditionRestInfo.getCondition());
+                condition.setRelation(recipeConditionRestInfo.getRelation());
+                condition.setValueCondition(recipeConditionRestInfo.getValueCondition());
+
+                step.addCondition(condition);
+            }
+
+            // add action
+            action = new OpenAcdRecipeAction();
+            actionRestInfo = recipeStepRestInfo.getAction();
+            action.setAction(actionRestInfo.getAction());
+            action.setActionValue(actionRestInfo.getActionValue());
+
+            // set action skills (separate from skills assigned to queue
+            for (OpenAcdSkillRestInfo skillRestInfo : actionRestInfo.getSkills()) {
+                skill = m_openAcdContext.getSkillById(skillRestInfo.getId());
+                action.addSkill(skill);
+            }
+
+            step.setAction(action);
+
+            queueGroup.addStep(step);
+        }
     }
 
 
@@ -466,6 +576,9 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             xstream.alias("group", OpenAcdQueueGroupRestInfoFull.class);
             xstream.alias("skill", OpenAcdSkillRestInfo.class);
             xstream.alias("agentGroup", OpenAcdAgentGroupRestInfo.class);
+            xstream.alias("step", OpenAcdRecipeStepRestInfo.class);
+            xstream.alias("condition", OpenAcdRecipeConditionRestInfo.class);
+            xstream.alias("action", OpenAcdRecipeActionRestInfo.class);
         }
     }
 
@@ -484,6 +597,9 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             xstream.alias("group", OpenAcdQueueGroupRestInfoFull.class);
             xstream.alias("skill", OpenAcdSkillRestInfo.class);
             xstream.alias("agentGroup", OpenAcdAgentGroupRestInfo.class);
+            xstream.alias("step", OpenAcdRecipeStepRestInfo.class);
+            xstream.alias("condition", OpenAcdRecipeConditionRestInfo.class);
+            xstream.alias("action", OpenAcdRecipeActionRestInfo.class);
         }
     }
 

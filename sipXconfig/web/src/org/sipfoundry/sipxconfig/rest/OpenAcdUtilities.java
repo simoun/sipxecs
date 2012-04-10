@@ -532,10 +532,49 @@ public class OpenAcdUtilities {
         public List<OpenAcdRecipeStepRestInfo> getSteps() {
             return m_steps;
         }
+    }
 
-//        public Set<OpenAcdRecipeStep> getStep(OpenAcdQueue queue) {
-//            return queue.getSteps();
-//        }
+
+    static class OpenAcdQueueGroupRestInfoFull {
+        private final String m_name;
+        private final int m_id;
+        private final String m_description;
+        private final List<OpenAcdSkillRestInfo> m_skills;
+        private final List<OpenAcdAgentGroupRestInfo> m_agentGroups;
+        private final List<OpenAcdRecipeStepRestInfo> m_steps;
+
+        public OpenAcdQueueGroupRestInfoFull(OpenAcdQueueGroup queueGroup, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups, List<OpenAcdRecipeStepRestInfo> steps) {
+            m_name = queueGroup.getName();
+            m_id = queueGroup.getId();
+            m_description = queueGroup.getDescription();
+            m_skills = skills;
+            m_agentGroups = agentGroups;
+            m_steps = steps;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getDescription() {
+            return m_description;
+        }
+
+        public List<OpenAcdSkillRestInfo> getSkills() {
+            return m_skills;
+        }
+
+        public List<OpenAcdAgentGroupRestInfo> getAgentGroups() {
+            return m_agentGroups;
+        }
+
+        public List<OpenAcdRecipeStepRestInfo> getSteps() {
+            return m_steps;
+        }
     }
 
     static class OpenAcdRecipeActionRestInfo {
@@ -692,42 +731,6 @@ public class OpenAcdUtilities {
 
         public List<OpenAcdClientRestInfo> getClients() {
             return m_clients;
-        }
-    }
-
-    static class OpenAcdQueueGroupRestInfoFull {
-        private final String m_name;
-        private final int m_id;
-        private final String m_description;
-        private final List<OpenAcdSkillRestInfo> m_skills;
-        private final List<OpenAcdAgentGroupRestInfo> m_agentGroups;
-
-        public OpenAcdQueueGroupRestInfoFull(OpenAcdQueueGroup queueGroup, List<OpenAcdSkillRestInfo> skills, List<OpenAcdAgentGroupRestInfo> agentGroups) {
-            m_name = queueGroup.getName();
-            m_id = queueGroup.getId();
-            m_description = queueGroup.getDescription();
-            m_skills = skills;
-            m_agentGroups = agentGroups;
-        }
-
-        public String getName() {
-            return m_name;
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getDescription() {
-            return m_description;
-        }
-
-        public List<OpenAcdSkillRestInfo> getSkills() {
-            return m_skills;
-        }
-
-        public List<OpenAcdAgentGroupRestInfo> getAgentGroups() {
-            return m_agentGroups;
         }
     }
 
