@@ -93,6 +93,7 @@ public class OpenAcdSettingsResource extends UserResource {
         try {
             settings = m_openAcdContext.getSettings();
             updateSettings(settings, settingRestInfo);
+            m_openAcdContext.saveSettings(settings);
         }
         catch (Exception exception) {
             RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Assign Setting failed", exception.getLocalizedMessage());
