@@ -24,19 +24,14 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import org.restlet.Context;
-import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
-import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSettings;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdSettingRestInfo;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
@@ -44,16 +39,12 @@ import com.thoughtworks.xstream.XStream;
 public class OpenAcdSettingsResource extends UserResource {
 
     private OpenAcdContext m_openAcdContext;
-    private Form m_form;
 
     @Override
     public void init(Context context, Request request, Response response) {
         super.init(context, request, response);
         getVariants().add(new Variant(TEXT_XML));
         getVariants().add(new Variant(APPLICATION_JSON));
-
-        // pull parameters from url
-        m_form = getRequest().getResourceRef().getQueryAsForm();
     }
 
 
@@ -80,195 +71,48 @@ public class OpenAcdSettingsResource extends UserResource {
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
-        // process request for single
-        int idInt;
-        OpenAcdSettingRestInfo settingRestInfo = null;
-        String idString = (String) getRequest().getAttributes().get("id");
-
-        if (idString != null) {
-            try {
-                idInt = RestUtilities.getIntFromAttribute(idString);
-            }
-            catch (Exception exception) {
-                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-            }
-
-            try {
-                settingRestInfo = createSettingRestInfo(idInt);
-            }
-            catch (Exception exception) {
-                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read Settings failed", exception.getLocalizedMessage());
-            }
-
-            return new OpenAcdSettingRepresentation(variant.getMediaType(), settingRestInfo);
-        }
-
-
         // if not single, process request for list
         OpenAcdSettings settings = m_openAcdContext.getSettings();
         OpenAcdSettingRestInfo settingsRestInfo = new OpenAcdSettingRestInfo(settings);
-        MetadataRestInfo metadataRestInfo;
 
-        // set requested records and get resulting metadata
-        metadataRestInfo = addSettings(settingsRestInfo, settings);
-
-        // create final restinfo
-        OpenAcdSettingsBundleRestInfo settingsBundleRestInfo = new OpenAcdSettingsBundleRestInfo(settingsRestInfo, metadataRestInfo);
-
-        return new OpenAcdSettingsRepresentation(variant.getMediaType(), settingsBundleRestInfo);
+        return new OpenAcdSettingRepresentation(variant.getMediaType(), settingsRestInfo);
     }
 
 
-    // PUT - Update or Add single Skill
-    // --------------------------------
+    // PUT - Update single Setting
+    // ---------------------------
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
         // get from request body
         OpenAcdSettingRepresentation representation = new OpenAcdSettingRepresentation(entity);
         OpenAcdSettingRestInfo settingRestInfo = representation.getObject();
-        OpenAcdSettings setting;
+        OpenAcdSettings settings;
 
-        // if have id then update single
-        String idString = (String) getRequest().getAttributes().get("id");
-
-        if (idString != null) {
-            try {
-                int idInt = RestUtilities.getIntFromAttribute(idString);
-                setting = m_openAcdContext.getSettings();
-            }
-            catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;
-            }
-
-            // copy values over to existing
-            try {
-                updateSetting(setting, settingRestInfo);
-                m_openAcdContext.saveSettings(setting);
-            }
-            catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Setting failed", exception.getLocalizedMessage());
-                return;
-            }
-
-            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Settings", setting.getId());
-
-            return;
-        }
-
-
-        // otherwise add new
+        // assign new setting
         try {
-            setting = createSetting(settingRestInfo);
-            m_openAcdContext.saveSettings(setting);
+            settings = m_openAcdContext.getSettings();
+            updateSettings(settings, settingRestInfo);
         }
         catch (Exception exception) {
-            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Setting failed", exception.getLocalizedMessage());
+            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Assign Setting failed", exception.getLocalizedMessage());
             return;
         }
 
-        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created Setting", setting.getId());
-    }
-
-
-    // DELETE - Delete single Skill
-    // ----------------------------
-
-    @Override
-    public void removeRepresentations() throws ResourceException {
-        OpenAcdSettings setting;
-
-        // get id then delete single
-        String idString = (String) getRequest().getAttributes().get("id");
-
-        if (idString != null) {
-            try {
-                int idInt = RestUtilities.getIntFromAttribute(idString);
-                setting = m_openAcdContext.getSettings();
-            }
-            catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;
-            }
-
-            m_openAcdContext.saveSettings(setting);
-
-            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Client", setting.getId());
-
-            return;
-        }
-
-        // no id string
-        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Assigned Setting", settings.getId());
     }
 
 
     // Helper functions
     // ----------------
 
-    private OpenAcdSettingRestInfo createSettingRestInfo(int id) throws ResourceException {
-        OpenAcdSettingRestInfo settingRestInfo;
-
-        try {
-            OpenAcdSettings setting = m_openAcdContext.getSettings();
-            settingRestInfo = new OpenAcdSettingRestInfo(setting);
-        }
-        catch (Exception exception) {
-            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "ID " + id + " not found.");
-        }
-
-        return settingRestInfo;
-    }
-
-    private MetadataRestInfo addSettings(OpenAcdSettingRestInfo settingsRestInfo, OpenAcdSettings settings) {
-        OpenAcdSettingRestInfo settingRestInfo;
-
-        // determine pagination
-        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, 1);
-
-        // create metadata about agent groups
-        MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
-        return metadata;
-    }
-
-    private void updateSetting(OpenAcdSettings setting, OpenAcdSettingRestInfo settingRestInfo) throws ResourceException {
-        String tempString;
-
-        // do not allow empty name
-        setting.setSettingValue("openacd-config/log_level", setting.getLogLevel());
-
-    }
-
-    private OpenAcdSettings createSetting(OpenAcdSettingRestInfo settingRestInfo) throws ResourceException {
-        OpenAcdSettings setting = new OpenAcdSettings();
-
-        // copy fields from rest info
-        setting.setSettingValue("openacd-config/log_level", setting.getLogLevel());
-
-        return setting;
+    private void updateSettings(OpenAcdSettings settings, OpenAcdSettingRestInfo settingRestInfo) throws ResourceException {
+        settings.setSettingValue("openacd-config/log_level", settingRestInfo.getLogLevel());
     }
 
 
     // REST Representations
     // --------------------
-
-    static class OpenAcdSettingsRepresentation extends XStreamRepresentation<OpenAcdSettingsBundleRestInfo> {
-
-        public OpenAcdSettingsRepresentation(MediaType mediaType, OpenAcdSettingsBundleRestInfo object) {
-            super(mediaType, object);
-        }
-
-        public OpenAcdSettingsRepresentation(Representation representation) {
-            super(representation);
-        }
-
-        @Override
-        protected void configureXStream(XStream xstream) {
-            xstream.alias("openacd-setting", OpenAcdSettingsBundleRestInfo.class);
-            xstream.alias("setting", OpenAcdSettingRestInfo.class);
-        }
-    }
 
     static class OpenAcdSettingRepresentation extends XStreamRepresentation<OpenAcdSettingRestInfo> {
 
@@ -290,23 +134,24 @@ public class OpenAcdSettingsResource extends UserResource {
     // REST info objects
     // -----------------
 
-    static class OpenAcdSettingsBundleRestInfo {
-        private final MetadataRestInfo m_metadata;
-        private final OpenAcdSettingRestInfo m_settings;
+    static class OpenAcdSettingRestInfo {
+        private final int m_id;
+        private final String m_logLevel;
 
-        public OpenAcdSettingsBundleRestInfo(OpenAcdSettingRestInfo settings, MetadataRestInfo metadata) {
-            m_metadata = metadata;
-            m_settings = settings;
+        public OpenAcdSettingRestInfo(OpenAcdSettings setting) {
+            m_id = setting.getId();
+            m_logLevel = setting.getLogLevel();
         }
 
-        public MetadataRestInfo getMetadata() {
-            return m_metadata;
+        public int getId() {
+            return m_id;
         }
 
-        public OpenAcdSettingRestInfo getSettings() {
-            return m_settings;
+        public String getLogLevel() {
+            return m_logLevel;
         }
     }
+
 
     // Injected objects
     // ----------------

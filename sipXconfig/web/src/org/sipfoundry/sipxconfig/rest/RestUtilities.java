@@ -40,7 +40,6 @@ import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeAction;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeCondition;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdRecipeStep;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdReleaseCode;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSettings;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
 import org.sipfoundry.sipxconfig.permission.Permission;
@@ -995,21 +994,4 @@ public class RestUtilities {
         }
     }
 
-    static class OpenAcdSettingRestInfo {
-        private final int m_id;
-        private final String m_logLevel;
-
-        public OpenAcdSettingRestInfo(OpenAcdSettings setting) {
-            m_id = setting.getId();
-            m_logLevel = setting.getLogLevel();
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getLogLevel() {
-            return m_logLevel;
-        }
-    }
 }

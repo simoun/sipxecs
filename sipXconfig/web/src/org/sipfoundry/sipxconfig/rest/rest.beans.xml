@@ -376,14 +376,6 @@
   </bean>
   <alias name="openAcdSettingsResource" alias="/openacd-setting" />
   
-  <bean id="openAcdSettingResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdSettingsResource" scope="prototype">
-    <property name="coreContext" ref="coreContext" />
-    <property name="openAcdContext" ref="openAcdContext" />
-    <property name="readable" value="true" />
-    <property name="modifiable" value="true" />
-  </bean>
-  <alias name="openAcdSettingResource" alias="/openacd-setting/{id}" />
-
   <bean id="permissionsResource" class="org.sipfoundry.sipxconfig.rest.PermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
     <property name="permissionManager" ref="permissionManager" />
@@ -415,5 +407,21 @@
     <property name="modifiable" value="true" />
   </bean>
   <alias name="branchResource" alias="/branch/{id}" />
+
+  <bean id="userGroupsResource" class="org.sipfoundry.sipxconfig.rest.UserGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="branchManager" ref="branchManager" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="userGroupsResource" alias="/user-group" />
+  
+  <bean id="userGroupResource" class="org.sipfoundry.sipxconfig.rest.UserGroupsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="branchManager" ref="branchManager" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="userGroupResource" alias="/user-group/{id}" />
 
 </beans>
