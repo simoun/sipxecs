@@ -410,6 +410,7 @@
 
   <bean id="userGroupsResource" class="org.sipfoundry.sipxconfig.rest.UserGroupsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
+    <property name="settingDao" ref="settingDao" />
     <property name="branchManager" ref="branchManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
@@ -418,6 +419,7 @@
   
   <bean id="userGroupResource" class="org.sipfoundry.sipxconfig.rest.UserGroupsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
+    <property name="settingDao" ref="settingDao" />
     <property name="branchManager" ref="branchManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
