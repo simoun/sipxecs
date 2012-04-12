@@ -61,10 +61,6 @@ public class OpenAcdSettingsResource extends UserResource {
         return true;
     }
 
-    @Override
-    public boolean allowDelete() {
-        return true;
-    }
 
     // GET - Retrieve all and single Client
     // -----------------------------------
