@@ -96,7 +96,7 @@ public class OpenAcdSettingsResource extends UserResource {
             return;
         }
 
-        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Assigned Setting", settings.getId());
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Assigned Setting", settings.getId());
     }
 
 
