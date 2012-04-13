@@ -426,4 +426,22 @@
   </bean>
   <alias name="userGroupResource" alias="/user-group/{id}" />
 
+  <bean id="userGroupPermissionsResource" class="org.sipfoundry.sipxconfig.rest.UserGroupPermissionsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="settingDao" ref="settingDao" />
+    <property name="branchManager" ref="branchManager" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="userGroupPermissionsResource" alias="/user-group-permission" />
+  
+  <bean id="userGroupPermissionResource" class="org.sipfoundry.sipxconfig.rest.UserGroupPermissionsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="settingDao" ref="settingDao" />
+    <property name="branchManager" ref="branchManager" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="userGroupPermissionResource" alias="/user-group-permission/{id}" />
+
 </beans>

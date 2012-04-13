@@ -481,17 +481,15 @@ public class RestUtilities {
         }
     }
 
-    static class UserGroupRestInfoFull {
+    static class UserGroupRestInfo {
         private final int m_id;
         private final String m_name;
         private final String m_description;
-        private final BranchRestInfoFull m_branch;
 
-        public UserGroupRestInfoFull(Group userGroup, BranchRestInfoFull branchRestInfo) {
+        public UserGroupRestInfo(Group userGroup) {
             m_id = userGroup.getId();
             m_name = userGroup.getName();
             m_description = userGroup.getDescription();
-            m_branch = branchRestInfo;
         }
 
         public int getId() {
@@ -505,9 +503,51 @@ public class RestUtilities {
         public String getDescription() {
             return m_description;
         }
+    }
+
+    static class UserGroupRestInfoFull extends UserGroupRestInfo {
+        private final BranchRestInfoFull m_branch;
+
+        public UserGroupRestInfoFull(Group userGroup, BranchRestInfoFull branchRestInfo) {
+            super(userGroup);
+
+            m_branch = branchRestInfo;
+        }
 
         public BranchRestInfoFull getBranch() {
             return m_branch;
+        }
+    }
+
+    static class SettingBooleanRestInfo {
+        private final String m_name;
+        private final Boolean m_value;
+
+        public SettingBooleanRestInfo(String name, Boolean value) {
+            m_name = name;
+            m_value = value;
+        }
+
+        public String getName() {
+            return m_name;
+        }
+
+        public Boolean getValue() {
+            return m_value;
+        }
+    }
+
+    static class UserGroupPermissionRestInfoFull extends UserGroupRestInfo {
+        private final List<SettingBooleanRestInfo> m_settings;
+
+        public UserGroupPermissionRestInfoFull(Group userGroup, List<SettingBooleanRestInfo> settingsRestInfo) {
+            super(userGroup);
+
+            m_settings = settingsRestInfo;
+        }
+
+        public List<SettingBooleanRestInfo> getSettings() {
+            return m_settings;
         }
     }
 
