@@ -52,7 +52,6 @@ import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdRecipeConditionRestIn
 import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdRecipeStepRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdSkillRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
@@ -268,16 +267,39 @@ public class OpenAcdQueueGroupsResource extends UserResource {
             if ((!Character.isLetterOrDigit(name.charAt(i)) && !(Character.getType(name.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && name.charAt(i) != '-') {
                 validationInfo.valid = false;
                 validationInfo.message = "Validation Error: 'Name' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
             }
         }
         for (int i = 0; i < restInfo.getSteps().size(); i++) {
             if (restInfo.getSteps().get(i).getAction() == null) {
                 validationInfo.valid = false;
                 validationInfo.message = "Validation Error: 'Action' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
+            }
+            if (!restInfo.getSteps().get(i).getAction().getAction().equals("announce")) {
+                for (int j = 0; j < restInfo.getSteps().get(i).getAction().getActionValue().length(); j++) {
+                    char c = restInfo.getSteps().get(i).getAction().getActionValue().charAt(j);
+                    if (!Character.isDigit(c) && c != '*') {
+                        validationInfo.valid = false;
+                        validationInfo.message = "Validation Error: 'Action Value' must only contain numbers and *";
+                        validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
+                    }
+                }
+            }
+            for (int k = 0; k < restInfo.getSteps().get(i).getConditions().size(); k++) {
+                if (!(restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("caller_id") || restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("caller_name"))) {
+                    for (int j = 0; j < restInfo.getSteps().get(i).getConditions().get(k).getValueCondition().length(); j++) {
+                        char c = restInfo.getSteps().get(i).getConditions().get(k).getValueCondition().charAt(j);
+                        if (!Character.isDigit(c) && c != '*') {
+                            validationInfo.valid = false;
+                            validationInfo.message = "Validation Error: 'Value Condition' must only contain numbers and *";
+                            validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
+                        }
+                    }
+                }
             }
         }
+
         return validationInfo;
     }
 
