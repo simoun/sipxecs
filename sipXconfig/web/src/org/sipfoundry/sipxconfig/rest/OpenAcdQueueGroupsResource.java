@@ -24,6 +24,7 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -52,6 +53,7 @@ import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdRecipeConditionRestIn
 import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdRecipeStepRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdSkillRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.springframework.beans.factory.annotation.Required;
@@ -126,14 +128,14 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 idInt = RestUtilities.getIntFromAttribute(idString);
             }
             catch (Exception exception) {
-                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                return RestUtilities.getResponseError(getResponse(), ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
             }
 
             try {
                 queueGroupRestInfo = createQueueGroupRestInfo(idInt);
             }
             catch (Exception exception) {
-                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read Queue Group failed", exception.getLocalizedMessage());
+                return RestUtilities.getResponseError(getResponse(), ResponseCode.ERROR_READ_FAILED, "Read Queue Group failed", exception.getLocalizedMessage());
             }
 
             return new OpenAcdQueueGroupRepresentation(variant.getMediaType(), queueGroupRestInfo);
@@ -186,7 +188,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 queueGroup = m_openAcdContext.getQueueGroupById(idInt);
             }
             catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
@@ -196,11 +198,11 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 m_openAcdContext.saveQueueGroup(queueGroup);
             }
             catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Queue Group failed", exception.getLocalizedMessage());
+                RestUtilities.setResponseError(getResponse(), ResponseCode.ERROR_WRITE_FAILED, "Update Queue Group failed", exception.getLocalizedMessage());
                 return;
             }
 
-            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Queue", queueGroup.getId());
+            RestUtilities.setResponse(getResponse(), ResponseCode.SUCCESS_UPDATED, "Updated Queue", queueGroup.getId());
 
             return;
         }
@@ -236,19 +238,19 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                 queueGroup = m_openAcdContext.getQueueGroupById(idInt);
             }
             catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
+                RestUtilities.setResponseError(getResponse(), ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
             m_openAcdContext.deleteQueueGroup(queueGroup);
 
-            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Queue Group", queueGroup.getId());
+            RestUtilities.setResponse(getResponse(), ResponseCode.SUCCESS_DELETED, "Deleted Queue Group", queueGroup.getId());
 
             return;
         }
 
         // no id string
-        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
+        RestUtilities.setResponse(getResponse(), ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
 
@@ -260,40 +262,106 @@ public class OpenAcdQueueGroupsResource extends UserResource {
     // may create another validation function if different rules needed for update v. create
     private ValidationInfo validate(OpenAcdQueueGroupRestInfoFull restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
+        List<String> relation = Arrays.asList("is", "isNot");
+        List<String> condition1 = Arrays.asList("available_agents", "eligible_agents", "calls_queued", "queue_position", "hour", "weekday", "client_calls_queued");
+        List<String> condition2 = Arrays.asList("ticks", "client", "media_type", "caller_id", "caller_name");
+        List<String> equalityRelation = Arrays.asList("is", "greater", "less");
+        List<String> mediaValues = Arrays.asList("voice", "email", "voicemail", "chat");
 
         String name = restInfo.getName();
+
+        // rest mods the hours with 24 to give a new hour, so allow over 23
 
         for (int i = 0; i < name.length(); i++) {
             if ((!Character.isLetterOrDigit(name.charAt(i)) && !(Character.getType(name.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && name.charAt(i) != '-') {
                 validationInfo.valid = false;
                 validationInfo.message = "Validation Error: 'Name' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
             }
         }
+
         for (int i = 0; i < restInfo.getSteps().size(); i++) {
-            if (restInfo.getSteps().get(i).getAction() == null) {
+            if (restInfo.getSteps().get(i).getAction().getAction().isEmpty()) {
                 validationInfo.valid = false;
-                validationInfo.message = "Validation Error: 'Action' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
+                validationInfo.message = "Validation Error: 'Action' cannot be empty and must only contain numbers and *";
+                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
             }
-            if (!restInfo.getSteps().get(i).getAction().getAction().equals("announce")) {
+
+            if (restInfo.getSteps().get(i).getAction().getAction().equals("announce") || restInfo.getSteps().get(i).getAction().getAction().equals("set_priority")) {
+                if (restInfo.getSteps().get(i).getAction().getActionValue().isEmpty()) {
+                    validationInfo.valid = false;
+                    validationInfo.message = "Validation Error: 'Action Value' cannot be empty and must only contain numbers and *";
+                    validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                }
+            }
+
+            for (int j = 0; j < m_openAcdContext.getClients().size(); j++) {
+                if (m_openAcdContext.getClients().get(j).getIdentity().equals(restInfo.getSteps().get(i).getAction().getActionValue())) {
+                    validationInfo.valid = false;
+                    validationInfo.message = "Validation Error: Client Does not Exist";
+                    validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                }
+            }
+
+            if (restInfo.getSteps().get(i).getAction().getAction().equals("set_priority")) {
                 for (int j = 0; j < restInfo.getSteps().get(i).getAction().getActionValue().length(); j++) {
                     char c = restInfo.getSteps().get(i).getAction().getActionValue().charAt(j);
                     if (!Character.isDigit(c) && c != '*') {
                         validationInfo.valid = false;
                         validationInfo.message = "Validation Error: 'Action Value' must only contain numbers and *";
-                        validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
+                        validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
                     }
                 }
             }
+
             for (int k = 0; k < restInfo.getSteps().get(i).getConditions().size(); k++) {
-                if (!(restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("caller_id") || restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("caller_name"))) {
+                if (restInfo.getSteps().get(i).getConditions().get(k).getCondition().isEmpty() || restInfo.getSteps().get(i).getConditions().get(k).getRelation().isEmpty() || restInfo.getSteps().get(i).getConditions().get(k).getValueCondition().isEmpty()) {
+                    validationInfo.valid = false;
+                    validationInfo.message = "Validation Error: 'Condtion' cannot be empty";
+                    validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+
+                }
+
+                if (condition2.contains(restInfo.getSteps().get(i).getConditions().get(k).getCondition())) {
+                    if (!(relation.contains(restInfo.getSteps().get(i).getConditions().get(k).getRelation()))) {
+                        validationInfo.valid = false;
+                        validationInfo.message = "Validation Error: 'Relation' must only be 'is' or 'isNot'";
+                        validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                    }
+
+                }
+
+                if (condition1.contains(restInfo.getSteps().get(i).getConditions().get(k).getCondition())) {
+                    if (!(equalityRelation.contains(restInfo.getSteps().get(i).getConditions().get(k).getRelation()))) {
+                        validationInfo.valid = false;
+                        validationInfo.message = "Validation Error: 'Relation' must only be 'is', 'greater', or 'less'";
+                        validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                    }
+                }
+
+                if (restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("media_type")) {
+                    if (!(mediaValues.contains(restInfo.getSteps().get(i).getConditions().get(k).getValueCondition()))) {
+                        validationInfo.valid = false;
+                        validationInfo.message = "Validation Error: 'Value Condition' can only be 'voice', 'email', 'voicemail', or 'chat'";
+                        validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                    }
+                }
+
+                if (restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("weekday")) {
+                    if (Integer.parseInt(restInfo.getSteps().get(i).getConditions().get(k).getValueCondition()) < 1 || Integer.parseInt(restInfo.getSteps().get(i).getConditions().get(k).getValueCondition()) > 7) {
+                        validationInfo.valid = false;
+                        validationInfo.message = "Validation Error: 'Value Condition' must be between 1 and 7";
+                        validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
+                    }
+                }
+
+                if (!(restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("caller_id") || restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("caller_name") || restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("media_type") || restInfo.getSteps().get(i).getConditions().get(k).getCondition().equals("client"))) {
                     for (int j = 0; j < restInfo.getSteps().get(i).getConditions().get(k).getValueCondition().length(); j++) {
                         char c = restInfo.getSteps().get(i).getConditions().get(k).getValueCondition().charAt(j);
                         if (!Character.isDigit(c) && c != '*') {
                             validationInfo.valid = false;
                             validationInfo.message = "Validation Error: 'Value Condition' must only contain numbers and *";
-                            validationInfo.responseCode = RestUtilities.ResponseCode.ERROR_BAD_INPUT;
+                            validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
                         }
                     }
                 }
