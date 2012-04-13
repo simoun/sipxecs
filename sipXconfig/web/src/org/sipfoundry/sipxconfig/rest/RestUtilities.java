@@ -521,9 +521,9 @@ public class RestUtilities {
 
     static class SettingBooleanRestInfo {
         private final String m_name;
-        private final Boolean m_value;
+        private final String m_value;
 
-        public SettingBooleanRestInfo(String name, Boolean value) {
+        public SettingBooleanRestInfo(String name, String value) {
             m_name = name;
             m_value = value;
         }
@@ -532,7 +532,7 @@ public class RestUtilities {
             return m_name;
         }
 
-        public Boolean getValue() {
+        public String getValue() {
             return m_value;
         }
     }

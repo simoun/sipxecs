@@ -23,6 +23,7 @@ package org.sipfoundry.sipxconfig.rest;
 import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -39,6 +40,8 @@ import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.branch.Branch;
 import org.sipfoundry.sipxconfig.branch.BranchManager;
 import org.sipfoundry.sipxconfig.common.CoreContext;
+import org.sipfoundry.sipxconfig.common.User;
+import org.sipfoundry.sipxconfig.permission.PermissionManager;
 import org.sipfoundry.sipxconfig.permission.PermissionName;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.BranchRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
@@ -58,6 +61,7 @@ public class UserGroupPermissionsResource extends UserResource {
 
     private SettingDao m_settingContext; // saveGroup is not available through corecontext
     private BranchManager m_branchManager;
+    private PermissionManager m_permissionManager;
     private Form m_form;
 
     // use to define all possible sort fields
@@ -284,14 +288,63 @@ public class UserGroupPermissionsResource extends UserResource {
 
     private SettingBooleanRestInfo createSettingRestInfo(Group group) {
         SettingBooleanRestInfo settingRestInfo = null;
-        String valueString;
-        Boolean value;
+        String valueString = "empty";
+        boolean value;
+        List<Permission> permissions;
+
+        permissions = new ArrayList(m_permissionManager.getCallPermissions());
+
+        User user = null;
+        user = getCoreContext().newUser();
+
+        if (user == null) {
+            valueString = "user null";
+        }
+        else {
+            valueString = "getPermissions: ";
+            for (String permString : user.getPermissions()) {
+                valueString = valueString + permString + " ";
+            }
+
+            //user.setSettingValue(PermissionName.findByName("subscribe-to-presence").getPath(), "ENABLE");
+            //valueString = valueString + " getName(): " + user.getSettingValue(PermissionName.SUBSCRIBE_TO_PRESENCE.getPath());
+            valueString = valueString + " getName(): " + user.getSettingValue(PermissionName.findByName("subscribe-to-presence").getPath());
+        }
+/*
+        List<String> temp = new ArrayList<String>(user.getPermissions());
+        if (temp == null) {
+            valueString = "temp null";
+        }
+
+        valueString = "getPermissions: ";
+        for (String permString : user.getPermissions()) {
+            valueString = valueString + permString + " ";
+        }
+
+        //valueString = tempString + " - " + user.getSettings().getSetting(tempString).getName(); // + " - " + user.getSettingValue(tempString);
+
+        if (user == null) {
+            valueString = "user null";
+        }
+        else if (user.getSettings() == null) {
+            valueString = "getSettings null";
+        }
+        else if (user.getSettings().getSetting(tempString) == null) {
+            valueString = "getSetting(tempString) null";
+        }
+        else {
+            valueString = tempString + " - " + user.getSettings().getSetting(tempString).getName();
+        }
+*/
+
+
 
         //value = (Boolean) group.getSettingTypedValue(new BooleanSetting(), PermissionName.SUBSCRIBE_TO_PRESENCE.getPath());
-        valueString = group.getSettingValue(PermissionName.SUBSCRIBE_TO_PRESENCE.getPath());
-        value = Boolean.parseBoolean(valueString);
+        //valueString = group.getSettingValue(PermissionName.SUBSCRIBE_TO_PRESENCE.getPath());
+        //value = Boolean.parseBoolean(valueString);
 
-        settingRestInfo = new SettingBooleanRestInfo(PermissionName.SUBSCRIBE_TO_PRESENCE.getName(), value);
+
+        settingRestInfo = new SettingBooleanRestInfo(PermissionName.SUBSCRIBE_TO_PRESENCE.getName(), valueString);
 
         return settingRestInfo;
     }
@@ -492,6 +545,11 @@ public class UserGroupPermissionsResource extends UserResource {
     @Required
     public void setBranchManager(BranchManager branchManager) {
         m_branchManager = branchManager;
+    }
+
+    @Required
+    public void setPermissionManager(PermissionManager permissionManager) {
+        m_permissionManager = permissionManager;
     }
 
 }
