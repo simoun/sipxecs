@@ -430,6 +430,7 @@
     <property name="coreContext" ref="coreContext" />
     <property name="settingDao" ref="settingDao" />
     <property name="branchManager" ref="branchManager" />
+    <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
   </bean>
@@ -439,9 +440,26 @@
     <property name="coreContext" ref="coreContext" />
     <property name="settingDao" ref="settingDao" />
     <property name="branchManager" ref="branchManager" />
+    <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
   </bean>
   <alias name="userGroupPermissionResource" alias="/user-group-permission/{id}" />
+
+  <bean id="openAcdDialStringsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdDialStringsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdDialStringsResource" alias="/openacd-dial-string" />
+
+  <bean id="openAcdDialStringResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdDialStringsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdDialStringResource" alias="/openacd-dial-string/{id}" />
 
 </beans>
