@@ -152,8 +152,8 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     }
 
 
-    // PUT - Update or Add single Skill
-    // --------------------------------
+    // PUT - Update or Create single
+    // -----------------------------
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
@@ -214,8 +214,8 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     }
 
 
-    // DELETE - Delete single Skill
-    // ----------------------------
+    // DELETE - Delete single
+    // ----------------------
 
     // deleteSkillGroup() not available from openAcdContext
     @Override
@@ -223,13 +223,14 @@ public class OpenAcdSkillGroupsResource extends UserResource {
         // for some reason skill groups are deleted by providing collection of ids, not by
         // providing skill group object
         Collection<Integer> skillGroupIds = new HashSet<Integer>();
+        int idInt;
 
         // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
             try {
-                int idInt = RestUtilities.getIntFromAttribute(idString);
+                idInt = RestUtilities.getIntFromAttribute(idString);
                 skillGroupIds.add(idInt);
             }
             catch (Exception exception) {
@@ -238,6 +239,8 @@ public class OpenAcdSkillGroupsResource extends UserResource {
             }
 
             m_openAcdContext.removeSkillGroups(skillGroupIds);
+
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Skill Group", idInt);
 
             return;
         }
