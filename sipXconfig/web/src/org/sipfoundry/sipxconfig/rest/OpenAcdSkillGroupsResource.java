@@ -217,11 +217,12 @@ public class OpenAcdSkillGroupsResource extends UserResource {
     // DELETE - Delete single
     // ----------------------
 
-    // deleteSkillGroup() not available from openAcdContext
     @Override
     public void removeRepresentations() throws ResourceException {
-        // for some reason skill groups are deleted by providing collection of ids, not by
-        // providing skill group object
+        OpenAcdSkillGroupRestInfo skillGroupRestInfo;
+        List<OpenAcdSkill> skills;
+
+        // skill groups are deleted by providing collection of ids, not by providing skill group object
         Collection<Integer> skillGroupIds = new HashSet<Integer>();
         int idInt;
 
@@ -236,6 +237,15 @@ public class OpenAcdSkillGroupsResource extends UserResource {
             catch (Exception exception) {
                 RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
+            }
+
+            // sipxconfig ui does not allow delete of group with existing skills
+            skills = m_openAcdContext.getSkills();
+            for (OpenAcdSkill skill : skills) {
+                if (skill.getGroup().getId() == idInt) {
+                    RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "Skill " + skill.getName() + " still refers to this group.");
+                    return;
+                }
             }
 
             m_openAcdContext.removeSkillGroups(skillGroupIds);
