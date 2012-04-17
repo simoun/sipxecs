@@ -441,7 +441,7 @@ public class UserGroupsResource extends UserResource {
         @Override
         protected void configureXStream(XStream xstream) {
             xstream.alias("user-group", UserGroupsBundleRestInfo.class);
-            xstream.alias("userGroup", UserGroupRestInfoFull.class);
+            xstream.alias("group", UserGroupRestInfoFull.class);
         }
     }
 
@@ -457,7 +457,7 @@ public class UserGroupsResource extends UserResource {
 
         @Override
         protected void configureXStream(XStream xstream) {
-            xstream.alias("userGroup", UserGroupRestInfoFull.class);
+            xstream.alias("group", UserGroupRestInfoFull.class);
         }
     }
 
@@ -467,19 +467,19 @@ public class UserGroupsResource extends UserResource {
 
     static class UserGroupsBundleRestInfo {
         private final MetadataRestInfo m_metadata;
-        private final List<UserGroupRestInfoFull> m_userGroups;
+        private final List<UserGroupRestInfoFull> m_groups;
 
         public UserGroupsBundleRestInfo(List<UserGroupRestInfoFull> userGroups, MetadataRestInfo metadata) {
             m_metadata = metadata;
-            m_userGroups = userGroups;
+            m_groups = userGroups;
         }
 
         public MetadataRestInfo getMetadata() {
             return m_metadata;
         }
 
-        public List<UserGroupRestInfoFull> getUserGroups() {
-            return m_userGroups;
+        public List<UserGroupRestInfoFull> getGroups() {
+            return m_groups;
         }
     }
 
