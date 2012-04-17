@@ -37,7 +37,6 @@ import org.restlet.data.Response;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.permission.Permission;
 import org.sipfoundry.sipxconfig.permission.PermissionManager;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
@@ -196,17 +195,8 @@ public class UserGroupPermissionsResource extends UserResource {
         }
 
 
-        // otherwise add new
-        try {
-            userGroup = createUserGroupPermission(userGroupPermissionRestInfo);
-            m_settingContext.saveGroup(userGroup);
-        }
-        catch (Exception exception) {
-            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create User Group Permissions failed", exception.getLocalizedMessage());
-            return;
-        }
-
-        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created User Group permissions", userGroup.getId());
+        // otherwise error, since no creation of new permissions
+        RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "Missing ID");
     }
 
 
@@ -359,28 +349,13 @@ public class UserGroupPermissionsResource extends UserResource {
     }
 
     private void updateUserGroupPermission(Group userGroup, UserGroupPermissionRestInfoFull userGroupPermissionRestInfo) {
-        String tempString;
+        Permission permission;
 
-        // do not allow empty name
-        tempString = userGroupPermissionRestInfo.getName();
-        if (!tempString.isEmpty()) {
-            userGroup.setName(tempString);
+        // update each permission setting
+        for (SettingBooleanRestInfo settingRestInfo : userGroupPermissionRestInfo.getSettings()) {
+            permission = m_permissionManager.getPermissionByName(settingRestInfo.getName());
+            userGroup.setSettingValue(permission.getSettingPath(), settingRestInfo.getValue());
         }
-
-        userGroup.setDescription(userGroupPermissionRestInfo.getDescription());
-    }
-
-    private Group createUserGroupPermission(UserGroupPermissionRestInfoFull userGroupPermissionRestInfo) {
-        Group userGroup = new Group();
-
-        // copy fields from rest info
-        userGroup.setName(userGroupPermissionRestInfo.getName());
-        userGroup.setDescription(userGroupPermissionRestInfo.getDescription());
-
-        // apparently there is a special Resource value for user groups
-        userGroup.setResource(CoreContext.USER_GROUP_RESOURCE_ID);
-
-        return userGroup;
     }
 
 
@@ -400,7 +375,7 @@ public class UserGroupPermissionsResource extends UserResource {
         @Override
         protected void configureXStream(XStream xstream) {
             xstream.alias("user-group-permission", UserGroupPermissionsBundleRestInfo.class);
-            xstream.alias("userGroup", UserGroupPermissionRestInfoFull.class);
+            xstream.alias("group", UserGroupPermissionRestInfoFull.class);
             xstream.alias("setting", SettingBooleanRestInfo.class);
         }
     }
@@ -417,7 +392,7 @@ public class UserGroupPermissionsResource extends UserResource {
 
         @Override
         protected void configureXStream(XStream xstream) {
-            xstream.alias("userGroup", UserGroupPermissionRestInfoFull.class);
+            xstream.alias("group", UserGroupPermissionRestInfoFull.class);
             xstream.alias("setting", SettingBooleanRestInfo.class);
         }
     }
@@ -428,19 +403,19 @@ public class UserGroupPermissionsResource extends UserResource {
 
     static class UserGroupPermissionsBundleRestInfo {
         private final MetadataRestInfo m_metadata;
-        private final List<UserGroupPermissionRestInfoFull> m_userGroupPermissions;
+        private final List<UserGroupPermissionRestInfoFull> m_permissions;
 
         public UserGroupPermissionsBundleRestInfo(List<UserGroupPermissionRestInfoFull> userGroupPermissions, MetadataRestInfo metadata) {
             m_metadata = metadata;
-            m_userGroupPermissions = userGroupPermissions;
+            m_permissions = userGroupPermissions;
         }
 
         public MetadataRestInfo getMetadata() {
             return m_metadata;
         }
 
-        public List<UserGroupPermissionRestInfoFull> getUserGroupPermissions() {
-            return m_userGroupPermissions;
+        public List<UserGroupPermissionRestInfoFull> getPermissions() {
+            return m_permissions;
         }
     }
 
