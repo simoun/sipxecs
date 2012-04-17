@@ -101,13 +101,8 @@ public class UserGroupPermissionsResource extends UserResource {
         return true;
     }
 
-    @Override
-    public boolean allowDelete() {
-        return true;
-    }
-
-    // GET - Retrieve all and single Skill
-    // -----------------------------------
+    // GET - Retrieve all and single User Group with Permissions
+    // ---------------------------------------------------------
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
@@ -153,8 +148,8 @@ public class UserGroupPermissionsResource extends UserResource {
         return new UserGroupPermissionsRepresentation(variant.getMediaType(), userGroupPermissionsBundleRestInfo);
     }
 
-    // PUT - Update or Add single Skill
-    // --------------------------------
+    // PUT - Update Permissions
+    // ------------------------
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
@@ -212,41 +207,6 @@ public class UserGroupPermissionsResource extends UserResource {
         }
 
         RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created User Group permissions", userGroup.getId());
-    }
-
-
-    // DELETE - Delete single Skill
-    // ----------------------------
-
-    @Override
-    public void removeRepresentations() throws ResourceException {
-        Group userGroup;
-        int idInt;
-
-        // get id then delete single
-        String idString = (String) getRequest().getAttributes().get("id");
-
-        if (idString != null) {
-            try {
-                idInt = RestUtilities.getIntFromAttribute(idString);
-                userGroup = m_settingContext.getGroup(idInt);
-            }
-            catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
-                return;
-            }
-
-            List<Integer> userGroupIds = new ArrayList<Integer>();
-            userGroupIds.add(idInt);
-            m_settingContext.deleteGroups(userGroupIds);
-
-            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted User Group Permissions", userGroup.getId());
-
-            return;
-        }
-
-        // no id string
-        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.ERROR_MISSING_INPUT, "ID value missing");
     }
 
 
