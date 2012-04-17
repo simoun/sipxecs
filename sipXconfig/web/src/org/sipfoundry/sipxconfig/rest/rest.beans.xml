@@ -429,7 +429,6 @@
   <bean id="userGroupPermissionsResource" class="org.sipfoundry.sipxconfig.rest.UserGroupPermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
     <property name="settingDao" ref="settingDao" />
-    <property name="branchManager" ref="branchManager" />
     <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
@@ -439,7 +438,6 @@
   <bean id="userGroupPermissionResource" class="org.sipfoundry.sipxconfig.rest.UserGroupPermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
     <property name="settingDao" ref="settingDao" />
-    <property name="branchManager" ref="branchManager" />
     <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />

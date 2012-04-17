@@ -23,8 +23,8 @@ package org.sipfoundry.sipxconfig.rest;
 import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
-import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -37,19 +37,14 @@ import org.restlet.data.Response;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
-import org.sipfoundry.sipxconfig.branch.Branch;
-import org.sipfoundry.sipxconfig.branch.BranchManager;
 import org.sipfoundry.sipxconfig.common.CoreContext;
-import org.sipfoundry.sipxconfig.common.User;
+import org.sipfoundry.sipxconfig.permission.Permission;
 import org.sipfoundry.sipxconfig.permission.PermissionManager;
-import org.sipfoundry.sipxconfig.permission.PermissionName;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.BranchRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.SettingBooleanRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.UserGroupPermissionRestInfoFull;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.UserGroupRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.sipfoundry.sipxconfig.setting.Group;
 import org.sipfoundry.sipxconfig.setting.SettingDao;
@@ -60,7 +55,6 @@ import com.thoughtworks.xstream.XStream;
 public class UserGroupPermissionsResource extends UserResource {
 
     private SettingDao m_settingContext; // saveGroup is not available through corecontext
-    private BranchManager m_branchManager;
     private PermissionManager m_permissionManager;
     private Form m_form;
 
@@ -277,76 +271,44 @@ public class UserGroupPermissionsResource extends UserResource {
 
     private UserGroupPermissionRestInfoFull createUserGroupPermissionRestInfo(Group group) {
         UserGroupPermissionRestInfoFull userGroupPermissionRestInfo = null;
-        List<SettingBooleanRestInfo> settings = new ArrayList<SettingBooleanRestInfo>();
+        List<SettingBooleanRestInfo> settings;
 
-        settings.add(createSettingRestInfo(group));
-
+        settings = createSettingsRestInfo(group);
         userGroupPermissionRestInfo = new UserGroupPermissionRestInfoFull(group, settings);
 
         return userGroupPermissionRestInfo;
     }
 
-    private SettingBooleanRestInfo createSettingRestInfo(Group group) {
+    private List<SettingBooleanRestInfo> createSettingsRestInfo(Group group) {
+        List<SettingBooleanRestInfo> settings = new ArrayList<SettingBooleanRestInfo>();
         SettingBooleanRestInfo settingRestInfo = null;
-        String valueString = "empty";
-        boolean value;
-        List<Permission> permissions;
+        Collection<Permission> permissions;
+        String permissionName;
+        String permissionValue;
+        boolean defaultValue;
 
-        permissions = new ArrayList(m_permissionManager.getCallPermissions());
+        permissions = m_permissionManager.getPermissions();
 
-        User user = null;
-        user = getCoreContext().newUser();
+        // settings value for permissions are ENABLE or DISABLE instead of boolean
+        for (Permission permission : permissions) {
+            permissionName = permission.getName();
 
-        if (user == null) {
-            valueString = "user null";
-        }
-        else {
-            valueString = "getPermissions: ";
-            for (String permString : user.getPermissions()) {
-                valueString = valueString + permString + " ";
+            try {
+                // empty return means setting is at default (unless error in input to getSettingValue)
+                //permissionValue = group.getSettingValue(PermissionName.findByName(permissionName).getPath());
+                permissionValue = group.getSettingValue(permission.getSettingPath());
+            }
+            catch (Exception exception) {
+                permissionValue = "GetSettingValue error: " + exception.getLocalizedMessage();
             }
 
-            //user.setSettingValue(PermissionName.findByName("subscribe-to-presence").getPath(), "ENABLE");
-            //valueString = valueString + " getName(): " + user.getSettingValue(PermissionName.SUBSCRIBE_TO_PRESENCE.getPath());
-            valueString = valueString + " getName(): " + user.getSettingValue(PermissionName.findByName("subscribe-to-presence").getPath());
-        }
-/*
-        List<String> temp = new ArrayList<String>(user.getPermissions());
-        if (temp == null) {
-            valueString = "temp null";
+            defaultValue = permission.getDefaultValue();
+
+            settingRestInfo = new SettingBooleanRestInfo(permissionName, permissionValue, defaultValue);
+            settings.add(settingRestInfo);
         }
 
-        valueString = "getPermissions: ";
-        for (String permString : user.getPermissions()) {
-            valueString = valueString + permString + " ";
-        }
-
-        //valueString = tempString + " - " + user.getSettings().getSetting(tempString).getName(); // + " - " + user.getSettingValue(tempString);
-
-        if (user == null) {
-            valueString = "user null";
-        }
-        else if (user.getSettings() == null) {
-            valueString = "getSettings null";
-        }
-        else if (user.getSettings().getSetting(tempString) == null) {
-            valueString = "getSetting(tempString) null";
-        }
-        else {
-            valueString = tempString + " - " + user.getSettings().getSetting(tempString).getName();
-        }
-*/
-
-
-
-        //value = (Boolean) group.getSettingTypedValue(new BooleanSetting(), PermissionName.SUBSCRIBE_TO_PRESENCE.getPath());
-        //valueString = group.getSettingValue(PermissionName.SUBSCRIBE_TO_PRESENCE.getPath());
-        //value = Boolean.parseBoolean(valueString);
-
-
-        settingRestInfo = new SettingBooleanRestInfo(PermissionName.SUBSCRIBE_TO_PRESENCE.getName(), valueString);
-
-        return settingRestInfo;
+        return settings;
     }
 
     private MetadataRestInfo addUserGroups(List<UserGroupPermissionRestInfoFull> userGroupPermissionsRestInfo, List<Group> userGroups) {
@@ -461,17 +423,6 @@ public class UserGroupPermissionsResource extends UserResource {
         return userGroup;
     }
 
-    private Branch getBranch(UserGroupRestInfoFull userGroupRestInfo) {
-        Branch branch = null;
-        BranchRestInfoFull branchRestInfo = userGroupRestInfo.getBranch();
-
-        if (branchRestInfo != null) {
-            branch = m_branchManager.getBranch(branchRestInfo.getId());
-        }
-
-        return branch;
-    }
-
 
     // REST Representations
     // --------------------
@@ -540,11 +491,6 @@ public class UserGroupPermissionsResource extends UserResource {
     @Required
     public void setSettingDao(SettingDao settingContext) {
         m_settingContext = settingContext;
-    }
-
-    @Required
-    public void setBranchManager(BranchManager branchManager) {
-        m_branchManager = branchManager;
     }
 
     @Required

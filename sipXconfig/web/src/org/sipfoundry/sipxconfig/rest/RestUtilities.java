@@ -522,10 +522,12 @@ public class RestUtilities {
     static class SettingBooleanRestInfo {
         private final String m_name;
         private final String m_value;
+        private final boolean m_defaultValue;
 
-        public SettingBooleanRestInfo(String name, String value) {
+        public SettingBooleanRestInfo(String name, String value, boolean defaultValue) {
             m_name = name;
             m_value = value;
+            m_defaultValue = defaultValue;
         }
 
         public String getName() {
@@ -534,6 +536,10 @@ public class RestUtilities {
 
         public String getValue() {
             return m_value;
+        }
+
+        public boolean getDefaultValue() {
+            return m_defaultValue;
         }
     }
 
