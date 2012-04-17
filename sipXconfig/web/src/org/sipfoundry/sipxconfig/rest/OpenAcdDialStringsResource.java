@@ -426,7 +426,7 @@ public class OpenAcdDialStringsResource extends UserResource {
         @Override
         protected void configureXStream(XStream xstream) {
             xstream.alias("openacd-dial-string", OpenAcdDialStringsBundleRestInfo.class);
-            xstream.alias("dial-string", OpenAcdDialStringRestInfo.class);
+            xstream.alias("dialString", OpenAcdDialStringRestInfo.class);
             xstream.alias("action", OpenAcdDialStringActionRestInfo.class);
         }
     }
