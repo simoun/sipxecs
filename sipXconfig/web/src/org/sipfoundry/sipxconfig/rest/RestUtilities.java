@@ -544,16 +544,16 @@ public class RestUtilities {
     }
 
     static class UserGroupPermissionRestInfoFull extends UserGroupRestInfo {
-        private final List<SettingBooleanRestInfo> m_settings;
+        private final List<SettingBooleanRestInfo> m_permissions;
 
         public UserGroupPermissionRestInfoFull(Group userGroup, List<SettingBooleanRestInfo> settingsRestInfo) {
             super(userGroup);
 
-            m_settings = settingsRestInfo;
+            m_permissions = settingsRestInfo;
         }
 
-        public List<SettingBooleanRestInfo> getSettings() {
-            return m_settings;
+        public List<SettingBooleanRestInfo> getPermissions() {
+            return m_permissions;
         }
     }
 

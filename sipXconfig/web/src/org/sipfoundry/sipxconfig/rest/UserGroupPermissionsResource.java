@@ -352,7 +352,7 @@ public class UserGroupPermissionsResource extends UserResource {
         Permission permission;
 
         // update each permission setting
-        for (SettingBooleanRestInfo settingRestInfo : userGroupPermissionRestInfo.getSettings()) {
+        for (SettingBooleanRestInfo settingRestInfo : userGroupPermissionRestInfo.getPermissions()) {
             permission = m_permissionManager.getPermissionByName(settingRestInfo.getName());
             userGroup.setSettingValue(permission.getSettingPath(), settingRestInfo.getValue());
         }
@@ -403,19 +403,19 @@ public class UserGroupPermissionsResource extends UserResource {
 
     static class UserGroupPermissionsBundleRestInfo {
         private final MetadataRestInfo m_metadata;
-        private final List<UserGroupPermissionRestInfoFull> m_permissions;
+        private final List<UserGroupPermissionRestInfoFull> m_groups;
 
         public UserGroupPermissionsBundleRestInfo(List<UserGroupPermissionRestInfoFull> userGroupPermissions, MetadataRestInfo metadata) {
             m_metadata = metadata;
-            m_permissions = userGroupPermissions;
+            m_groups = userGroupPermissions;
         }
 
         public MetadataRestInfo getMetadata() {
             return m_metadata;
         }
 
-        public List<UserGroupPermissionRestInfoFull> getPermissions() {
-            return m_permissions;
+        public List<UserGroupPermissionRestInfoFull> getGroups() {
+            return m_groups;
         }
     }
 
