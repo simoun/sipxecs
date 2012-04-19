@@ -375,6 +375,22 @@
     <property name="modifiable" value="true" />
   </bean>
   <alias name="openAcdSettingsResource" alias="/openacd-setting" />
+
+  <bean id="openAcdDialStringsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdDialStringsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdDialStringsResource" alias="/openacd-dial-string" />
+
+  <bean id="openAcdDialStringResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdDialStringsResource" scope="prototype">
+    <property name="coreContext" ref="coreContext" />
+    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="readable" value="true" />
+    <property name="modifiable" value="true" />
+  </bean>
+  <alias name="openAcdDialStringResource" alias="/openacd-dial-string/{id}" />
   
   <bean id="permissionsResource" class="org.sipfoundry.sipxconfig.rest.PermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
@@ -444,20 +460,20 @@
   </bean>
   <alias name="userGroupPermissionResource" alias="/user-group-permission/{id}" />
 
-  <bean id="openAcdDialStringsResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdDialStringsResource" scope="prototype">
+  <bean id="userPermissionsResource" class="org.sipfoundry.sipxconfig.rest.UserPermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
-    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
   </bean>
-  <alias name="openAcdDialStringsResource" alias="/openacd-dial-string" />
-
-  <bean id="openAcdDialStringResource" class="org.sipfoundry.sipxconfig.rest.OpenAcdDialStringsResource" scope="prototype">
+  <alias name="userPermissionsResource" alias="/user-permission" />
+  
+  <bean id="userPermissionResource" class="org.sipfoundry.sipxconfig.rest.UserPermissionsResource" scope="prototype">
     <property name="coreContext" ref="coreContext" />
-    <property name="openAcdContext" ref="openAcdContext" />
+    <property name="permissionManager" ref="permissionManager" />
     <property name="readable" value="true" />
     <property name="modifiable" value="true" />
   </bean>
-  <alias name="openAcdDialStringResource" alias="/openacd-dial-string/{id}" />
+  <alias name="userPermissionResource" alias="/user-permission/{id}" />
 
 </beans>
