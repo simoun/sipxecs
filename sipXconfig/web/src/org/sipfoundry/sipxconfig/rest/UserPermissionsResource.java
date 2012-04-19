@@ -51,7 +51,6 @@ import com.thoughtworks.xstream.XStream;
 
 public class UserPermissionsResource extends UserResource {
 
-    //private SettingDao m_settingContext; // saveGroup is not available through corecontext
     private PermissionManager m_permissionManager;
     private Form m_form;
 
@@ -127,8 +126,27 @@ public class UserPermissionsResource extends UserResource {
         }
 
 
-        // if not single, process request for all
-        List<User> users = getCoreContext().loadUsersByPage(1, getCoreContext().getAllUsersCount()); // no GetUsers() in coreContext, instead some subgroups
+        // if not single, check if need to filter list
+        List<User> users;
+        Collection<Integer> userIds;
+        String branchIdString = m_form.getFirstValue("branch");
+        int branchId;
+
+        if ((branchIdString != null) && (branchIdString != "")) {
+            try {
+                branchId = RestUtilities.getIntFromAttribute(branchIdString);
+            }
+            catch (Exception exception) {
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "Branch ID " + branchIdString + " not found.");
+            }
+
+            userIds = getCoreContext().getBranchMembersByPage(branchId, 0, getCoreContext().getBranchMembersCount(branchId));
+            users = getUsers(userIds);
+        }
+        else {
+            // process request for all
+            users = getCoreContext().loadUsersByPage(1, getCoreContext().getAllUsersCount()); // no GetUsers() in coreContext, instead some subgroups
+        }
 
         List<UserPermissionRestInfoFull> userPermissionsRestInfo = new ArrayList<UserPermissionRestInfoFull>();
         MetadataRestInfo metadataRestInfo;
@@ -144,7 +162,6 @@ public class UserPermissionsResource extends UserResource {
 
         return new UserPermissionsRepresentation(variant.getMediaType(), userPermissionsBundleRestInfo);
     }
-
 
     // PUT - Update Permissions
     // ------------------------
@@ -347,6 +364,17 @@ public class UserPermissionsResource extends UserResource {
         }
     }
 
+    private List<User> getUsers(Collection<Integer> userIds) {
+        List<User> users;
+
+        users = new ArrayList<User>();
+        for (int userId : userIds) {
+            users.add(getCoreContext().getUser(userId));
+        }
+
+        return users;
+    }
+
     private void updateUserPermission(User user, UserPermissionRestInfoFull userPermissionRestInfo) {
         Permission permission;
 
@@ -459,11 +487,6 @@ public class UserPermissionsResource extends UserResource {
 
     // Injected objects
     // ----------------
-
-//    @Required
-//    public void setSettingDao(SettingDao settingContext) {
-//        m_settingContext = settingContext;
-//    }
 
     @Required
     public void setPermissionManager(PermissionManager permissionManager) {
