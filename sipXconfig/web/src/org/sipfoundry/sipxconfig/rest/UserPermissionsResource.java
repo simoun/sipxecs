@@ -128,7 +128,7 @@ public class UserPermissionsResource extends UserResource {
 
 
         // if not single, process request for all
-        List<User> users = getCoreContext().getSharedUsers(); // no GetUsers() in coreContext, instead some subgroups
+        List<User> users = getCoreContext().loadUsersByPage(1, 10); // no GetUsers() in coreContext, instead some subgroups
 
         List<UserPermissionRestInfoFull> userPermissionsRestInfo = new ArrayList<UserPermissionRestInfoFull>();
         MetadataRestInfo metadataRestInfo;
