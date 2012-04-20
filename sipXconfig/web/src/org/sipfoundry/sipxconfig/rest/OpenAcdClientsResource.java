@@ -103,7 +103,7 @@ public class OpenAcdClientsResource extends UserResource {
     }
 
     // GET - Retrieve all and single Client
-    // -----------------------------------
+    // ------------------------------------
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
@@ -149,8 +149,8 @@ public class OpenAcdClientsResource extends UserResource {
     }
 
 
-    // PUT - Update or Add single Skill
-    // --------------------------------
+    // PUT - Update or Add single Client
+    // ---------------------------------
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
@@ -211,8 +211,8 @@ public class OpenAcdClientsResource extends UserResource {
     }
 
 
-    // DELETE - Delete single Skill
-    // ----------------------------
+    // DELETE - Delete single Client
+    // -----------------------------
 
     @Override
     public void removeRepresentations() throws ResourceException {
@@ -294,7 +294,7 @@ public class OpenAcdClientsResource extends UserResource {
             clientsRestInfo.add(clientRestInfo);
         }
 
-        // create metadata about agent groups
+        // create metadata about results
         MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
         return metadata;
     }

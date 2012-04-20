@@ -99,8 +99,8 @@ public class OpenAcdDialStringsResource extends UserResource {
         return true;
     }
 
-    // GET - Retrieve all and single Client
-    // -----------------------------------
+    // GET - Retrieve all and single Dial Strings
+    // ------------------------------------------
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
@@ -303,7 +303,7 @@ public class OpenAcdDialStringsResource extends UserResource {
             dialStringsRestInfo.add(dialStringRestInfo);
         }
 
-        // create metadata about agent groups
+        // create metadata about results
         MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
         return metadata;
     }
