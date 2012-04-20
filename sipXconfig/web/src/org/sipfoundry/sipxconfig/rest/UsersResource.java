@@ -24,9 +24,12 @@ import static org.restlet.data.MediaType.APPLICATION_JSON;
 import static org.restlet.data.MediaType.TEXT_XML;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.restlet.Context;
 import org.restlet.data.Form;
@@ -36,29 +39,29 @@ import org.restlet.data.Response;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
+import org.sipfoundry.sipxconfig.branch.Branch;
+import org.sipfoundry.sipxconfig.branch.BranchManager;
 import org.sipfoundry.sipxconfig.common.User;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdContext;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkill;
-import org.sipfoundry.sipxconfig.openacd.OpenAcdSkillGroup;
-import org.sipfoundry.sipxconfig.rest.OpenAcdSkillsResource.OpenAcdSkillsBundleRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.BranchRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.BranchRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.OpenAcdSkillRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
-import org.sipfoundry.sipxconfig.rest.RestUtilities.ResponseCode;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.UserGroupRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
+import org.sipfoundry.sipxconfig.setting.Group;
 import org.springframework.beans.factory.annotation.Required;
 
 import com.thoughtworks.xstream.XStream;
 
 public class UsersResource extends UserResource {
 
-    private OpenAcdContext m_openAcdContext;
+    private BranchManager m_branchManager;
     private Form m_form;
 
     // use to define all possible sort fields
     private enum SortField {
-        NAME, DESCRIPTION, ATOM, NONE;
+        USERNAME, LASTNAME, FIRSTNAME, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -104,14 +107,14 @@ public class UsersResource extends UserResource {
         return true;
     }
 
-    // GET - Retrieve all and single Skill
-    // -----------------------------------
+    // GET - Retrieve all and single User
+    // ----------------------------------
 
     @Override
     public Representation represent(Variant variant) throws ResourceException {
         // process request for single
         int idInt;
-        OpenAcdSkillRestInfoFull skillRestInfo = null;
+        UserRestInfoFull userRestInfo = null;
         String idString = (String) getRequest().getAttributes().get("id");
 
         if (idString != null) {
@@ -123,46 +126,66 @@ public class UsersResource extends UserResource {
             }
 
             try {
-                skillRestInfo = createSkillRestInfo(idInt);
+                userRestInfo = createUserRestInfo(idInt);
             }
             catch (Exception exception) {
-                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read Skills failed", exception.getLocalizedMessage());
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_READ_FAILED, "Read User failed", exception.getLocalizedMessage());
             }
 
-            return new OpenAcdSkillRepresentation(variant.getMediaType(), skillRestInfo);
+            return new UserRepresentation(variant.getMediaType(), userRestInfo);
         }
 
 
-        // if not single, process request for all
-        List<OpenAcdSkill> skills = m_openAcdContext.getSkills();
-        List<OpenAcdSkillRestInfoFull> skillsRestInfo = new ArrayList<OpenAcdSkillRestInfoFull>();
+        // if not single, check if need to filter list
+        List<User> users;
+
+        Collection<Integer> userIds;
+        String branchIdString = m_form.getFirstValue("branch");
+        int branchId;
+
+        if ((branchIdString != null) && (branchIdString != "")) {
+            try {
+                branchId = RestUtilities.getIntFromAttribute(branchIdString);
+            }
+            catch (Exception exception) {
+                return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "Branch ID " + branchIdString + " not found.");
+            }
+
+            userIds = getCoreContext().getBranchMembersByPage(branchId, 0, getCoreContext().getBranchMembersCount(branchId));
+            users = getUsers(userIds);
+        }
+        else {
+            // process request for all
+            users = getCoreContext().loadUsersByPage(1, getCoreContext().getAllUsersCount()); // no GetUsers() in coreContext, instead some subgroups
+        }
+
+        List<UserRestInfoFull> usersRestInfo = new ArrayList<UserRestInfoFull>();
         MetadataRestInfo metadataRestInfo;
 
-        // sort groups if specified
-        sortSkills(skills);
+        // sort if specified
+        sortUsers(users);
 
-        // set requested agents groups and get resulting metadata
-        metadataRestInfo = addSkills(skillsRestInfo, skills);
+        // set requested items and get resulting metadata
+        metadataRestInfo = addUsers(usersRestInfo, users);
 
         // create final restinfo
-        OpenAcdSkillsBundleRestInfo skillsBundleRestInfo = new OpenAcdSkillsBundleRestInfo(skillsRestInfo, metadataRestInfo);
+        UsersBundleRestInfo usersBundleRestInfo = new UsersBundleRestInfo(usersRestInfo, metadataRestInfo);
 
-        return new OpenAcdSkillsRepresentation(variant.getMediaType(), skillsBundleRestInfo);
+        return new UsersRepresentation(variant.getMediaType(), usersBundleRestInfo);
     }
 
-
-    // PUT - Update or Add single Skill
-    // --------------------------------
+    // PUT - Update or Add single User
+    // -------------------------------
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
         // get from request body
-        OpenAcdSkillRepresentation representation = new OpenAcdSkillRepresentation(entity);
-        OpenAcdSkillRestInfoFull skillRestInfo = representation.getObject();
-        OpenAcdSkill skill = null;
+        UserRepresentation representation = new UserRepresentation(entity);
+        UserRestInfoFull userRestInfo = representation.getObject();
+        User user = null;
 
         // validate input for update or create
-        ValidationInfo validationInfo = validate(skillRestInfo);
+        ValidationInfo validationInfo = validate(userRestInfo);
 
         if (!validationInfo.valid) {
             RestUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
@@ -176,7 +199,7 @@ public class UsersResource extends UserResource {
         if (idString != null) {
             try {
                 int idInt = RestUtilities.getIntFromAttribute(idString);
-                skill = m_openAcdContext.getSkillById(idInt);
+                user = getCoreContext().getUser(idInt);
             }
             catch (Exception exception) {
                 RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
@@ -185,15 +208,15 @@ public class UsersResource extends UserResource {
 
             // copy values over to existing
             try {
-                updateSkill(skill, skillRestInfo);
-                m_openAcdContext.saveSkill(skill);
+                updateUser(user, userRestInfo);
+                getCoreContext().saveUser(user);
             }
             catch (Exception exception) {
-                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update Skill failed", exception.getLocalizedMessage());
+                RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Update User failed", exception.getLocalizedMessage());
                 return;
             }
 
-            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated Skill", skill.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "Updated User", user.getId());
 
             return;
         }
@@ -201,24 +224,24 @@ public class UsersResource extends UserResource {
 
         // otherwise add new
         try {
-            skill = createSkill(skillRestInfo);
-            m_openAcdContext.saveSkill(skill);
+            user = createUser(userRestInfo);
+            getCoreContext().saveUser(user);
         }
         catch (Exception exception) {
-            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create Skill failed", exception.getLocalizedMessage());
+            RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_WRITE_FAILED, "Create User failed", exception.getLocalizedMessage());
             return;
         }
 
-        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created Skill", skill.getId());
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_CREATED, "Created User", user.getId());
     }
 
 
-    // DELETE - Delete single Skill
-    // ----------------------------
+    // DELETE - Delete single User
+    // ---------------------------
 
     @Override
     public void removeRepresentations() throws ResourceException {
-        OpenAcdSkill skill;
+        User user;
 
         // get id then delete single
         String idString = (String) getRequest().getAttributes().get("id");
@@ -226,16 +249,16 @@ public class UsersResource extends UserResource {
         if (idString != null) {
             try {
                 int idInt = RestUtilities.getIntFromAttribute(idString);
-                skill = m_openAcdContext.getSkillById(idInt);
+                user = getCoreContext().getUser(idInt);
             }
             catch (Exception exception) {
                 RestUtilities.setResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + idString + " not found.");
                 return;
             }
 
-            m_openAcdContext.deleteSkill(skill);
+            getCoreContext().deleteUser(user);
 
-            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted Skill", skill.getId());
+            RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_DELETED, "Deleted User", user.getId());
 
             return;
         }
@@ -252,60 +275,71 @@ public class UsersResource extends UserResource {
     // update
     // may also contain clean up of input data
     // may create another validation function if different rules needed for update v. create
-    private ValidationInfo validate(OpenAcdSkillRestInfoFull restInfo) {
+    private ValidationInfo validate(UserRestInfoFull restInfo) {
         ValidationInfo validationInfo = new ValidationInfo();
-
-        String name = restInfo.getName();
-        String atom = restInfo.getAtom();
-
-        for (int i = 0; i < name.length(); i++) {
-            if ((!Character.isLetterOrDigit(name.charAt(i)) && !(Character.getType(name.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && name.charAt(i) != '-') {
-                validationInfo.valid = false;
-                validationInfo.message = "Validation Error: Skill Group 'Name' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
-            }
-        }
-
-        for (int i = 0; i < atom.length(); i++) {
-            if ((!Character.isLetterOrDigit(atom.charAt(i)) && !(Character.getType(atom.charAt(i)) == Character.CONNECTOR_PUNCTUATION)) && atom.charAt(i) != '-') {
-                validationInfo.valid = false;
-                validationInfo.message = "Validation Error: 'Atom' must only contain letters, numbers, dashes, and underscores";
-                validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
-            }
-        }
 
         return validationInfo;
     }
 
-    private OpenAcdSkillRestInfoFull createSkillRestInfo(int id) throws ResourceException {
-        OpenAcdSkillRestInfoFull skillRestInfo = null;
+    private UserRestInfoFull createUserRestInfo(int id) {
+        User user = getCoreContext().getUser(id);
 
-        OpenAcdSkill skill = m_openAcdContext.getSkillById(id);
-        skillRestInfo = new OpenAcdSkillRestInfoFull(skill);
-
-        return skillRestInfo;
+        return createUserRestInfo(user);
     }
 
-    private MetadataRestInfo addSkills(List<OpenAcdSkillRestInfoFull> skillsRestInfo, List<OpenAcdSkill> skills) {
-        OpenAcdSkillRestInfoFull skillRestInfo;
+    private UserRestInfoFull createUserRestInfo(User user) {
+        UserRestInfoFull userRestInfo = null;
+        UserGroupRestInfo userGroupRestInfo = null;
+        List<UserGroupRestInfo> userGroupsRestInfo = new ArrayList<UserGroupRestInfo>();
+        Set<Group> groups = null;
+        BranchRestInfo branchRestInfo = null;
+        Branch branch = null;
+
+        groups = user.getGroups();
+
+        // user does not necessarily have any groups
+        if ((groups != null) && (!groups.isEmpty())) {
+            for (Group group : groups) {
+                userGroupRestInfo = new UserGroupRestInfo(group);
+                userGroupsRestInfo.add(userGroupRestInfo);
+            }
+        }
+
+        branch = user.getBranch();
+
+        // user does not necessarily have branch
+        if (branch != null) {
+            branchRestInfo = new BranchRestInfo(branch);
+        }
+
+        userRestInfo = new UserRestInfoFull(user, userGroupsRestInfo, branchRestInfo);
+
+        return userRestInfo;
+    }
+
+    private MetadataRestInfo addUsers(List<UserRestInfoFull> usersRestInfo, List<User> users) {
+        UserRestInfoFull userRestInfo;
+        User user;
 
         // determine pagination
-        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, skills.size());
+        PaginationInfo paginationInfo = RestUtilities.calculatePagination(m_form, users.size());
+
 
         // create list of skill restinfos
         for (int index = paginationInfo.startIndex; index <= paginationInfo.endIndex; index++) {
-            OpenAcdSkill skill = skills.get(index);
+            user = users.get(index);
 
-            skillRestInfo = new OpenAcdSkillRestInfoFull(skill);
-            skillsRestInfo.add(skillRestInfo);
+            userRestInfo = createUserRestInfo(user);
+            usersRestInfo.add(userRestInfo);
         }
+
 
         // create metadata about agent groups
         MetadataRestInfo metadata = new MetadataRestInfo(paginationInfo);
         return metadata;
     }
 
-    private void sortSkills(List<OpenAcdSkill> skills) {
+    private void sortUsers(List<User> users) {
         // sort groups if requested
         SortInfo sortInfo = RestUtilities.calculateSorting(m_form);
 
@@ -318,38 +352,38 @@ public class UsersResource extends UserResource {
         if (sortInfo.directionForward) {
 
             switch (sortField) {
-            case NAME:
-                Collections.sort(skills, new Comparator() {
+            case USERNAME:
+                Collections.sort(users, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
-                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
-                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill1.getName().compareToIgnoreCase(skill2.getName());
+                        User user1 = (User) object1;
+                        User user2 = (User) object2;
+                        return user1.getUserName().compareToIgnoreCase(user2.getUserName());
                     }
 
                 });
                 break;
 
-            case DESCRIPTION:
-                Collections.sort(skills, new Comparator() {
+            case LASTNAME:
+                Collections.sort(users, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
-                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
-                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill1.getDescription().compareToIgnoreCase(skill2.getDescription());
+                        User user1 = (User) object1;
+                        User user2 = (User) object2;
+                        return user1.getLastName().compareToIgnoreCase(user2.getLastName());
                     }
 
                 });
                 break;
 
 
-            case ATOM:
-                Collections.sort(skills, new Comparator() {
+            case FIRSTNAME:
+                Collections.sort(users, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
-                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
-                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill1.getAtom().compareToIgnoreCase(skill2.getAtom());
+                        User user1 = (User) object1;
+                        User user2 = (User) object2;
+                        return user1.getFirstName().compareToIgnoreCase(user2.getFirstName());
                     }
 
                 });
@@ -359,37 +393,37 @@ public class UsersResource extends UserResource {
         else {
             // must be reverse
             switch (sortField) {
-            case NAME:
-                Collections.sort(skills, new Comparator() {
+            case USERNAME:
+                Collections.sort(users, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
-                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
-                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill2.getName().compareToIgnoreCase(skill1.getName());
+                        User user1 = (User) object1;
+                        User user2 = (User) object2;
+                        return user2.getUserName().compareToIgnoreCase(user1.getUserName());
                     }
 
                 });
                 break;
 
-            case DESCRIPTION:
-                Collections.sort(skills, new Comparator() {
+            case LASTNAME:
+                Collections.sort(users, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
-                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
-                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill2.getDescription().compareToIgnoreCase(skill1.getDescription());
+                        User user1 = (User) object1;
+                        User user2 = (User) object2;
+                        return user2.getLastName().compareToIgnoreCase(user1.getLastName());
                     }
 
                 });
                 break;
 
-            case ATOM:
-                Collections.sort(skills, new Comparator() {
+            case FIRSTNAME:
+                Collections.sort(users, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
-                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
-                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill2.getAtom().compareToIgnoreCase(skill1.getAtom());
+                        User user1 = (User) object1;
+                        User user2 = (User) object2;
+                        return user2.getFirstName().compareToIgnoreCase(user1.getFirstName());
                     }
 
                 });
@@ -398,79 +432,110 @@ public class UsersResource extends UserResource {
         }
     }
 
-    private void updateSkill(OpenAcdSkill skill, OpenAcdSkillRestInfoFull skillRestInfo) {
-        OpenAcdSkillGroup skillGroup;
-        String tempString;
+    private List<User> getUsers(Collection<Integer> userIds) {
+        List<User> users;
 
-        // do not allow empty name
-        tempString = skillRestInfo.getName();
-        if (!tempString.isEmpty()) {
-            skill.setName(tempString);
+        users = new ArrayList<User>();
+        for (int userId : userIds) {
+            users.add(getCoreContext().getUser(userId));
         }
 
-        skill.setDescription(skillRestInfo.getDescription());
-
-        skillGroup = getSkillGroup(skillRestInfo);
-        skill.setGroup(skillGroup);
+        return users;
     }
 
-    private OpenAcdSkill createSkill(OpenAcdSkillRestInfoFull skillRestInfo) throws ResourceException {
-        OpenAcdSkillGroup skillGroup;
-        OpenAcdSkill skill = new OpenAcdSkill();
+    private void updateUser(User user, UserRestInfoFull userRestInfo) {
+        Set<Group> userGroups = new HashSet<Group>();
+        Branch branch;
+        String tempString;
 
-        // copy fields from rest info
-        skill.setName(skillRestInfo.getName());
-        skill.setDescription(skillRestInfo.getDescription());
-        skill.setAtom(skillRestInfo.getAtom());
+        // do not allow empty username
+        tempString = userRestInfo.getUserName();
+        if (!tempString.isEmpty()) {
+            user.setUserName(tempString);
+        }
 
-        skillGroup = getSkillGroup(skillRestInfo);
-        skill.setGroup(skillGroup);
+        user.setLastName(userRestInfo.getLastName());
+        user.setFirstName(userRestInfo.getFirstName());
+        user.setPin(userRestInfo.getPin(), getCoreContext().getAuthorizationRealm());
+        user.setSipPassword(userRestInfo.getSipPassword());
 
-        return skill;
+        userGroups = new HashSet<Group>(getUserGroups(userRestInfo));
+        user.setGroups(userGroups);
+
+        branch = m_branchManager.getBranch(userRestInfo.getBranch().getId());
+        user.setBranch(branch);
     }
 
-    private OpenAcdSkillGroup getSkillGroup(OpenAcdSkillRestInfoFull skillRestInfo) {
-        OpenAcdSkillGroup skillGroup;
-        int groupId = skillRestInfo.getGroupId();
-        skillGroup = m_openAcdContext.getSkillGroupById(groupId);
+    private User createUser(UserRestInfoFull userRestInfo) {
+        User user = new User();
+        Set<Group> userGroups = new HashSet<Group>();
+        Branch branch;
 
-        return skillGroup;
+        user.setUserName(userRestInfo.getUserName());
+        user.setLastName(userRestInfo.getLastName());
+        user.setFirstName(userRestInfo.getFirstName());
+        user.setPin(userRestInfo.getPin(), getCoreContext().getAuthorizationRealm());
+        user.setSipPassword(userRestInfo.getSipPassword());
+
+        userGroups = new HashSet<Group>(getUserGroups(userRestInfo));
+        user.setGroups(userGroups);
+
+        branch = m_branchManager.getBranch(userRestInfo.getBranch().getId());
+        user.setBranch(branch);
+
+        return user;
+    }
+
+    private List<Group> getUserGroups(UserRestInfoFull userRestInfo) {
+        List<Group> userGroups = new ArrayList<Group>();
+        Group userGroup;
+
+        for (UserGroupRestInfo userGroupRestInfo : userRestInfo.getGroups()) {
+            userGroup = getCoreContext().getGroupById(userGroupRestInfo.getId());
+            userGroups.add(userGroup);
+        }
+
+        return userGroups;
     }
 
 
     // REST Representations
     // --------------------
 
-    static class OpenAcdSkillsRepresentation extends XStreamRepresentation<OpenAcdSkillsBundleRestInfo> {
+    static class UsersRepresentation extends XStreamRepresentation<UsersBundleRestInfo> {
 
-        public OpenAcdSkillsRepresentation(MediaType mediaType, OpenAcdSkillsBundleRestInfo object) {
+        public UsersRepresentation(MediaType mediaType, UsersBundleRestInfo object) {
             super(mediaType, object);
         }
 
-        public OpenAcdSkillsRepresentation(Representation representation) {
+        public UsersRepresentation(Representation representation) {
             super(representation);
         }
 
         @Override
         protected void configureXStream(XStream xstream) {
-            xstream.alias("openacd-skill", OpenAcdSkillsBundleRestInfo.class);
-            xstream.alias("skill", OpenAcdSkillRestInfoFull.class);
+            xstream.alias("user", UsersBundleRestInfo.class);
+            xstream.alias("user", UserRestInfoFull.class);
+            xstream.alias("group", UserGroupRestInfo.class);
+            xstream.alias("branch", BranchRestInfoFull.class);
         }
     }
 
-    static class OpenAcdSkillRepresentation extends XStreamRepresentation<OpenAcdSkillRestInfoFull> {
+    static class UserRepresentation extends XStreamRepresentation<UserRestInfoFull> {
 
-        public OpenAcdSkillRepresentation(MediaType mediaType, OpenAcdSkillRestInfoFull object) {
+        public UserRepresentation(MediaType mediaType, UserRestInfoFull object) {
             super(mediaType, object);
         }
 
-        public OpenAcdSkillRepresentation(Representation representation) {
+        public UserRepresentation(Representation representation) {
             super(representation);
         }
 
         @Override
         protected void configureXStream(XStream xstream) {
-            xstream.alias("skill", OpenAcdSkillRestInfoFull.class);
+            xstream.alias("group", UserGroupRestInfo.class);
+            xstream.alias("user", UserRestInfoFull.class);
+            xstream.alias("branch", BranchRestInfoFull.class);
         }
     }
 
@@ -503,16 +568,20 @@ public class UsersResource extends UserResource {
         private final String m_firstName;
         private final String m_pin;
         private final String m_sipPassword;
+        private final List<UserGroupRestInfo> m_groups;
+        private final BranchRestInfo m_branch;
 
-        // user groups
+        // user groups, branch, aliases
 
-        public UserRestInfoFull(User user) {
+        public UserRestInfoFull(User user, List<UserGroupRestInfo> userGroupsRestInfo, BranchRestInfo branchRestInfo) {
             m_id = user.getId();
             m_userName = user.getUserName();
             m_lastName = user.getLastName();
             m_firstName = user.getFirstName();
             m_pin = "*"; // pin is hardcoded to never display but must still be submitted
             m_sipPassword = user.getSipPassword();
+            m_groups = userGroupsRestInfo;
+            m_branch = branchRestInfo;
         }
 
         public int getId() {
@@ -538,6 +607,14 @@ public class UsersResource extends UserResource {
         public String getSipPassword() {
             return m_sipPassword;
         }
+
+        public List<UserGroupRestInfo> getGroups() {
+            return m_groups;
+        }
+
+        public BranchRestInfo getBranch() {
+            return m_branch;
+        }
     }
 
 
@@ -546,8 +623,8 @@ public class UsersResource extends UserResource {
     // ----------------
 
     @Required
-    public void setOpenAcdContext(OpenAcdContext openAcdContext) {
-        m_openAcdContext = openAcdContext;
+    public void setBranchManager(BranchManager branchManager) {
+        m_branchManager = branchManager;
     }
 
 }

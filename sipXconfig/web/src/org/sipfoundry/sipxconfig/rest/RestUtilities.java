@@ -439,21 +439,15 @@ public class RestUtilities {
         }
     }
 
-    static class BranchRestInfoFull {
+    static class BranchRestInfo {
         private final int m_id;
         private final String m_name;
         private final String m_description;
-        private final Address m_address;
-        private final String m_phoneNumber;
-        private final String m_faxNumber;
 
-        public BranchRestInfoFull(Branch branch) {
+        public BranchRestInfo(Branch branch) {
             m_id = branch.getId();
             m_name = branch.getName();
             m_description = branch.getDescription();
-            m_address = branch.getAddress();
-            m_phoneNumber = branch.getPhoneNumber();
-            m_faxNumber = branch.getFaxNumber();
         }
 
         public int getId() {
@@ -466,6 +460,20 @@ public class RestUtilities {
 
         public String getDescription() {
             return m_description;
+        }
+    }
+
+    static class BranchRestInfoFull extends BranchRestInfo {
+        private final Address m_address;
+        private final String m_phoneNumber;
+        private final String m_faxNumber;
+
+        public BranchRestInfoFull(Branch branch) {
+            super(branch);
+
+            m_address = branch.getAddress();
+            m_phoneNumber = branch.getPhoneNumber();
+            m_faxNumber = branch.getFaxNumber();
         }
 
         public Address getAddress() {
