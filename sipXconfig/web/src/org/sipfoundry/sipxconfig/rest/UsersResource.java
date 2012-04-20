@@ -27,27 +27,31 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.restlet.Context;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
 import org.restlet.data.Request;
 import org.restlet.data.Response;
+import org.restlet.data.Status;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.branch.Branch;
 import org.sipfoundry.sipxconfig.branch.BranchManager;
 import org.sipfoundry.sipxconfig.common.User;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.AliasRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.BranchRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.BranchRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.MetadataRestInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.PaginationInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.SortInfo;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.UserGroupRestInfo;
+import org.sipfoundry.sipxconfig.rest.RestUtilities.UserRestInfoFull;
 import org.sipfoundry.sipxconfig.rest.RestUtilities.ValidationInfo;
 import org.sipfoundry.sipxconfig.setting.Group;
 import org.springframework.beans.factory.annotation.Required;
@@ -138,12 +142,14 @@ public class UsersResource extends UserResource {
 
         // if not single, check if need to filter list
         List<User> users;
-
         Collection<Integer> userIds;
+
         String branchIdString = m_form.getFirstValue("branch");
+        String idListString = m_form.getFirstValue("ids");
         int branchId;
 
-        if ((branchIdString != null) && (branchIdString != "")) {
+        // check if searching by branch
+        if ((branchIdString != null) && (!branchIdString.isEmpty())) {
             try {
                 branchId = RestUtilities.getIntFromAttribute(branchIdString);
             }
@@ -153,6 +159,24 @@ public class UsersResource extends UserResource {
 
             userIds = getCoreContext().getBranchMembersByPage(branchId, 0, getCoreContext().getBranchMembersCount(branchId));
             users = getUsers(userIds);
+        }
+        else if ((idListString != null) && (!idListString.isEmpty())) {
+            // searching by id list
+            String[] idArray = idListString.split(",");
+
+            users = new ArrayList<User>();
+            User user;
+            for (String id : idArray) {
+                try {
+                    idInt = RestUtilities.getIntFromAttribute(id);
+                }
+                catch (Exception exception) {
+                    return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + id + " not found.");
+                }
+
+                user = getCoreContext().getUser(idInt);
+                users.add(user);
+            }
         }
         else {
             // process request for all
@@ -281,8 +305,12 @@ public class UsersResource extends UserResource {
         return validationInfo;
     }
 
-    private UserRestInfoFull createUserRestInfo(int id) {
+    private UserRestInfoFull createUserRestInfo(int id) throws ResourceException {
         User user = getCoreContext().getUser(id);
+
+        if (user == null) {
+            throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "No user with id " + id);
+        }
 
         return createUserRestInfo(user);
     }
@@ -294,6 +322,9 @@ public class UsersResource extends UserResource {
         Set<Group> groups = null;
         BranchRestInfo branchRestInfo = null;
         Branch branch = null;
+        AliasRestInfo aliasRestInfo = null;
+        List<AliasRestInfo> aliasesRestInfo = new ArrayList<AliasRestInfo>();
+        Set<String> aliases = null;
 
         groups = user.getGroups();
 
@@ -312,7 +343,17 @@ public class UsersResource extends UserResource {
             branchRestInfo = new BranchRestInfo(branch);
         }
 
-        userRestInfo = new UserRestInfoFull(user, userGroupsRestInfo, branchRestInfo);
+        aliases = user.getAliases();
+
+        // user does not necessarily have any aliases
+        if (aliases != null) {
+            for (String alias : aliases) {
+                aliasRestInfo = new AliasRestInfo(alias);
+                aliasesRestInfo.add(aliasRestInfo);
+            }
+        }
+
+        userRestInfo = new UserRestInfoFull(user, userGroupsRestInfo, branchRestInfo, aliasesRestInfo);
 
         return userRestInfo;
     }
@@ -444,7 +485,6 @@ public class UsersResource extends UserResource {
     }
 
     private void updateUser(User user, UserRestInfoFull userRestInfo) {
-        Set<Group> userGroups = new HashSet<Group>();
         Branch branch;
         String tempString;
 
@@ -456,38 +496,76 @@ public class UsersResource extends UserResource {
 
         user.setLastName(userRestInfo.getLastName());
         user.setFirstName(userRestInfo.getFirstName());
-        user.setPin(userRestInfo.getPin(), getCoreContext().getAuthorizationRealm());
         user.setSipPassword(userRestInfo.getSipPassword());
 
-        userGroups = new HashSet<Group>(getUserGroups(userRestInfo));
-        user.setGroups(userGroups);
+        // if pin is empty do not save
+        if (!userRestInfo.getPin().isEmpty()) {
+            user.setPin(userRestInfo.getPin(), getCoreContext().getAuthorizationRealm());
+        }
 
-        branch = m_branchManager.getBranch(userRestInfo.getBranch().getId());
-        user.setBranch(branch);
+        // user may not have any groups
+        List<UserGroupRestInfo> userGroupsRestInfo = userRestInfo.getGroups();
+        if (userGroupsRestInfo != null) {
+            user.setGroups(createUserGroups(userRestInfo));
+        }
+        else {
+            user.setGroups(null);
+        }
+
+        // user may not have a branch
+        if (userRestInfo.getBranch() != null) {
+            branch = m_branchManager.getBranch(userRestInfo.getBranch().getId());
+            user.setBranch(branch);
+        }
+        else {
+            user.setBranch(null);
+        }
+
+        // user may not have any aliases
+        if (userRestInfo.getAliases() != null) {
+            user.setAliases(createAliases(userRestInfo));
+        }
+        else {
+            user.setAliases(null);
+        }
     }
 
     private User createUser(UserRestInfoFull userRestInfo) {
-        User user = new User();
-        Set<Group> userGroups = new HashSet<Group>();
+        User user = getCoreContext().newUser();
         Branch branch;
 
         user.setUserName(userRestInfo.getUserName());
         user.setLastName(userRestInfo.getLastName());
         user.setFirstName(userRestInfo.getFirstName());
-        user.setPin(userRestInfo.getPin(), getCoreContext().getAuthorizationRealm());
         user.setSipPassword(userRestInfo.getSipPassword());
 
-        userGroups = new HashSet<Group>(getUserGroups(userRestInfo));
-        user.setGroups(userGroups);
+        // if pin is empty do not save
+        if (!userRestInfo.getPin().isEmpty()) {
+            user.setPin(userRestInfo.getPin(), getCoreContext().getAuthorizationRealm());
+        }
 
-        branch = m_branchManager.getBranch(userRestInfo.getBranch().getId());
-        user.setBranch(branch);
+        // user may not have any groups
+        List<UserGroupRestInfo> userGroupsRestInfo = userRestInfo.getGroups();
+        if (userGroupsRestInfo != null) {
+            user.setGroups(createUserGroups(userRestInfo));
+        }
+
+        // user may not have a branch
+        if (userRestInfo.getBranch() != null) {
+            branch = m_branchManager.getBranch(userRestInfo.getBranch().getId());
+            user.setBranch(branch);
+        }
+
+        // user may not have any aliases
+        if (userRestInfo.getAliases() != null) {
+            user.setAliases(createAliases(userRestInfo));
+        }
 
         return user;
     }
 
-    private List<Group> getUserGroups(UserRestInfoFull userRestInfo) {
-        List<Group> userGroups = new ArrayList<Group>();
+    private Set<Group> createUserGroups(UserRestInfoFull userRestInfo) {
+        Set<Group> userGroups = new TreeSet<Group>();
         Group userGroup;
 
         for (UserGroupRestInfo userGroupRestInfo : userRestInfo.getGroups()) {
@@ -496,6 +574,16 @@ public class UsersResource extends UserResource {
         }
 
         return userGroups;
+    }
+
+    private Set<String> createAliases(UserRestInfoFull userRestInfo) {
+        Set<String> aliases = new LinkedHashSet<String>();
+
+        for (AliasRestInfo aliasRestInfo : userRestInfo.getAliases()) {
+            aliases.add(aliasRestInfo.getAlias());
+        }
+
+        return aliases;
     }
 
 
@@ -518,6 +606,7 @@ public class UsersResource extends UserResource {
             xstream.alias("user", UserRestInfoFull.class);
             xstream.alias("group", UserGroupRestInfo.class);
             xstream.alias("branch", BranchRestInfoFull.class);
+            xstream.alias("alias", AliasRestInfo.class);
         }
     }
 
@@ -536,6 +625,7 @@ public class UsersResource extends UserResource {
             xstream.alias("group", UserGroupRestInfo.class);
             xstream.alias("user", UserRestInfoFull.class);
             xstream.alias("branch", BranchRestInfoFull.class);
+            xstream.alias("alias", AliasRestInfo.class);
         }
     }
 
@@ -560,63 +650,6 @@ public class UsersResource extends UserResource {
             return m_users;
         }
     }
-
-    static class UserRestInfoFull {
-        private final int m_id;
-        private final String m_userName; // also called "User ID" in gui
-        private final String m_lastName;
-        private final String m_firstName;
-        private final String m_pin;
-        private final String m_sipPassword;
-        private final List<UserGroupRestInfo> m_groups;
-        private final BranchRestInfo m_branch;
-
-        // user groups, branch, aliases
-
-        public UserRestInfoFull(User user, List<UserGroupRestInfo> userGroupsRestInfo, BranchRestInfo branchRestInfo) {
-            m_id = user.getId();
-            m_userName = user.getUserName();
-            m_lastName = user.getLastName();
-            m_firstName = user.getFirstName();
-            m_pin = "*"; // pin is hardcoded to never display but must still be submitted
-            m_sipPassword = user.getSipPassword();
-            m_groups = userGroupsRestInfo;
-            m_branch = branchRestInfo;
-        }
-
-        public int getId() {
-            return m_id;
-        }
-
-        public String getUserName() {
-            return m_userName;
-        }
-
-        public String getLastName() {
-            return m_lastName;
-        }
-
-        public String getFirstName() {
-            return m_firstName;
-        }
-
-        public String getPin() {
-            return m_pin;
-        }
-
-        public String getSipPassword() {
-            return m_sipPassword;
-        }
-
-        public List<UserGroupRestInfo> getGroups() {
-            return m_groups;
-        }
-
-        public BranchRestInfo getBranch() {
-            return m_branch;
-        }
-    }
-
 
 
     // Injected objects

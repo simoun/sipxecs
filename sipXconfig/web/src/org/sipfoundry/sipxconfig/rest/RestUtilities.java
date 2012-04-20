@@ -31,6 +31,7 @@ import org.restlet.resource.DomRepresentation;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.sipfoundry.sipxconfig.branch.Branch;
+import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgent;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdAgentGroup;
 import org.sipfoundry.sipxconfig.openacd.OpenAcdClient;
@@ -562,6 +563,80 @@ public class RestUtilities {
 
         public List<SettingBooleanRestInfo> getPermissions() {
             return m_permissions;
+        }
+    }
+
+    static class UserRestInfoFull {
+        private final int m_id;
+        private final String m_userName; // also called "User ID" in gui
+        private final String m_lastName;
+        private final String m_firstName;
+        private final String m_pin;
+        private final String m_sipPassword;
+        private final List<UserGroupRestInfo> m_groups;
+        private final BranchRestInfo m_branch;
+        private final List<AliasRestInfo> m_aliases;
+
+
+        public UserRestInfoFull(User user, List<UserGroupRestInfo> userGroupsRestInfo, BranchRestInfo branchRestInfo, List<AliasRestInfo> aliasesRestInfo) {
+            m_id = user.getId();
+            m_userName = user.getUserName();
+            m_lastName = user.getLastName();
+            m_firstName = user.getFirstName();
+            m_pin = ""; // pin is hardcoded to never display but must still be submitted
+            m_sipPassword = user.getSipPassword();
+            m_groups = userGroupsRestInfo;
+            m_branch = branchRestInfo;
+            m_aliases = aliasesRestInfo;
+        }
+
+        public int getId() {
+            return m_id;
+        }
+
+        public String getUserName() {
+            return m_userName;
+        }
+
+        public String getLastName() {
+            return m_lastName;
+        }
+
+        public String getFirstName() {
+            return m_firstName;
+        }
+
+        public String getPin() {
+            return m_pin;
+        }
+
+        public String getSipPassword() {
+            return m_sipPassword;
+        }
+
+        public List<UserGroupRestInfo> getGroups() {
+            return m_groups;
+        }
+
+        public BranchRestInfo getBranch() {
+            return m_branch;
+        }
+
+        public List<AliasRestInfo> getAliases() {
+            return m_aliases;
+        }
+    }
+
+    static class AliasRestInfo {
+
+        private final String m_alias;
+
+        public AliasRestInfo(String alias) {
+            m_alias = alias;
+        }
+
+        public String getAlias() {
+            return m_alias;
         }
     }
 

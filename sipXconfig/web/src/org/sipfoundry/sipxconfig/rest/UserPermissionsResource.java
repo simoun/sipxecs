@@ -129,7 +129,9 @@ public class UserPermissionsResource extends UserResource {
         // if not single, check if need to filter list
         List<User> users;
         Collection<Integer> userIds;
+
         String branchIdString = m_form.getFirstValue("branch");
+        String idListString = m_form.getFirstValue("ids");
         int branchId;
 
         if ((branchIdString != null) && (branchIdString != "")) {
@@ -142,6 +144,24 @@ public class UserPermissionsResource extends UserResource {
 
             userIds = getCoreContext().getBranchMembersByPage(branchId, 0, getCoreContext().getBranchMembersCount(branchId));
             users = getUsers(userIds);
+        }
+        else if ((idListString != null) && (!idListString.isEmpty())) {
+            // searching by id list
+            String[] idArray = idListString.split(",");
+
+            users = new ArrayList<User>();
+            User user;
+            for (String id : idArray) {
+                try {
+                    idInt = RestUtilities.getIntFromAttribute(id);
+                }
+                catch (Exception exception) {
+                    return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + id + " not found.");
+                }
+
+                user = getCoreContext().getUser(idInt);
+                users.add(user);
+            }
         }
         else {
             // process request for all
