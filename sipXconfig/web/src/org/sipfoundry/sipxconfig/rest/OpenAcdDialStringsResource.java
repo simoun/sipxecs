@@ -390,7 +390,7 @@ public class OpenAcdDialStringsResource extends UserResource {
     }
 
     private OpenAcdCommand createDialString(OpenAcdDialStringRestInfo dialStringRestInfo) throws ResourceException {
-        OpenAcdCommand dialString = new OpenAcdCommand();
+        OpenAcdCommand dialString = m_openAcdContext.newOpenAcdCommand();
         dialString.addCondition(OpenAcdCommand.createLineCondition());
         String tempString;
 
