@@ -573,6 +573,7 @@ public class RestUtilities {
         private final String m_firstName;
         private final String m_pin;
         private final String m_sipPassword;
+        private final String m_emailAddress;  // this is actually from "Contact Information" tab.  Maybe create separate API later
         private final List<UserGroupRestInfo> m_groups;
         private final BranchRestInfo m_branch;
         private final List<AliasRestInfo> m_aliases;
@@ -585,6 +586,7 @@ public class RestUtilities {
             m_firstName = user.getFirstName();
             m_pin = ""; // pin is hardcoded to never display but must still be submitted
             m_sipPassword = user.getSipPassword();
+            m_emailAddress = user.getEmailAddress();
             m_groups = userGroupsRestInfo;
             m_branch = branchRestInfo;
             m_aliases = aliasesRestInfo;
@@ -614,6 +616,9 @@ public class RestUtilities {
             return m_sipPassword;
         }
 
+        public String getEmailAddress() {
+            return m_emailAddress;
+        }
         public List<UserGroupRestInfo> getGroups() {
             return m_groups;
         }

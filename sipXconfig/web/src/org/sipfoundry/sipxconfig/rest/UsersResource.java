@@ -497,6 +497,7 @@ public class UsersResource extends UserResource {
         user.setLastName(userRestInfo.getLastName());
         user.setFirstName(userRestInfo.getFirstName());
         user.setSipPassword(userRestInfo.getSipPassword());
+        user.setEmailAddress(userRestInfo.getEmailAddress());
 
         // if pin is empty do not save
         if (!userRestInfo.getPin().isEmpty()) {
@@ -538,6 +539,7 @@ public class UsersResource extends UserResource {
         user.setLastName(userRestInfo.getLastName());
         user.setFirstName(userRestInfo.getFirstName());
         user.setSipPassword(userRestInfo.getSipPassword());
+        user.setEmailAddress(userRestInfo.getEmailAddress());
 
         // if pin is empty do not save
         if (!userRestInfo.getPin().isEmpty()) {
