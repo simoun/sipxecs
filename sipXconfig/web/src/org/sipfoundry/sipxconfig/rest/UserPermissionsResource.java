@@ -1,6 +1,6 @@
 /*
  *
- *  UserGroupPermissionsResource.java - A Restlet to read User Group data with Permissions from SipXecs
+ *  UserPermissionsResource.java - A Restlet to read User data with Permissions from SipXecs
  *  Copyright (C) 2012 PATLive, D. Chang
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -129,6 +129,7 @@ public class UserPermissionsResource extends UserResource {
         // if not single, check if need to filter list
         List<User> users;
         String branchIdString = m_form.getFirstValue("branch");
+        String idListString = m_form.getFirstValue("ids");
         int branchId;
 
         if ((branchIdString != null) && (branchIdString != "")) {
@@ -139,8 +140,25 @@ public class UserPermissionsResource extends UserResource {
                 return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "Branch ID " + branchIdString + " not found.");
             }
 
-            //userIds = getCoreContext().getBranchMembersByPage(branchId, 0, getCoreContext().getBranchMembersCount(branchId));
             users = getUsersByBranch(branchId);
+        }
+        else if ((idListString != null) && (!idListString.isEmpty())) {
+            // searching by id list
+            String[] idArray = idListString.split(",");
+
+            users = new ArrayList<User>();
+            User user;
+            for (String id : idArray) {
+                try {
+                    idInt = RestUtilities.getIntFromAttribute(id);
+                }
+                catch (Exception exception) {
+                    return RestUtilities.getResponseError(getResponse(), RestUtilities.ResponseCode.ERROR_BAD_INPUT, "ID " + id + " not found.");
+                }
+
+                user = getCoreContext().loadUser(idInt);
+                users.add(user);
+            }
         }
         else {
             // process request for all
