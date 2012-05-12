@@ -165,6 +165,7 @@ public class OpenAcdLinesResource extends UserResource {
 
     @Override
     public void storeRepresentation(Representation entity) throws ResourceException {
+
         // get from request body
         OpenAcdLineRepresentation representation = new OpenAcdLineRepresentation(entity);
         OpenAcdLineRestInfo lineRestInfo = representation.getObject();
@@ -177,6 +178,10 @@ public class OpenAcdLinesResource extends UserResource {
             RestUtilities.setResponseError(getResponse(), validationInfo.responseCode, validationInfo.message);
             return;
         }
+
+        // DEBUG
+        RestUtilities.setResponse(getResponse(), RestUtilities.ResponseCode.SUCCESS_UPDATED, "after validate", 4);
+    	if (true ) return;
 
 
         // if have id then update single
@@ -283,7 +288,7 @@ public class OpenAcdLinesResource extends UserResource {
                 validationInfo.responseCode = ResponseCode.ERROR_BAD_INPUT;
             }
         }
-
+        
         for (int i = 0; i < did.length(); i++) {
             if ((!Character.isDigit(did.charAt(i)))) {
                 validationInfo.valid = false;

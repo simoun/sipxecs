@@ -364,6 +364,8 @@ public class BranchesResource extends UserResource {
         }
 
         branch.setDescription(branchRestInfo.getDescription());
+        branch.setPhoneNumber(branchRestInfo.getPhoneNumber());
+        branch.setFaxNumber(branchRestInfo.getFaxNumber());
 
         address = getAddress(branchRestInfo);
         branch.setAddress(address);
@@ -376,6 +378,8 @@ public class BranchesResource extends UserResource {
         // copy fields from rest info
         branch.setName(branchRestInfo.getName());
         branch.setDescription(branchRestInfo.getDescription());
+        branch.setPhoneNumber(branchRestInfo.getPhoneNumber());
+        branch.setFaxNumber(branchRestInfo.getFaxNumber());
 
         address = getAddress(branchRestInfo);
         branch.setAddress(address);
