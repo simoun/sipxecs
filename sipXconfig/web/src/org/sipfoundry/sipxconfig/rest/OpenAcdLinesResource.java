@@ -66,7 +66,7 @@ public class OpenAcdLinesResource extends UserResource {
 
     // use to define all possible sort fields
     enum SortField {
-        NAME, DESCRIPTION, NONE;
+        NAME, DESCRIPTION, EXTENSION, DIDNUMBER, QUEUE, CLIENT, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -433,7 +433,7 @@ public class OpenAcdLinesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
                         OpenAcdLine line2 = (OpenAcdLine) object2;
-                        return line1.getName().compareToIgnoreCase(line2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(line1.getName(), line2.getName());
                     }
 
                 });
@@ -445,7 +445,55 @@ public class OpenAcdLinesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
                         OpenAcdLine line2 = (OpenAcdLine) object2;
-                        return line1.getDescription().compareToIgnoreCase(line2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(line1.getDescription(), line2.getDescription());
+                    }
+
+                });
+                break;
+                
+            case EXTENSION:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(line1.getExtension(), line2.getExtension());
+                    }
+
+                });
+                break;
+                
+            case DIDNUMBER:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(line1.getDid(), line2.getDid());
+                    }
+
+                });
+                break;
+                
+            case QUEUE:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(createLineRestInfo(line1).m_actions.getQueue().getName(), createLineRestInfo(line2).m_actions.getQueue().getName());
+                    }
+
+                });
+                break;
+                
+            case CLIENT:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(createLineRestInfo(line1).m_actions.getClient().getIdentity(), createLineRestInfo(line2).m_actions.getClient().getIdentity());
                     }
 
                 });
@@ -462,7 +510,7 @@ public class OpenAcdLinesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
                         OpenAcdLine line2 = (OpenAcdLine) object2;
-                        return line2.getName().compareToIgnoreCase(line1.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(line2.getName(), line1.getName());
                     }
 
                 });
@@ -474,7 +522,55 @@ public class OpenAcdLinesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdLine line1 = (OpenAcdLine) object1;
                         OpenAcdLine line2 = (OpenAcdLine) object2;
-                        return line2.getDescription().compareToIgnoreCase(line1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(line2.getDescription(), line1.getDescription());
+                    }
+
+                });
+                break;
+                
+            case EXTENSION:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(line2.getExtension(), line1.getExtension());
+                    }
+
+                });
+                break;
+                
+            case DIDNUMBER:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(line2.getDid(), line1.getDid());
+                    }
+
+                });
+                break;
+                
+            case QUEUE:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(createLineRestInfo(line2).m_actions.getQueue().getName(), createLineRestInfo(line1).m_actions.getQueue().getName());
+                    }
+
+                });
+                break;
+                
+            case CLIENT:
+                Collections.sort(lines, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdLine line1 = (OpenAcdLine) object1;
+                        OpenAcdLine line2 = (OpenAcdLine) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(createLineRestInfo(line2).m_actions.getClient().getIdentity(), createLineRestInfo(line1).m_actions.getClient().getIdentity());
                     }
 
                 });

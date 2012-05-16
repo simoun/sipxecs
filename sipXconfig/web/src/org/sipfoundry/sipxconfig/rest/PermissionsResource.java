@@ -54,7 +54,7 @@ public class PermissionsResource extends UserResource {
 
     // use to define all possible sort fields
     private enum SortField {
-        NAME, DESCRIPTION, NONE;
+        NAME, DESCRIPTION, LABEL, BUILTIN, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -286,13 +286,37 @@ public class PermissionsResource extends UserResource {
         if (sortInfo.directionForward) {
 
             switch (sortField) {
+            case LABEL:
+                Collections.sort(permissions, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Permission permission1 = (Permission) object1;
+                        Permission permission2 = (Permission) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(permission1.getLabel(),permission2.getLabel());
+                    }
+
+                });
+                break;
+                
+            case BUILTIN:
+                Collections.sort(permissions, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Permission permission1 = (Permission) object1;
+                        Permission permission2 = (Permission) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(Boolean.toString(permission1.isBuiltIn()),Boolean.toString(permission2.isBuiltIn()));
+                    }
+
+                });
+                break;
+                
             case NAME:
                 Collections.sort(permissions, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         Permission permission1 = (Permission) object1;
                         Permission permission2 = (Permission) object2;
-                        return permission1.getName().compareToIgnoreCase(permission2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(permission1.getName(), permission2.getName());
                     }
 
                 });
@@ -304,7 +328,7 @@ public class PermissionsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         Permission permission1 = (Permission) object1;
                         Permission permission2 = (Permission) object2;
-                        return permission1.getDescription().compareToIgnoreCase(permission2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(permission1.getDescription(), permission2.getDescription());
                     }
 
                 });
@@ -314,13 +338,37 @@ public class PermissionsResource extends UserResource {
         else {
             // must be reverse
             switch (sortField) {
+            case LABEL:
+                Collections.sort(permissions, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Permission permission1 = (Permission) object1;
+                        Permission permission2 = (Permission) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(permission2.getLabel(),permission1.getLabel());
+                    }
+
+                });
+                break;
+                
+            case BUILTIN:
+                Collections.sort(permissions, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Permission permission1 = (Permission) object1;
+                        Permission permission2 = (Permission) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(Boolean.toString(permission2.isBuiltIn()),Boolean.toString(permission1.isBuiltIn()));
+                    }
+
+                });
+                break;
+                
             case NAME:
                 Collections.sort(permissions, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         Permission permission1 = (Permission) object1;
                         Permission permission2 = (Permission) object2;
-                        return permission2.getName().compareToIgnoreCase(permission1.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(permission2.getName(), permission1.getName());
                     }
 
                 });
@@ -332,7 +380,7 @@ public class PermissionsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         Permission permission1 = (Permission) object1;
                         Permission permission2 = (Permission) object2;
-                        return permission2.getDescription().compareToIgnoreCase(permission1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(permission2.getDescription(), permission1.getDescription());
                     }
 
                 });

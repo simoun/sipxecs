@@ -166,6 +166,16 @@ public class RestUtilities {
         return sortInfo;
     }
 
+    public static int compareIgnoreCaseNullSafe (String left, String right)
+    {
+    	if (left == null)
+        	left = "";
+        if (right == null)
+        	right = "";
+        
+        return left.compareToIgnoreCase(right);
+    }
+    
 
     // XML Response functions
     // ----------------------

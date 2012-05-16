@@ -55,7 +55,7 @@ public class BranchesResource extends UserResource {
 
     // use to define all possible sort fields
     private enum SortField {
-        NAME, DESCRIPTION, NONE;
+        NAME, DESCRIPTION, CITY, OFFICEDESIGNATION, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -298,13 +298,37 @@ public class BranchesResource extends UserResource {
         if (sortInfo.directionForward) {
 
             switch (sortField) {
+            case CITY:
+                Collections.sort(branches, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Branch branch1 = (Branch) object1;
+                        Branch branch2 = (Branch) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch1.getAddress().getCity(), branch2.getAddress().getCity());
+                    }
+
+                });
+                break;
+                
+            case OFFICEDESIGNATION:
+                Collections.sort(branches, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Branch branch1 = (Branch) object1;
+                        Branch branch2 = (Branch) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch1.getAddress().getOfficeDesignation(), branch2.getAddress().getOfficeDesignation());
+                    }
+
+                });
+                break;
+                
             case NAME:
                 Collections.sort(branches, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         Branch branch1 = (Branch) object1;
                         Branch branch2 = (Branch) object2;
-                        return branch1.getName().compareToIgnoreCase(branch2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch1.getName(),branch2.getName());
                     }
 
                 });
@@ -316,7 +340,7 @@ public class BranchesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         Branch branch1 = (Branch) object1;
                         Branch branch2 = (Branch) object2;
-                        return branch1.getDescription().compareToIgnoreCase(branch2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch1.getDescription(),branch2.getDescription());
                     }
 
                 });
@@ -326,13 +350,37 @@ public class BranchesResource extends UserResource {
         else {
             // must be reverse
             switch (sortField) {
+            case CITY:
+                Collections.sort(branches, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Branch branch1 = (Branch) object1;
+                        Branch branch2 = (Branch) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch2.getAddress().getCity(), branch1.getAddress().getCity());
+                    }
+
+                });
+                break;
+                
+            case OFFICEDESIGNATION:
+                Collections.sort(branches, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        Branch branch1 = (Branch) object1;
+                        Branch branch2 = (Branch) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch2.getAddress().getOfficeDesignation(), branch1.getAddress().getOfficeDesignation());
+                    }
+
+                });
+                break;
+                
             case NAME:
                 Collections.sort(branches, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         Branch branch1 = (Branch) object1;
                         Branch branch2 = (Branch) object2;
-                        return branch2.getName().compareToIgnoreCase(branch1.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch2.getName(),branch1.getName());
                     }
 
                 });
@@ -344,7 +392,7 @@ public class BranchesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         Branch branch1 = (Branch) object1;
                         Branch branch2 = (Branch) object2;
-                        return branch2.getDescription().compareToIgnoreCase(branch1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(branch2.getDescription(),branch1.getDescription());
                     }
 
                 });

@@ -379,7 +379,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
                         OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-                        return agentGroup1.getName().compareToIgnoreCase(agentGroup2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agentGroup1.getName(), agentGroup2.getName());
                     }
 
                 });
@@ -391,7 +391,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
                         OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-                        return agentGroup1.getDescription().compareToIgnoreCase(agentGroup2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agentGroup1.getDescription(),agentGroup2.getDescription());
                     }
 
                 });
@@ -407,7 +407,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
                         OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-                        return agentGroup2.getName().compareToIgnoreCase(agentGroup1.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agentGroup2.getName(), agentGroup1.getName());
                     }
 
                 });
@@ -419,7 +419,7 @@ public class OpenAcdAgentGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgentGroup agentGroup1 = (OpenAcdAgentGroup) object1;
                         OpenAcdAgentGroup agentGroup2 = (OpenAcdAgentGroup) object2;
-                        return agentGroup2.getDescription().compareToIgnoreCase(agentGroup1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agentGroup2.getDescription(),agentGroup1.getDescription());
                     }
 
                 });

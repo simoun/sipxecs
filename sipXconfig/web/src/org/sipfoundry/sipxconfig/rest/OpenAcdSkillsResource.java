@@ -56,7 +56,7 @@ public class OpenAcdSkillsResource extends UserResource {
 
     // use to define all possible sort fields
     private enum SortField {
-        NAME, DESCRIPTION, ATOM, NONE;
+        NAME, DESCRIPTION, ATOM, GROUPNAME, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -322,7 +322,19 @@ public class OpenAcdSkillsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
                         OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill1.getName().compareToIgnoreCase(skill2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill1.getName(), skill2.getName());
+                    }
+
+                });
+                break;
+                
+            case GROUPNAME:
+                Collections.sort(skills, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
+                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill1.getGroupName(), skill2.getGroupName());
                     }
 
                 });
@@ -334,7 +346,7 @@ public class OpenAcdSkillsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
                         OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill1.getDescription().compareToIgnoreCase(skill2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill1.getDescription(), skill2.getDescription());
                     }
 
                 });
@@ -347,7 +359,7 @@ public class OpenAcdSkillsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
                         OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill1.getAtom().compareToIgnoreCase(skill2.getAtom());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill1.getAtom(), skill2.getAtom());
                     }
 
                 });
@@ -363,7 +375,19 @@ public class OpenAcdSkillsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
                         OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill2.getName().compareToIgnoreCase(skill1.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill2.getName(), skill1.getName());
+                    }
+
+                });
+                break;
+                
+            case GROUPNAME:
+                Collections.sort(skills, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
+                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill2.getGroupName(), skill1.getGroupName());
                     }
 
                 });
@@ -375,7 +399,7 @@ public class OpenAcdSkillsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
                         OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill2.getDescription().compareToIgnoreCase(skill1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill2.getDescription(), skill1.getDescription());
                     }
 
                 });
@@ -387,7 +411,7 @@ public class OpenAcdSkillsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkill skill1 = (OpenAcdSkill) object1;
                         OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill2.getAtom().compareToIgnoreCase(skill1.getAtom());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skill2.getAtom(), skill1.getAtom());
                     }
 
                 });

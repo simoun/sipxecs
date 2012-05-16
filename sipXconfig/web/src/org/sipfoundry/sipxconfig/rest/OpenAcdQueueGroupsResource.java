@@ -501,7 +501,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;
                         OpenAcdQueueGroup queueGroup2 = (OpenAcdQueueGroup) object2;
-                        return queueGroup1.getName().compareToIgnoreCase(queueGroup2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queueGroup1.getName(), queueGroup2.getName());
                     }
 
                 });
@@ -513,7 +513,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;
                         OpenAcdQueueGroup queueGroup2 = (OpenAcdQueueGroup) object2;
-                        return queueGroup1.getDescription().compareToIgnoreCase(queueGroup2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queueGroup1.getDescription(), queueGroup2.getDescription());
                     }
 
                 });
@@ -529,7 +529,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;
                         OpenAcdQueueGroup queueGroup2 = (OpenAcdQueueGroup) object2;
-                        return queueGroup2.getName().compareToIgnoreCase(queueGroup1.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queueGroup2.getName(), queueGroup1.getName());
                     }
 
                 });
@@ -541,7 +541,7 @@ public class OpenAcdQueueGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueueGroup queueGroup1 = (OpenAcdQueueGroup) object1;
                         OpenAcdQueueGroup queueGroup2 = (OpenAcdQueueGroup) object2;
-                        return queueGroup2.getDescription().compareToIgnoreCase(queueGroup1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queueGroup2.getDescription(), queueGroup1.getDescription());
                     }
 
                 });

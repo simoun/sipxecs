@@ -335,7 +335,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
                         OpenAcdSkillGroup skillGroup2 = (OpenAcdSkillGroup) object2;
-                        return skillGroup1.getName().compareToIgnoreCase(skillGroup2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skillGroup1.getName(), skillGroup2.getName());
                     }
 
                 });
@@ -347,7 +347,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
                         OpenAcdSkillGroup skillGroup2 = (OpenAcdSkillGroup) object2;
-                        return skillGroup1.getDescription().compareToIgnoreCase(skillGroup2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skillGroup1.getDescription(), skillGroup2.getDescription());
                     }
 
                 });
@@ -361,9 +361,9 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                 Collections.sort(skillGroups, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
-                        OpenAcdSkill skill1 = (OpenAcdSkill) object1;
-                        OpenAcdSkill skill2 = (OpenAcdSkill) object2;
-                        return skill2.getName().compareToIgnoreCase(skill1.getName());
+                        OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
+                        OpenAcdSkillGroup skillGroup2 = (OpenAcdSkillGroup) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(skillGroup2.getName(), skillGroup1.getName());
                     }
 
                 });
@@ -375,7 +375,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
                         OpenAcdSkillGroup skillGroup2 = (OpenAcdSkillGroup) object2;
-                        return skillGroup2.getDescription().compareToIgnoreCase(skillGroup1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(skillGroup2.getDescription(), skillGroup1.getDescription());
                     }
 
                 });

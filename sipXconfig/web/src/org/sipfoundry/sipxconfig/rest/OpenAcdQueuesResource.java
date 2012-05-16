@@ -69,7 +69,7 @@ public class OpenAcdQueuesResource extends UserResource {
 
     // use to define all possible sort fields
     enum SortField {
-        NAME, DESCRIPTION, NONE;
+        NAME, GROUPNAME, DESCRIPTION, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -498,13 +498,25 @@ public class OpenAcdQueuesResource extends UserResource {
         if (sortInfo.directionForward) {
 
             switch (sortField) {
+            case GROUPNAME:
+            	Collections.sort(queues, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdQueue queue1 = (OpenAcdQueue) object1;
+                        OpenAcdQueue queue2 = (OpenAcdQueue) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(queue1.getGroup().getName(), queue2.getGroup().getName());
+                    }
+
+                });
+                break;
+                
             case NAME:
                 Collections.sort(queues, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;
                         OpenAcdQueue queue2 = (OpenAcdQueue) object2;
-                        return queue1.getName().compareToIgnoreCase(queue2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queue1.getName(), queue2.getName());
                     }
 
                 });
@@ -516,7 +528,7 @@ public class OpenAcdQueuesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;
                         OpenAcdQueue queue2 = (OpenAcdQueue) object2;
-                        return queue1.getDescription().compareToIgnoreCase(queue2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queue1.getDescription(), queue2.getDescription());
                     }
 
                 });
@@ -526,13 +538,25 @@ public class OpenAcdQueuesResource extends UserResource {
         else {
             // must be reverse
             switch (sortField) {
+            case GROUPNAME:
+            	Collections.sort(queues, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdQueue queue1 = (OpenAcdQueue) object1;
+                        OpenAcdQueue queue2 = (OpenAcdQueue) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(queue2.getGroup().getName(), queue1.getGroup().getName());
+                    }
+
+                });
+                break;
+                
             case NAME:
                 Collections.sort(queues, new Comparator() {
 
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;
                         OpenAcdQueue queue2 = (OpenAcdQueue) object2;
-                        return queue2.getName().compareToIgnoreCase(queue1.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queue2.getName(), queue1.getName());
                     }
 
                 });
@@ -544,7 +568,7 @@ public class OpenAcdQueuesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdQueue queue1 = (OpenAcdQueue) object1;
                         OpenAcdQueue queue2 = (OpenAcdQueue) object2;
-                        return queue2.getDescription().compareToIgnoreCase(queue1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(queue2.getDescription(), queue1.getDescription());
                     }
 
                 });

@@ -320,7 +320,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;
                         OpenAcdReleaseCode releaseCode2 = (OpenAcdReleaseCode) object2;
-                        return releaseCode1.getLabel().compareToIgnoreCase(releaseCode2.getLabel());
+                        return RestUtilities.compareIgnoreCaseNullSafe(releaseCode1.getLabel(), releaseCode2.getLabel());
                     }
 
                 });
@@ -332,7 +332,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;
                         OpenAcdReleaseCode releaseCode2 = (OpenAcdReleaseCode) object2;
-                        return releaseCode1.getDescription().compareToIgnoreCase(releaseCode2.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(releaseCode1.getDescription(), releaseCode2.getDescription());
                     }
 
                 });
@@ -348,7 +348,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;
                         OpenAcdReleaseCode releaseCode2 = (OpenAcdReleaseCode) object2;
-                        return releaseCode2.getLabel().compareToIgnoreCase(releaseCode1.getLabel());
+                        return RestUtilities.compareIgnoreCaseNullSafe(releaseCode2.getLabel(), releaseCode1.getLabel());
                     }
 
                 });
@@ -360,7 +360,7 @@ public class OpenAcdReleaseCodesResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdReleaseCode releaseCode1 = (OpenAcdReleaseCode) object1;
                         OpenAcdReleaseCode releaseCode2 = (OpenAcdReleaseCode) object2;
-                        return releaseCode2.getDescription().compareToIgnoreCase(releaseCode1.getDescription());
+                        return RestUtilities.compareIgnoreCaseNullSafe(releaseCode2.getDescription(), releaseCode1.getDescription());
                     }
 
                 });

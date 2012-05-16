@@ -69,7 +69,7 @@ public class OpenAcdAgentsResource extends UserResource {
 
     // use to define all possible sort fields
     private enum SortField {
-        NAME, GROUP, SECURITY, NONE;
+        NAME, GROUP, SECURITY, USERNAME, FIRSTNAME, LASTNAME, BRANCH, EXTENSION, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -379,7 +379,7 @@ public class OpenAcdAgentsResource extends UserResource {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
 
-                        return agent1.getName().compareToIgnoreCase(agent2.getName());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getName(), agent2.getName());
                     }
 
                 });
@@ -391,7 +391,7 @@ public class OpenAcdAgentsResource extends UserResource {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
 
-                        return agent1.getAgentGroup().compareToIgnoreCase(agent2.getAgentGroup());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getAgentGroup(), agent2.getAgentGroup());
                     }
                 });
                 break;
@@ -402,7 +402,67 @@ public class OpenAcdAgentsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
-                        return agent1.getSecurity().compareToIgnoreCase(agent2.getSecurity());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getUser().getGroupsNames(), agent2.getUser().getGroupsNames());
+                    }
+
+                });
+                break;
+                
+            case USERNAME:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getUser().getUserName(), agent2.getUser().getUserName());
+                    }
+
+                });
+                break;
+                
+            case FIRSTNAME:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getFirstName(), agent2.getFirstName());
+                    }
+
+                });
+                break;
+                
+            case LASTNAME:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getLastName(), agent2.getLastName());
+                    }
+
+                });
+                break;
+                
+            case BRANCH:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getUser().getBranch().getName(), agent2.getUser().getBranch().getName());
+                    }
+
+                });
+                break;
+                
+            case EXTENSION:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent1.getUser().getExtension(true), agent2.getUser().getExtension(true));
                     }
 
                 });
@@ -418,8 +478,10 @@ public class OpenAcdAgentsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
-                        return agent2.getName().compareToIgnoreCase(agent1.getName());
+
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getName(), agent1.getName());
                     }
+
                 });
                 break;
 
@@ -429,7 +491,7 @@ public class OpenAcdAgentsResource extends UserResource {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
 
-                        return agent2.getAgentGroup().compareToIgnoreCase(agent1.getAgentGroup());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getAgentGroup(), agent1.getAgentGroup());
                     }
                 });
                 break;
@@ -440,8 +502,69 @@ public class OpenAcdAgentsResource extends UserResource {
                     public int compare(Object object1, Object object2) {
                         OpenAcdAgent agent1 = (OpenAcdAgent) object1;
                         OpenAcdAgent agent2 = (OpenAcdAgent) object2;
-                        return agent2.getSecurity().compareToIgnoreCase(agent1.getSecurity());
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getUser().getGroupsNames(), agent1.getUser().getGroupsNames());
                     }
+
+                });
+                break;
+                
+            case USERNAME:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getUser().getUserName(), agent1.getUser().getUserName());
+                    }
+
+                });
+                break;
+                
+            case FIRSTNAME:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getFirstName(), agent1.getFirstName());
+                    }
+
+                });
+                break;
+                
+            case LASTNAME:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getLastName(), agent1.getLastName());
+                    }
+
+                });
+                break;
+                
+            case BRANCH:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getUser().getBranch().getName(), agent1.getUser().getBranch().getName());
+                    }
+
+                });
+                break;
+                
+            case EXTENSION:
+                Collections.sort(agents, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdAgent agent1 = (OpenAcdAgent) object1;
+                        OpenAcdAgent agent2 = (OpenAcdAgent) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(agent2.getUser().getExtension(true), agent1.getUser().getExtension(true));
+                    }
+
                 });
                 break;
             }
