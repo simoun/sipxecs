@@ -59,7 +59,7 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
     // use to define all possible sort fields
     private enum SortField {
-        NAME, DESCRIPTION, NONE;
+        NAME, DESCRIPTION, NUMBERSKILLS, NONE;
 
         public static SortField toSortField(String fieldString) {
             if (fieldString == null) {
@@ -352,6 +352,18 @@ public class OpenAcdSkillGroupsResource extends UserResource {
 
                 });
                 break;
+                
+            case NUMBERSKILLS:
+                Collections.sort(skillGroups, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
+                        OpenAcdSkillGroup skillGroup2 = (OpenAcdSkillGroup) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(String.valueOf(skillGroup1.getSkills().size()), String.valueOf(skillGroup2.getSkills().size()));
+                    }
+
+                });
+                break;
             }
         }
         else {
@@ -376,6 +388,18 @@ public class OpenAcdSkillGroupsResource extends UserResource {
                         OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
                         OpenAcdSkillGroup skillGroup2 = (OpenAcdSkillGroup) object2;
                         return RestUtilities.compareIgnoreCaseNullSafe(skillGroup2.getDescription(), skillGroup1.getDescription());
+                    }
+
+                });
+                break;
+                
+            case NUMBERSKILLS:
+                Collections.sort(skillGroups, new Comparator() {
+
+                    public int compare(Object object1, Object object2) {
+                        OpenAcdSkillGroup skillGroup1 = (OpenAcdSkillGroup) object1;
+                        OpenAcdSkillGroup skillGroup2 = (OpenAcdSkillGroup) object2;
+                        return RestUtilities.compareIgnoreCaseNullSafe(String.valueOf(skillGroup2.getSkills().size()), String.valueOf(skillGroup1.getSkills().size()));
                     }
 
                 });
